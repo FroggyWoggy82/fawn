@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Meal Planner Home</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        a {
+            display: block;
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            text-decoration: none;
+            text-align: center;
+            width: 200px;
+        }
+        a:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <h1>Welcome to the Meal Planner</h1>
+    <a href="{% url 'daily_submission' %}">Submit a Daily Meal</a>
+    <a href="{% url 'submissions_list' %}">View Submissions</a>
+</body>
+</html>
+
+# filepath: /c:/Users/kevin/mealplanner/meals/admin.py
+from django.contrib import admin
+from .models import Ingredient, Dish, DishIngredient, DailySubmission, DailySubmissionIngredient
+
+admin.site.register(Ingredient)
+admin.site.register(Dish)
+admin.site.register(DishIngredient)
+admin.site.register(DailySubmission)
+admin.site.register(DailySubmissionIngredient)

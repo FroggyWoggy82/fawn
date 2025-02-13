@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Daily Submissions</title>
+</head>
+<body>
+    <h1>All Daily Submissions</h1>
+    <ul>
+        {% for submission in submissions %}
+            <li>
+                <!-- Link to the detail view of the submission -->
+                <a href="{% url 'submission_detail' submission.pk %}">
+                    {{ submission.submission_date }} - {{ submission.dish.name }}
+                </a>
+            </li>
+        {% empty %}
+            <li>No submissions found.</li>
+        {% endfor %}
+    </ul>
+    <a href="{% url 'daily_submission' %}">Back to Submit Form</a>
+</body>
+</html>

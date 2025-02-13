@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Daily Meal Submissions</title>
+</head>
+<body>
+    <h1>Daily Meal Submissions</h1>
+    {% for submission in submissions %}
+        <h2>{{ submission.dish.name }}</h2>
+        <p><strong>Submission Date:</strong> {{ submission.submission_date }}</p>
+        <p><strong>Notes:</strong> {{ submission.notes }}</p>
+        <h3>Ingredients</h3>
+        <ul>
+            {% for usage in submission.usage.all %}
+                <li>{{ usage.dish_ingredient.ingredient.name }} - {{ usage.grams_used }}g</li>
+            {% endfor %}
+        </ul>
+        <h3>Nutrition Totals</h3>
+        <p><strong>Total Calories:</strong> {{ submission.total_calories|floatformat:2 }} kcal</p>
+        <p><strong>Total Protein:</strong> {{ submission.total_protein|floatformat:2 }} g</p>
+        <p><strong>Total Fats:</strong> {{ submission.total_fats|floatformat:2 }} g</p>
+        <p><strong>Total Carbohydrates:</strong> {{ submission.total_carbohydrates|floatformat:2 }} g</p>
+    {% endfor %}
+</body>
+</html>

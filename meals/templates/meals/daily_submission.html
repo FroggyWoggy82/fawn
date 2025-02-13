@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Daily Submission</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        form {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        label {
+            display: block;
+            margin-top: 10px;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 8px;
+            margin-top: 5px;
+        }
+        button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <h1>Daily Submission</h1>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        {{ dish_form.as_p }}
+        <div id="ingredients"></div>
+        <button type="submit">Submit</button>
+    </form>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const dishSelect = document.querySelector('select[name="dish"]');
+        const ingredientsDiv = document.getElementById('ingredients');
+
+        dishSelect.addEventListener('change', function() {
+            const dishId = this.value;
+            fetch(`/get_ingredients/${dishId}/`)
+                .then(response => response.json())
+                .then(data => {
+                    ingredientsDiv.innerHTML = '';
+                    data.ingredients.forEach(ingredient => {
+                        const label = document.createElement('label');
+                        label.setAttribute('for', `grams_used_${ingredient.id}`);
+                        label.textContent = ingredient.name;
+
+                        const input = document.createElement('input');
+                        input.setAttribute('type', 'number');
+                        input.setAttribute('name', `grams_used_${ingredient.id}`);
+                        input.setAttribute('id', `grams_used_${ingredient.id}`);
+
+                        ingredientsDiv.appendChild(label);
+                        ingredientsDiv.appendChild(input);
+                    });
+                });
+        });
+    });
+    </script>
+</body>
+</html>
