@@ -28,7 +28,13 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'default-secret-key')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG', 'False').lower() in ['true', '1', 't']
 
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '127.0.0.1,localhost').split(',')
+import logging
+
+logger = logging.getLogger(__name__)
+
+DJANGO_ALLOWED_HOSTS = os.getenv('DJANGO_ALLOWED_HOSTS', '127.0.0.1,localhost')
+logger.debug(f'DJANGO_ALLOWED_HOSTS: {DJANGO_ALLOWED_HOSTS}')
+ALLOWED_HOSTS = DJANGO_ALLOWED_HOSTS.split(',')
 
 
 # Application definition
