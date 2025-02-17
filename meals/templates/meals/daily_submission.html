@@ -32,44 +32,60 @@
             background-color: #45a049;
         }
     </style>
+    <script>
+        function loadIngredients(dishId) {
+            fetch(`/get_ingredients/${dishId}/`)
+                .then(response => response.json())
+                .then(data => {
+                    const ingredientsContainer = document.getElementById('ingredients-container');
+                    ingredientsContainer.innerHTML = '';
+                    data.ingredients.forEach(ingredient => {
+                        const div = document.createElement('div');
+                        div.innerHTML = `
+                            <label for="ingredient_${ingredient.id}">${ingredient.name} (grams):</label>
+                            <input type="number" name="ingredient_${ingredient.id}" id="ingredient_${ingredient.id}" step="0.01">
+                        `;
+                        ingredientsContainer.appendChild(div);
+                    });
+                });
+        }
+    </script>
 </head>
 <body>
     <h1>Daily Submission</h1>
     <form method="post">
         {% csrf_token %}
-        {{ form.as_p }}
-        {{ dish_form.as_p }}
-        <div id="ingredients"></div>
+        <div>
+            <label for="id_dish">Dish:</label>
+            {{ form.dish }}
+        </div>
+        <div>
+            <label for="id_submission_date">Submission Date:</label>
+            {{ form.submission_date }}
+        </div>
+        <div>
+            <label for="id_notes">Notes:</label>
+            {{ form.notes }}
+        </div>
+        <div>
+            <label for="id_cook_time">Cook Time:</label>
+            {{ dish_form.cook_time }}
+        </div>
+        <div>
+            <label for="id_instructions">Instructions:</label>
+            {{ dish_form.instructions }}
+        </div>
+        <div id="ingredients-container"></div>
         <button type="submit">Submit</button>
     </form>
-
+    <a href="{% url 'submissions_list' %}"><button>See All Submissions</button></a>
     <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const dishSelect = document.querySelector('select[name="dish"]');
-        const ingredientsDiv = document.getElementById('ingredients');
-
-        dishSelect.addEventListener('change', function() {
+        document.getElementById('id_dish').addEventListener('change', function() {
             const dishId = this.value;
-            fetch(`/get_ingredients/${dishId}/`)
-                .then(response => response.json())
-                .then(data => {
-                    ingredientsDiv.innerHTML = '';
-                    data.ingredients.forEach(ingredient => {
-                        const label = document.createElement('label');
-                        label.setAttribute('for', `grams_used_${ingredient.id}`);
-                        label.textContent = ingredient.name;
-
-                        const input = document.createElement('input');
-                        input.setAttribute('type', 'number');
-                        input.setAttribute('name', `grams_used_${ingredient.id}`);
-                        input.setAttribute('id', `grams_used_${ingredient.id}`);
-
-                        ingredientsDiv.appendChild(label);
-                        ingredientsDiv.appendChild(input);
-                    });
-                });
+            if (dishId) {
+                loadIngredients(dishId);
+            }
         });
-    });
     </script>
 </body>
 </html>

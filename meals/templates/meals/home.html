@@ -26,15 +26,6 @@
     <h1>Welcome to the Meal Planner</h1>
     <a href="{% url 'daily_submission' %}">Submit a Daily Meal</a>
     <a href="{% url 'submissions_list' %}">View Submissions</a>
+    <a href="/admin/">Admin Access</a>
 </body>
 </html>
-
-# filepath: /c:/Users/kevin/mealplanner/meals/admin.py
-from django.contrib import admin
-from .models import Ingredient, Dish, DishIngredient, DailySubmission, DailySubmissionIngredient
-
-admin.site.register(Ingredient)
-admin.site.register(Dish)
-admin.site.register(DishIngredient)
-admin.site.register(DailySubmission)
-admin.site.register(DailySubmissionIngredient)

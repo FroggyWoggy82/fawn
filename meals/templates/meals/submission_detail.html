@@ -3,9 +3,8 @@
 <head>
     <title>Submission Detail</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Proxima+Nova:wght@400;700&display=swap');
         body {
-            font-family: 'Proxima Nova', sans-serif;
+            font-family: Arial, sans-serif;
             margin: 20px;
         }
         .totals {
@@ -14,25 +13,23 @@
     </style>
 </head>
 <body>
-    <h1>Submission Detail</h1>
-    <p><strong>Dish:</strong> {{ submission.dish.name }}</p>
-    <p><strong>Submission Date:</strong> {{ submission.submission_date }}</p>
-    <p><strong>Notes:</strong> {{ submission.notes }}</p>
-
+    <h1>Submission on {{ submission.submission_date }} - {{ submission.dish.name }}</h1>
+    <p>{{ submission.notes }}</p>
+    
     <h2>Ingredients</h2>
     <ul>
-        {% for usage in submission.usage.all %}
-            <li>{{ usage.dish_ingredient.ingredient.name }} - {{ usage.grams_used }}g</li>
+        {% for submission_ingredient in submission_ingredients %}
+            <li>{{ submission_ingredient.dish_ingredient.ingredient.name }}: {{ submission_ingredient.grams_used }} grams</li>
         {% endfor %}
     </ul>
-
+    
     <div class="totals">
-        <h2>Nutrition Totals</h2>
-        <p><strong>Total Calories:</strong> {{ submission.total_calories|floatformat:2 }} kcal</p>
-        <p><strong>Total Protein:</strong> {{ submission.total_protein|floatformat:2 }} g</p>
-        <p><strong>Total Fats:</strong> {{ submission.total_fats|floatformat:2 }} g</p>
-        <p><strong>Total Carbohydrates:</strong> {{ submission.total_carbohydrates|floatformat:2 }} g</p>
+        <h2>Totals</h2>
+        <p>Total Calories: {{ total_calories }}</p>
+        <p>Total Protein: {{ total_protein }} grams</p>
+        <p>Total Fats: {{ total_fats }} grams</p>
+        <p>Total Carbohydrates: {{ total_carbohydrates }} grams</p>
+        <p>Total Cost: ${{ total_cost }}</p>
     </div>
-    <a href="{% url 'submissions_list' %}">Back to Submissions List</a>
 </body>
 </html>

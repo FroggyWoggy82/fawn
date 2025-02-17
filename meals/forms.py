@@ -9,4 +9,4 @@ class DailySubmissionForm(forms.ModelForm):
 class DishForm(forms.ModelForm):
     class Meta:
         model = Dish
-        fields = ['cook_time']
+        fields = ['cook_time', 'instructions']

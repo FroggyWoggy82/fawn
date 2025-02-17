@@ -7,6 +7,7 @@ class Ingredient(models.Model):
     protein_per_gram = models.FloatField(default=0)
     fats_per_gram = models.FloatField(default=0)
     carbohydrates_per_gram = models.FloatField(default=0)
+    cost_per_gram = models.FloatField(default=0)  # New field
 
     def __str__(self):
         return self.name
@@ -48,6 +49,7 @@ class DailySubmissionIngredient(models.Model):
     submission = models.ForeignKey(DailySubmission, related_name='ingredients', on_delete=models.CASCADE)
     dish_ingredient = models.ForeignKey(DishIngredient, on_delete=models.CASCADE)
     grams_used = models.FloatField()
+    cost_per_gram = models.FloatField(default=0)  # New field
 
     def __str__(self):
         return f"{self.grams_used}g of {self.dish_ingredient.ingredient.name}"
