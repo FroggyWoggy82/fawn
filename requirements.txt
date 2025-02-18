@@ -3,3 +3,4 @@ celery
 python-dotenv
 psycopg2
 gunicorn
+whitenoise
