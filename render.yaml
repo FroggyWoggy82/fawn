@@ -1,10 +1,20 @@
+databases:
+  - name: mealplanner-db
+
 services:
   - type: web
-    name: fawn
-    region: us-west
+    name: mealplanner-web
+    env: python
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "gunicorn --workers 4 mealplanner.wsgi:application --log-file -"
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: mealplanner-db
+          property: connectionString
+
+    healthCheckPath: /
     plan: free
-    env: production
-    build_command: "pip install -r requirements.txt && python manage.py migrate && python manage.py collectstatic --noinput"
-    start_command: "gunicorn mealplanner.wsgi:application"
-    static_paths:
-      - /static/: staticfiles/
+
+    buildCommands:
+      - python manage.py migrate

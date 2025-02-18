@@ -1,7 +1,1 @@
-whitenoise
-
-Django==5.1.6
-gunicorn
-python-dotenv
-redis
-celery
+dj-database-url
