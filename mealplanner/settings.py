@@ -14,6 +14,7 @@ import os
 from dotenv import load_dotenv
 from pathlib import Path
 import dj_database_url
+import logging
 
 load_dotenv()
 
@@ -24,12 +25,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenv('SECRET_KEY', 'default-secret-key')
+SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'default-secret-key')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv('DEBUG', 'False').lower() in ['true', '1', 't']
-
-import logging
+DEBUG = os.getenv('DJANGO_DEBUG', 'False').lower() in ['true', '1', 't']
 
 logger = logging.getLogger(__name__)
 
@@ -83,9 +82,12 @@ WSGI_APPLICATION = 'mealplanner.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
+DATABASE_URL = os.getenv('DATABASE_URL')
+logger.debug(f'DATABASE_URL: {DATABASE_URL}')
+
 DATABASES = {
     'default': dj_database_url.config(
-        default=os.environ.get('DATABASE_URL')
+        default=DATABASE_URL
     )
 }
 
@@ -146,6 +148,7 @@ LOGGING = {
         },
     },
 }
+
 CELERY_BROKER_URL = os.getenv('CELERY_BROKER_URL', 'redis://localhost:6379/0')
 CELERY_RESULT_BACKEND = os.getenv('CELERY_RESULT_BACKEND', 'redis://localhost:6379/0')
 CELERY_ACCEPT_CONTENT = ['json']
