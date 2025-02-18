@@ -1,1 +1,2 @@
 dj-database-url
+celery
