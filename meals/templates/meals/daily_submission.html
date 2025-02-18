@@ -7,6 +7,16 @@
             font-family: Arial, sans-serif;
             margin: 20px;
         }
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+        }
+        .grid-item {
+            border: 1px solid #ccc;
+            padding: 10px;
+            border-radius: 5px;
+        }
         form {
             max-width: 600px;
             margin: 0 auto;
@@ -31,6 +41,22 @@
         button:hover {
             background-color: #45a049;
         }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .graph-container {
+            margin-top: 20px;
+        }
     </style>
     <script>
         function loadIngredients(dishId) {
@@ -43,49 +69,156 @@
                         const div = document.createElement('div');
                         div.innerHTML = `
                             <label for="ingredient_${ingredient.id}">${ingredient.name} (grams):</label>
-                            <input type="number" name="ingredient_${ingredient.id}" id="ingredient_${ingredient.id}" step="0.01">
+                            <input type="number" name="ingredient_${ingredient.id}" id="ingredient_${ingredient.id}" step="0.01" oninput="calculateTotals()">
                         `;
                         ingredientsContainer.appendChild(div);
                     });
+                    calculateTotals();
                 });
+        }
+
+        function calculateTotals() {
+            const ingredients = document.querySelectorAll('input[name^="ingredient_"]');
+            let totalCalories = 0;
+            let totalProtein = 0;
+            let totalCarbs = 0;
+            let totalFat = 0;
+            let totalCost = 0;
+
+            ingredients.forEach(input => {
+                const ingredientId = input.id.replace('ingredient_', '');
+                const quantity = parseFloat(input.value) || 0;
+                const ingredientData = JSON.parse(document.getElementById(`ingredient_data_${ingredientId}`).value);
+                totalCalories += quantity * ingredientData.calories_per_gram;
+                totalProtein += quantity * ingredientData.protein_per_gram;
+                totalCarbs += quantity * ingredientData.carbs_per_gram;
+                totalFat += quantity * ingredientData.fat_per_gram;
+                totalCost += quantity * ingredientData.cost_per_gram;
+            });
+
+            document.getElementById('total_calories').textContent = totalCalories.toFixed(2);
+            document.getElementById('total_protein').textContent = totalProtein.toFixed(2);
+            document.getElementById('total_carbs').textContent = totalCarbs.toFixed(2);
+            document.getElementById('total_fat').textContent = totalFat.toFixed(2);
+            document.getElementById('total_cost').textContent = totalCost.toFixed(2);
         }
     </script>
 </head>
 <body>
     <h1>Daily Submission</h1>
-    <form method="post">
-        {% csrf_token %}
-        <div>
-            <label for="id_dish">Dish:</label>
-            {{ form.dish }}
+    <div class="grid-container">
+        <div class="grid-item">
+            <form method="post">
+                {% csrf_token %}
+                <div>
+                    <label for="id_dish">Dish:</label>
+                    {{ form.dish }}
+                </div>
+                <div>
+                    <label for="id_submission_date">Submission Date:</label>
+                    {{ form.submission_date }}
+                </div>
+                <div>
+                    <label for="id_notes">Notes:</label>
+                    {{ form.notes }}
+                </div>
+                <div>
+                    <label for="id_cook_time">Cook Time:</label>
+                    {{ dish_form.cook_time }}
+                </div>
+                <div>
+                    <label for="id_instructions">Instructions:</label>
+                    {{ dish_form.instructions }}
+                </div>
+                <div id="ingredients-container"></div>
+                <button type="submit">Submit</button>
+            </form>
+            <a href="{% url 'submissions_list' %}"><button>See All Submissions</button></a>
         </div>
-        <div>
-            <label for="id_submission_date">Submission Date:</label>
-            {{ form.submission_date }}
+        <div class="grid-item">
+            <h2>Ingredients</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Ingredient</th>
+                        <th>Cal/g</th>
+                        <th>P/g</th>
+                        <th>Carb/g</th>
+                        <th>Fat/g</th>
+                        <th>Cost/g</th>
+                        <th>Quantity (g)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for ingredient in ingredients %}
+                    <tr>
+                        <td>{{ ingredient.name }}</td>
+                        <td>{{ ingredient.calories_per_gram }}</td>
+                        <td>{{ ingredient.protein_per_gram }}</td>
+                        <td>{{ ingredient.carbs_per_gram }}</td>
+                        <td>{{ ingredient.fat_per_gram }}</td>
+                        <td>{{ ingredient.cost_per_gram }}</td>
+                        <td>
+                            <input type="hidden" id="ingredient_data_{{ ingredient.id }}" value='{{ ingredient|safe }}'>
+                            <input type="number" name="ingredient_{{ ingredient.id }}" id="ingredient_{{ ingredient.id }}" step="0.01" oninput="calculateTotals()">
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <h3>Nutritional Totals</h3>
+            <p>Total Calories: <span id="total_calories">0.00</span></p>
+            <p>Total Protein: <span id="total_protein">0.00</span>g</p>
+            <p>Total Carbs: <span id="total_carbs">0.00</span>g</p>
+            <p>Total Fat: <span id="total_fat">0.00</span>g</p>
+            <p>Total Cost: <span id="total_cost">0.00</span></p>
         </div>
-        <div>
-            <label for="id_notes">Notes:</label>
-            {{ form.notes }}
+        <div class="grid-item graph-container">
+            <h2>Cost Per Serving Graph</h2>
+            <canvas id="costGraph"></canvas>
+            <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+            <script>
+                const ctx = document.getElementById('costGraph').getContext('2d');
+                const costGraph = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: [],
+                        datasets: [{
+                            label: 'Cost Per Serving',
+                            data: [],
+                            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                            borderColor: 'rgba(75, 192, 192, 1)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+
+                function updateGraph(dishes) {
+                    costGraph.data.labels = dishes.map(dish => dish.name);
+                    costGraph.data.datasets[0].data = dishes.map(dish => dish.cost_per_serving);
+                    costGraph.update();
+                }
+
+                document.getElementById('id_dish').addEventListener('change', function() {
+                    const dishId = this.value;
+                    if (dishId) {
+                        fetch(`/get_ingredients/${dishId}/`)
+                            .then(response => response.json())
+                            .then(data => {
+                                loadIngredients(dishId);
+                                updateGraph(data.dishes);
+                            });
+                    }
+                });
+            </script>
         </div>
-        <div>
-            <label for="id_cook_time">Cook Time:</label>
-            {{ dish_form.cook_time }}
-        </div>
-        <div>
-            <label for="id_instructions">Instructions:</label>
-            {{ dish_form.instructions }}
-        </div>
-        <div id="ingredients-container"></div>
-        <button type="submit">Submit</button>
-    </form>
-    <a href="{% url 'submissions_list' %}"><button>See All Submissions</button></a>
-    <script>
-        document.getElementById('id_dish').addEventListener('change', function() {
-            const dishId = this.value;
-            if (dishId) {
-                loadIngredients(dishId);
-            }
-        });
-    </script>
+    </div>
 </body>
 </html>
