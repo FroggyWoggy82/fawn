@@ -1,20 +1,36 @@
-databases:
-  - name: mealplanner-db
-
 services:
   - type: web
-    name: mealplanner-web
-    env: python
+    name: mealplanner
+    env: python-3.10
     buildCommand: "pip install -r requirements.txt"
-    startCommand: "gunicorn --workers 4 mealplanner.wsgi:application --log-file -"
-    envVars:
-      - key: DATABASE_URL
-        fromDatabase:
-          name: mealplanner-db
-          property: connectionString
-
-    healthCheckPath: /
+    startCommand: "gunicorn mealplanner.wsgi:application --log-file -"
     plan: free
-
-    buildCommands:
-      - python manage.py migrate
+    region: oregon
+    envVars:
+      - key: DJANGO_SECRET_KEY
+        fromSecret: DJANGO_SECRET_KEY
+      - key: DJANGO_DEBUG
+        value: "False"
+      - key: DJANGO_ALLOWED_HOSTS
+        value: "mealplanner.onrender.com"
+      - key: EMAIL_HOST_USER
+        fromSecret: EMAIL_HOST_USER
+      - key: EMAIL_HOST_PASSWORD
+        fromSecret: EMAIL_HOST_PASSWORD
+      - key: EMAIL_HOST
+        value: "smtp.gmail.com"
+      - key: EMAIL_PORT
+        value: "587"
+      - key: EMAIL_USE_TLS
+        value: "True"
+      - key: DEFAULT_FROM_EMAIL
+        value: "your-email@gmail.com"
+      - key: CELERY_BROKER_URL
+        value: "redis://:password@host:port/0"
+      - key: CELERY_RESULT_BACKEND
+        value: "redis://:password@host:port/0"
+    healthCheckPath: /
+    autoDeploy: true
+    gitBranch: master
+    run:
+      - "python manage.py migrate"
