@@ -1,4 +1,4 @@
-django-whitenoise==6.9.0
+whitenoise
 
 Django==5.1.6
 gunicorn
