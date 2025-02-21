@@ -82,14 +82,28 @@ WSGI_APPLICATION = 'mealplanner.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
-DATABASE_URL = os.getenv('DATABASE_URL')
-logger.debug(f'DATABASE_URL: {DATABASE_URL}')
+# Detect environment
+ENVIRONMENT = os.getenv("DJANGO_ENV", "local")  # Default to "local" if no env var is set
 
-DATABASES = {
-    'default': dj_database_url.config(
-        default=DATABASE_URL
-    )
-}
+if ENVIRONMENT == "production":
+    # Production Database (Render PostgreSQL)
+    DATABASE_URL = os.getenv("DATABASE_URL")  # Render's PostgreSQL URL
+    DATABASES = {
+        "default": dj_database_url.config(default=DATABASE_URL)
+    }
+else:
+    # Local Database (SQLite)
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
+        }
+    }
+    # Debug log to confirm which database is being used
+import logging
+logger = logging.getLogger(__name__)
+logger.debug(f"Using {ENVIRONMENT} database: {DATABASES['default']}")
+
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators

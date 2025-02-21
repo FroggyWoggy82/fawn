@@ -44,7 +44,45 @@ def get_ingredients(request, dish_id):
 
 def submissions_list_view(request):
     submissions = DailySubmission.objects.all().order_by('-submission_date')
-    return render(request, 'meals/list_submissions.html', {'submissions': submissions})
+
+    # Initialize a list to store submission-specific totals
+    submission_totals = []
+
+    for submission in submissions:
+        total_calories = 0
+        total_protein = 0
+        total_fats = 0
+        total_carbohydrates = 0
+        total_cost = 0
+
+        for submission_ingredient in submission.ingredients.all():
+            ingredient = submission_ingredient.dish_ingredient.ingredient
+            grams_used = submission_ingredient.grams_used
+            current_cost_per_gram = ingredient.cost_per_gram  # Fetch the current cost_per_gram from the Ingredient model
+            total_calories += ingredient.calories_per_gram * grams_used
+            total_protein += ingredient.protein_per_gram * grams_used
+            total_fats += ingredient.fats_per_gram * grams_used
+            total_carbohydrates += ingredient.carbohydrates_per_gram * grams_used
+            total_cost += current_cost_per_gram * grams_used
+        
+        # Append the calculated totals for this submission to the list
+        submission_totals.append({
+            'submission': submission,
+            'total_calories': round(total_calories, 2),
+            'total_protein': round(total_protein, 2),
+            'total_fats': round(total_fats, 2),
+            'total_carbohydrates': round(total_carbohydrates, 2),
+            'total_cost': round(total_cost, 2)
+        })
+    
+    context = {
+        'submissions': submission_totals  # Pass the list of submission-specific totals
+    }
+    
+    return render(request, 'meals/list_submissions.html', context)
+
+
+
 
 def submission_detail_view(request, pk):
     submission = get_object_or_404(DailySubmission, pk=pk)
@@ -66,6 +104,9 @@ def submission_detail_view(request, pk):
         total_carbohydrates += ingredient.carbohydrates_per_gram * grams_used
         total_cost += current_cost_per_gram * grams_used
     
+    # Format the total_cost with a dollar sign
+    formatted_total_cost = f"${round(total_cost, 2)}"
+    
     context = {
         'submission': submission,
         'submission_ingredients': submission_ingredients,
@@ -73,9 +114,11 @@ def submission_detail_view(request, pk):
         'total_protein': round(total_protein, 2),
         'total_fats': round(total_fats, 2),
         'total_carbohydrates': round(total_carbohydrates, 2),
-        'total_cost': round(total_cost, 2),
+        'total_cost': formatted_total_cost,  # Pass the formatted cost
     }
+    
     return render(request, 'meals/submission_detail.html', context)
+
 
 def submission_view(request, submission_id):
     submission = get_object_or_404(DailySubmission, id=submission_id)

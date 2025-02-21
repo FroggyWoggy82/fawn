@@ -135,37 +135,10 @@
             </form>
             <a href="{% url 'submissions_list' %}"><button>See All Submissions</button></a>
         </div>
+       
         <div class="grid-item">
             <h2>Ingredients</h2>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Ingredient</th>
-                        <th>Cal/g</th>
-                        <th>P/g</th>
-                        <th>Carb/g</th>
-                        <th>Fat/g</th>
-                        <th>Cost/g</th>
-                        <th>Quantity (g)</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for ingredient in ingredients %}
-                    <tr>
-                        <td>{{ ingredient.name }}</td>
-                        <td>{{ ingredient.calories_per_gram }}</td>
-                        <td>{{ ingredient.protein_per_gram }}</td>
-                        <td>{{ ingredient.carbs_per_gram }}</td>
-                        <td>{{ ingredient.fat_per_gram }}</td>
-                        <td>{{ ingredient.cost_per_gram }}</td>
-                        <td>
-                            <input type="hidden" id="ingredient_data_{{ ingredient.id }}" value='{{ ingredient|safe }}'>
-                            <input type="number" name="ingredient_{{ ingredient.id }}" id="ingredient_{{ ingredient.id }}" step="0.01" oninput="calculateTotals()">
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+            
             <h3>Nutritional Totals</h3>
             <p>Total Calories: <span id="total_calories">0.00</span></p>
             <p>Total Protein: <span id="total_protein">0.00</span>g</p>
