@@ -40,6 +40,7 @@ class DailySubmission(models.Model):
     total_protein = models.IntegerField(default=0)
     total_fats = models.IntegerField(default=0)
     total_carbohydrates = models.IntegerField(default=0)
+    image = models.ImageField(upload_to='submissions/', blank=True, null=True)
 
     def __str__(self):
         return f"Submission on {self.submission_date} - {self.dish.name}"

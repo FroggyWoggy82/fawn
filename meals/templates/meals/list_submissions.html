@@ -108,6 +108,7 @@
                     <tr>
                         <th>Date</th>
                         <th>Dish</th>
+                        <th>Image</th>  <!-- Add this new column -->
                         <th>Ingredients</th>
                         <th>Total Calories</th>
                         <th>Total Protein</th>
@@ -121,6 +122,13 @@
                         <tr>
                             <td>{{ submission_total.submission.submission_date }}</td> <!-- Submission date -->
                             <td>{{ submission_total.submission.dish.name }}</td> <!-- Dish name -->
+                            <td>
+                                {% if submission_total.submission.image %}
+                                    <img src="{{ submission_total.submission.image.url }}" alt="Food Image" style="max-width: 100px;">
+                                {% else %}
+                                    No image
+                                {% endif %}
+                            </td>
                             <td>
                                 <div class="ingredient-dropdown" onclick="toggleIngredients(this)">
                                     Ingredients <span class="arrow">→</span>

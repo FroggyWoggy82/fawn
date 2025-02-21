@@ -7,8 +7,10 @@ def home_view(request):
     return render(request, 'meals/home.html')
 
 def daily_submission_view(request):
+    submission_ingredients = []  # Initialize the variable outside if/else blocks
+    
     if request.method == "POST":
-        form = DailySubmissionForm(request.POST)
+        form = DailySubmissionForm(request.POST, request.FILES)  # Include request.FILES for file uploads
         dish_form = DishForm(request.POST)
         if form.is_valid() and dish_form.is_valid():
             submission = form.save()
@@ -32,7 +34,12 @@ def daily_submission_view(request):
     else:
         form = DailySubmissionForm()
         dish_form = DishForm()
-    return render(request, 'meals/daily_submission.html', {'form': form, 'dish_form': dish_form})
+
+    return render(request, 'meals/daily_submission.html', {
+        'form': form,
+        'dish_form': dish_form,
+        'submission_ingredients': submission_ingredients
+    })
 
 def submission_success(request):
     return render(request, 'meals/submission_success.html')
@@ -81,9 +88,6 @@ def submissions_list_view(request):
     
     return render(request, 'meals/list_submissions.html', context)
 
-
-
-
 def submission_detail_view(request, pk):
     submission = get_object_or_404(DailySubmission, pk=pk)
     submission_ingredients = DailySubmissionIngredient.objects.filter(submission=submission)
@@ -118,7 +122,6 @@ def submission_detail_view(request, pk):
     }
     
     return render(request, 'meals/submission_detail.html', context)
-
 
 def submission_view(request, submission_id):
     submission = get_object_or_404(DailySubmission, id=submission_id)

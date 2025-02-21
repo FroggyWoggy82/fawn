@@ -102,13 +102,20 @@
             document.getElementById('total_fat').textContent = totalFat.toFixed(2);
             document.getElementById('total_cost').textContent = totalCost.toFixed(2);
         }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const dishSelect = document.getElementById('id_dish');
+            dishSelect.addEventListener('change', function() {
+                loadIngredients(this.value);
+            });
+        });
     </script>
 </head>
 <body>
     <h1>Daily Submission</h1>
     <div class="grid-container">
         <div class="grid-item">
-            <form method="post">
+            <form method="post" enctype="multipart/form-data">
                 {% csrf_token %}
                 <div>
                     <label for="id_dish">Dish:</label>
@@ -117,6 +124,10 @@
                 <div>
                     <label for="id_submission_date">Submission Date:</label>
                     {{ form.submission_date }}
+                </div>
+                <div>
+                    <label for="id_image">Upload Image:</label>
+                    {{ form.image }}
                 </div>
                 <div>
                     <label for="id_notes">Notes:</label>
@@ -136,62 +147,7 @@
             <a href="{% url 'submissions_list' %}"><button>See All Submissions</button></a>
         </div>
        
-        <div class="grid-item">
-            <h2>Ingredients</h2>
-            
-            <h3>Nutritional Totals</h3>
-            <p>Total Calories: <span id="total_calories">0.00</span></p>
-            <p>Total Protein: <span id="total_protein">0.00</span>g</p>
-            <p>Total Carbs: <span id="total_carbs">0.00</span>g</p>
-            <p>Total Fat: <span id="total_fat">0.00</span>g</p>
-            <p>Total Cost: <span id="total_cost">0.00</span></p>
-        </div>
-        <div class="grid-item graph-container">
-            <h2>Cost Per Serving Graph</h2>
-            <canvas id="costGraph"></canvas>
-            <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-            <script>
-                const ctx = document.getElementById('costGraph').getContext('2d');
-                const costGraph = new Chart(ctx, {
-                    type: 'bar',
-                    data: {
-                        labels: [],
-                        datasets: [{
-                            label: 'Cost Per Serving',
-                            data: [],
-                            backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                            borderColor: 'rgba(75, 192, 192, 1)',
-                            borderWidth: 1
-                        }]
-                    },
-                    options: {
-                        scales: {
-                            y: {
-                                beginAtZero: true
-                            }
-                        }
-                    }
-                });
-
-                function updateGraph(dishes) {
-                    costGraph.data.labels = dishes.map(dish => dish.name);
-                    costGraph.data.datasets[0].data = dishes.map(dish => dish.cost_per_serving);
-                    costGraph.update();
-                }
-
-                document.getElementById('id_dish').addEventListener('change', function() {
-                    const dishId = this.value;
-                    if (dishId) {
-                        fetch(`/get_ingredients/${dishId}/`)
-                            .then(response => response.json())
-                            .then(data => {
-                                loadIngredients(dishId);
-                                updateGraph(data.dishes);
-                            });
-                    }
-                });
-            </script>
-        </div>
+       
     </div>
 </body>
 </html>
