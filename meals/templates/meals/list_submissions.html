@@ -87,20 +87,7 @@
     </head>
     <body>
         <h1>All Daily Submissions</h1>
-        <ul>
-            {% for submission_total in submissions %}
-                <li>
-                    <p>{{ submission_total.submission.pk }}</p> 
-                    <a href="{% url 'submission_detail' submission_total.submission.pk %}">
-                        {{ submission_total.submission.submission_date }} - {{ submission_total.submission.dish.name }}
-                    </a>
-                </li>
-            {% empty %}
-                <li>No submissions found.</li>
-            {% endfor %}
-        </ul>
     
-       
     
         <div class="table-container">
             <table>
@@ -115,6 +102,7 @@
                         <th>Total Fats</th>
                         <th>Total Carbohydrates</th>
                         <th>Total Cost per Serving</th>
+                        <th>Actions</th>  <!-- New column for actions -->
                     </tr>
                 </thead>
                 <tbody>
@@ -144,6 +132,14 @@
                             <td>{{ submission_total.total_fats }}</td>  <!-- Total fats per submission -->
                             <td>{{ submission_total.total_carbohydrates }}</td>  <!-- Total carbs per submission -->
                             <td>${{ submission_total.total_cost }}</td>  <!-- Total cost per submission with dollar sign -->
+                            <td>
+                                <form method="POST" action="{% url 'delete_submission' submission_total.submission.pk %}">
+                                    {% csrf_token %}
+                                    <button type="submit" onclick="return confirm('Are you sure you want to delete this submission?');">
+                                        Delete
+                                    </button>
+                                </form>
+                            </td>
                         </tr>
                     {% endfor %}
                 </tbody>

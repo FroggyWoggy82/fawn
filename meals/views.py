@@ -132,3 +132,16 @@ def submission_view(request, submission_id):
         'dish_ingredients': dish_ingredients,
     }
     return render(request, 'meals/submission_detail.html', context)
+
+def delete_submission(request, submission_id):
+    # Retrieve the submission object or return a 404 if it doesn't exist
+    submission = get_object_or_404(DailySubmission, id=submission_id)
+    
+    if request.method == 'POST':
+        # Delete the submission and all related DailySubmissionIngredient objects (via cascade)
+        submission.delete()
+        return redirect('submissions_list')
+    
+    # Optionally, render a confirmation page if you want a separate confirmation step:
+    return render(request, 'meals/confirm_delete.html', {'submission': submission})
+
