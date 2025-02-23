@@ -7,11 +7,34 @@ class Ingredient(models.Model):
     protein_per_gram = models.FloatField(default=0)
     fats_per_gram = models.FloatField(default=0)
     carbohydrates_per_gram = models.FloatField(default=0)
-    cost_per_gram = models.FloatField(default=0)  # New field
+    cost_per_gram = models.FloatField(default=0)  # Existing per-gram field
+
+    # New package fields for user input
+    grams_in_package = models.FloatField(null=True, blank=True)
+    calories_per_package = models.FloatField(null=True, blank=True)
+    protein_per_package = models.FloatField(null=True, blank=True)
+    fats_per_package = models.FloatField(null=True, blank=True)
+    carbohydrates_per_package = models.FloatField(null=True, blank=True)
+    cost_per_package = models.FloatField(null=True, blank=True)
+
+    def save(self, *args, **kwargs):
+        # If package information is provided and grams_in_package is non-zero,
+        # automatically calculate per-gram values.
+        if self.grams_in_package and self.grams_in_package != 0:
+            if self.calories_per_package is not None:
+                self.calories_per_gram = self.calories_per_package / self.grams_in_package
+            if self.protein_per_package is not None:
+                self.protein_per_gram = self.protein_per_package / self.grams_in_package
+            if self.fats_per_package is not None:
+                self.fats_per_gram = self.fats_per_package / self.grams_in_package
+            if self.carbohydrates_per_package is not None:
+                self.carbohydrates_per_gram = self.carbohydrates_per_package / self.grams_in_package
+            if self.cost_per_package is not None:
+                self.cost_per_gram = self.cost_per_package / self.grams_in_package
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return self.name
-
 class Dish(models.Model):
     name = models.CharField(max_length=100)
     notes = models.TextField(blank=True)
