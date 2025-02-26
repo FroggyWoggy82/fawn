@@ -89,3 +89,23 @@ class DailyCalorieGoal(models.Model):
 
     def __str__(self):
         return f"{self.date}: {self.calorie_goal}"
+    
+class Task(models.Model):
+    title = models.CharField(max_length=200)
+    start_time = models.DateTimeField(null=True, blank=True)
+    end_time = models.DateTimeField(null=True, blank=True)
+    duration = models.DurationField(null=True, blank=True)  # stored as a timedelta
+    date = models.DateField(default=timezone.now)
+
+    def __str__(self):
+        return self.title
+    
+class SubTask(models.Model):
+    task = models.ForeignKey(Task, related_name="subtasks", on_delete=models.CASCADE)
+    title = models.CharField(max_length=200)
+    start_time = models.DateTimeField(null=True, blank=True)
+    end_time = models.DateTimeField(null=True, blank=True)
+    duration = models.DurationField(null=True, blank=True)
+
+    def __str__(self):
+        return self.title

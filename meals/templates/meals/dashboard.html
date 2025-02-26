@@ -102,6 +102,8 @@
         <button type="submit" name="set_goal">Set Goal</button>
     </form>
 
+<a href="{% url 'home' %}" class="btn btn-secondary">Back to Home</a>
+
     <h2>Current Month Calendar</h2>
     <div class="calendar-container">
         {{ calendar|safe }}

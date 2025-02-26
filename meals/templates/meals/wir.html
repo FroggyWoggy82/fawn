@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>WIR Page</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f9f9f9;
+        }
+        h1, h2 {
+            text-align: center;
+            color: #333;
+        }
+        form {
+            text-align: center;
+            background: #fff;
+            padding: 15px;
+            margin: 0 auto 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            max-width: 500px;
+        }
+        .timer {
+            font-size: 2em;
+            margin: 20px 0;
+        }
+        .button {
+            padding: 10px 20px;
+            margin: 5px;
+            background: #007bff;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        .button:hover {
+            background: #0056b3;
+        }
+        .metrics, .task-list {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .task-list ul {
+            list-style: none;
+            padding: 0;
+        }
+        .task-list li {
+            background: #fff;
+            margin: 5px auto;
+            padding: 10px;
+            max-width: 500px;
+            box-shadow: 0 1px 5px rgba(0,0,0,0.1);
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>WIR Page</h1>
+    <!-- Task Form with Timer -->
+    <form method="post" id="taskForm">
+        {% csrf_token %}
+        <label for="task_title">Task Goal:</label>
+        <input type="text" id="task_title" name="task_title" required placeholder="e.g., Code a user interface">
+        <br><br>
+        <!-- Hidden input to store task duration (in seconds) -->
+        <input type="hidden" id="task_duration" name="task_duration" value="0">
+        <div class="timer" id="timerDisplay">00:00:00</div>
+        <button type="button" class="button" id="startButton">Start</button>
+        <button type="button" class="button" id="pauseButton" disabled>Pause</button>
+        <button type="button" class="button" id="resumeButton" disabled>Resume</button>
+        <button type="button" class="button" id="stopButton" disabled>Stop</button>
+    </form>
+
+    <!-- Metrics Section -->
+    <h2>Metrics</h2>
+    <div class="metrics">
+        <p>Total tasks completed: {{ total_tasks }}</p>
+        <p>Total time today: {{ daily_total|floatformat:0 }} seconds</p>
+        <p>Total time this week: {{ weekly_total|floatformat:0 }} seconds</p>
+    </div>
+
+    <!-- Completed Tasks -->
+    <h2>Completed Tasks</h2>
+    <div class="task-list">
+        <ul>
+            {% for task in tasks %}
+                <li>{{ task.title }} - Duration: {{ task.duration.total_seconds|floatformat:0 }} seconds</li>
+            {% empty %}
+                <li>No tasks yet.</li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    <script>
+        let startTime, timerInterval, elapsed = 0;
+        const timerDisplay = document.getElementById('timerDisplay');
+        const taskDurationInput = document.getElementById('task_duration');
+        const startButton = document.getElementById('startButton');
+        const pauseButton = document.getElementById('pauseButton');
+        const resumeButton = document.getElementById('resumeButton');
+        const stopButton = document.getElementById('stopButton');
+
+        function updateTimer() {
+            elapsed = (Date.now() - startTime) / 1000;
+            let hours = Math.floor(elapsed / 3600);
+            let minutes = Math.floor((elapsed % 3600) / 60);
+            let seconds = Math.floor(elapsed % 60);
+            timerDisplay.textContent =
+                String(hours).padStart(2, '0') + ':' +
+                String(minutes).padStart(2, '0') + ':' +
+                String(seconds).padStart(2, '0');
+        }
+
+        startButton.addEventListener('click', function() {
+            startTime = Date.now();
+            timerInterval = setInterval(updateTimer, 1000);
+            startButton.disabled = true;
+            pauseButton.disabled = false;
+            stopButton.disabled = false;
+        });
+
+        pauseButton.addEventListener('click', function() {
+            clearInterval(timerInterval);
+            pauseButton.disabled = true;
+            resumeButton.disabled = false;
+        });
+
+        resumeButton.addEventListener('click', function() {
+            startTime = Date.now() - elapsed * 1000;
+            timerInterval = setInterval(updateTimer, 1000);
+            pauseButton.disabled = false;
+            resumeButton.disabled = true;
+        });
+
+        stopButton.addEventListener('click', function() {
+            clearInterval(timerInterval);
+            // Store the elapsed time in seconds in the hidden field
+            taskDurationInput.value = elapsed;
+            // Submit the form (this will create the task on the server)
+            document.getElementById('taskForm').submit();
+        });
+    </script>
+
+    <a href="{% url 'home' %}" class="home-button">Home</a>
+</body>
+</html>

@@ -6,6 +6,8 @@ from .custom_calendar import CustomHTMLCalendar
 from django.core.cache import cache
 import calendar
 from datetime import date, datetime, timedelta
+from .models import Task, SubTask
+from django.utils import timezone
 
 def home_view(request):
     return render(request, 'meals/home.html')
@@ -83,7 +85,9 @@ def dashboard_view(request):
     }
     return render(request, 'meals/dashboard.html', context)
 
-
+def wir_view(request):
+    # Logic for the WIR page
+    return render(request, 'meals/wir.html')  # Create a new template for WIR
 
 def daily_submission_view(request):
     submission_ingredients = []  # Initialize the variable outside if/else blocks
@@ -224,3 +228,37 @@ def delete_submission(request, submission_id):
     # Optionally, render a confirmation page if you want a separate confirmation step:
     return render(request, 'meals/confirm_delete.html', {'submission': submission})
 
+def wir_view(request):
+    if request.method == "POST":
+        # Retrieve task information from the form submission
+        task_title = request.POST.get("task_title")
+        # The timer is running on the client, and when stopped the duration (in seconds) is submitted
+        duration_seconds = float(request.POST.get("task_duration", 0))
+        duration = timedelta(seconds=duration_seconds)
+
+        # For simplicity, we store start_time and end_time as the time of submission.
+        now = timezone.now()
+        Task.objects.create(
+            title=task_title,
+            start_time=now,
+            end_time=now,
+            duration=duration,
+            date=now.date()
+        )
+        return redirect("wir_view")
+    
+    tasks = Task.objects.all().order_by("-id")
+    today = timezone.now().date()
+    start_of_week = today - timedelta(days=today.weekday())
+    # Sum durations (in seconds) for today and this week
+    daily_total = sum((t.duration.total_seconds() for t in tasks if t.date == today), 0)
+    weekly_total = sum((t.duration.total_seconds() for t in tasks if t.date >= start_of_week), 0)
+    total_tasks = tasks.count()
+
+    context = {
+        "tasks": tasks,
+        "daily_total": daily_total,
+        "weekly_total": weekly_total,
+        "total_tasks": total_tasks,
+    }
+    return render(request, "meals/wir.html", context)

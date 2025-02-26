@@ -10,13 +10,13 @@ class MealsConfig(AppConfig):
         from django.contrib.auth import get_user_model
         User = get_user_model()
 
-        username = os.environ.get("SUPERUSER_USERNAME", "admin")
-        email = os.environ.get("SUPERUSER_EMAIL", "admin@example.com")
-        password = os.environ.get("SUPERUSER_PASSWORD", "adminpass")
+     #   username = os.environ.get("SUPERUSER_USERNAME", "admin")
+     #   email = os.environ.get("SUPERUSER_EMAIL", "admin@example.com")
+     #   password = os.environ.get("SUPERUSER_PASSWORD", "adminpass")
 
-        if not User.objects.filter(username=username).exists():
-            try:
-                User.objects.create_superuser(username=username, email=email, password=password)
-                print("Superuser created automatically.")
-            except Exception as e:
-                print("Error creating superuser:", e)
+     #   if not User.objects.filter(username=username).exists():
+     #       try:
+     #           User.objects.create_superuser(username=username, email=email, password=password)
+     #           print("Superuser created automatically.")
+     #       except Exception as e:
+     #           print("Error creating superuser:", e)
