@@ -1,10 +1,89 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import JsonResponse
-from .forms import DailySubmissionForm, DishForm
-from .models import DailySubmission, DishIngredient, DailySubmissionIngredient, Dish, Ingredient
+from .forms import DailySubmissionForm, DishForm, CalorieGoalRangeForm
+from .models import DailySubmission, DishIngredient, DailySubmissionIngredient, Dish, Ingredient, DailyCalorieGoal
+from .custom_calendar import CustomHTMLCalendar
+from django.core.cache import cache
+import calendar
+from datetime import date, datetime, timedelta
 
 def home_view(request):
     return render(request, 'meals/home.html')
+
+def dashboard_view(request):
+    now = datetime.now()
+    year, month = now.year, now.month
+
+    # --- Process the Calorie Goal Range Form ---
+    if request.method == 'POST' and 'set_goal' in request.POST:
+        form = CalorieGoalRangeForm(request.POST)
+        if form.is_valid():
+            start_date = form.cleaned_data['start_date']
+            end_date = form.cleaned_data['end_date']
+            calorie_goal = form.cleaned_data['calorie_goal']
+
+            # Update or create a DailyCalorieGoal for each date in the range
+            current = start_date
+            while current <= end_date:
+                # Latest assignment overrides any previous goal.
+                DailyCalorieGoal.objects.update_or_create(
+                    date=current,
+                    defaults={'calorie_goal': calorie_goal}
+                )
+                current += timedelta(days=1)
+            return redirect('dashboard')
+    else:
+        form = CalorieGoalRangeForm()
+
+    # --- Aggregate Calorie Data ---
+    # Use caching for performance (cache key includes year and month)
+    cache_key = f"daily_totals_{year}_{month}"
+    daily_totals = cache.get(cache_key)
+    if daily_totals is None:
+        daily_totals = {}
+        # Iterate over submissions in the current month
+        submissions = DailySubmission.objects.filter(
+            submission_date__year=year, submission_date__month=month
+        )
+        # Loop through submissions and add calories together.
+        # (Assuming each submission has a method or property to calculate total calories)
+        for submission in submissions:
+            sub_date = submission.submission_date
+            # Calculate calories for this submission
+            total_calories = 0
+            for ingredient in submission.ingredients.all():
+                # Assuming each ingredient has calories_per_gram and grams_used on the submission ingredient
+                total_calories += ingredient.dish_ingredient.ingredient.calories_per_gram * ingredient.grams_used
+            daily_totals[sub_date] = daily_totals.get(sub_date, 0) + round(total_calories)
+
+        # Cache the result for one hour (3600 seconds)
+        cache.set(cache_key, daily_totals, timeout=3600)
+
+    # --- Retrieve Calorie Goals for the Month ---
+    goals = DailyCalorieGoal.objects.filter(date__year=year, date__month=month)
+    goal_map = {goal.date: goal.calorie_goal for goal in goals}
+
+    # --- Build Day Data Dictionary ---
+    # We’ll create a dictionary mapping each day (as a date object) in the month to a tuple (total_calories, calorie_goal)
+    day_data = {}
+    # Get the number of days in the month
+    num_days = calendar.monthrange(year, month)[1]
+    for day in range(1, num_days + 1):
+        current_date = date(year, month, day)
+        eaten = daily_totals.get(current_date, 0)
+        goal = goal_map.get(current_date, 0)  # default goal is 0 unless explicitly set
+        day_data[current_date] = (eaten, goal)
+
+    # --- Generate the Calendar HTML ---
+    cal = CustomHTMLCalendar(year, month, day_data).formatmonth(withyear=True)
+
+    context = {
+        'calendar': cal,
+        'goal_form': form,
+    }
+    return render(request, 'meals/dashboard.html', context)
+
+
 
 def daily_submission_view(request):
     submission_ingredients = []  # Initialize the variable outside if/else blocks

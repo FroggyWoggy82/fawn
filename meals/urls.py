@@ -9,5 +9,6 @@ urlpatterns = [
     path('submissions/', views.submissions_list_view, name='submissions_list'),
     path('submission/<int:pk>/', views.submission_detail_view, name='submission_detail'),
     path('submission_view/<int:submission_id>/', views.submission_view, name='submission_view'),
-     path('submission/delete/<int:submission_id>/', views.delete_submission, name='delete_submission'),
+    path('submission/delete/<int:submission_id>/', views.delete_submission, name='delete_submission'),
+    path('dashboard/', views.dashboard_view, name='dashboard'),  # Adding the dashboard URL pattern
 ]

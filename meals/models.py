@@ -81,3 +81,11 @@ class DailySubmissionIngredient(models.Model):
 class Usage(models.Model):
     dish_ingredient = models.ForeignKey(DishIngredient, on_delete=models.CASCADE)
     grams_used = models.FloatField()
+
+
+class DailyCalorieGoal(models.Model):
+    date = models.DateField(unique=True)
+    calorie_goal = models.PositiveIntegerField(default=0)
+
+    def __str__(self):
+        return f"{self.date}: {self.calorie_goal}"
