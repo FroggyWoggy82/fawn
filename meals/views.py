@@ -538,6 +538,8 @@ def delete_submission(request, submission_id):
     # Optionally, render a confirmation page if you want a separate confirmation step:
     return render(request, 'meals/confirm_delete.html', {'submission': submission})
 
+# Replace this function in your views.py file:
+
 def wir_view(request):
     if request.method == "POST":
         # Retrieve task information from the form submission
@@ -562,7 +564,7 @@ def wir_view(request):
             try:
                 subtasks = json.loads(subtasks_data)
                 
-                # Create a map to track parent-child relationships
+                # Create a map to track created subtasks for parent-child relationships
                 subtask_map = {}
                 
                 # First pass: Create all subtasks
@@ -578,13 +580,13 @@ def wir_view(request):
                         # Parent will be set in the second pass
                     )
                     
-                    # Store the ID mapping
+                    # Store in map using the JavaScript ID
                     subtask_map[subtask_info["id"]] = subtask
                 
                 # Second pass: Set parent-child relationships
                 for subtask_info in subtasks:
-                    if subtask_info.get("parentId"):
-                        # Find the Django model instances
+                    # If this subtask has a parent
+                    if subtask_info.get("parentId") is not None:
                         child = subtask_map.get(subtask_info["id"])
                         parent = subtask_map.get(subtask_info["parentId"])
                         
@@ -597,6 +599,23 @@ def wir_view(request):
                 print(f"Error processing subtasks: {e}")
         
         return redirect("wir_view")
+    
+    tasks = Task.objects.all().order_by("-id")
+    today = timezone.now().date()
+    start_of_week = today - timedelta(days=today.weekday())
+    
+    # Sum durations (in seconds) for today and this week
+    daily_total = sum((t.duration.total_seconds() for t in tasks if t.date == today), 0)
+    weekly_total = sum((t.duration.total_seconds() for t in tasks if t.date >= start_of_week), 0)
+    total_tasks = tasks.count()
+
+    context = {
+        "tasks": tasks,
+        "daily_total": daily_total,
+        "weekly_total": weekly_total,
+        "total_tasks": total_tasks,
+    }
+    return render(request, "meals/wir.html", context)
     
     tasks = Task.objects.all().order_by("-id")
     today = timezone.now().date()

@@ -1,4 +1,6 @@
 {% load static %}
+{% load time_filters %}
+{% load time_filters %}
 <!DOCTYPE html>
 <html>
 <head>
@@ -162,7 +164,8 @@
             margin: 5px 0;
             color: #555;
         }
-        .subtasks-section ul {
+        .subtasks-section ul.subtasks-list {
+            display: none;
             margin-top: 5px;
         }
         .subtasks-section li {
@@ -223,6 +226,82 @@
         .subtasks-visible {
             display: block !important;
         }
+        .nested-subtask {
+            margin-top: 0;
+            background: #e3f0ff;
+            border-left: 4px solid #0056b3;
+            display: none;
+        }
+        .task-hierarchy {
+            margin-left: 20px;
+        }
+        .parent-task {
+            font-weight: bold;
+        }
+        .nested-subtasks-list {
+            margin-top: 5px;
+            margin-left: 20px;
+            padding-left: 0;
+            list-style-type: none;
+        }
+        .nested-subtask-item {
+            background-color: #f0f8ff;
+            padding: 6px 8px;
+            margin: 4px 0;
+            border-left: 2px solid #4682b4;
+            border-radius: 3px;
+            font-size: 0.95em;
+        }
+        .nested-indicator {
+            color: #4682b4;
+            font-weight: bold;
+            margin-right: 5px;
+        }
+        .formatted-time {
+            font-weight: bold;
+            color: #007bff;
+            font-size: 1.2em;
+        }
+        .nested-subtask-item-deep {
+            background-color: #e6f2ff;
+            padding: 6px 8px 6px 15px;
+            margin: 4px 0;
+            border-left: 2px solid #6495ed;
+            border-radius: 3px;
+            font-size: 0.9em;
+        }
+        .nested-subtasks-list-deep {
+            margin-top: 5px;
+            margin-left: 15px;
+            padding-left: 0;
+            list-style-type: none;
+        }
+        .formatted-time {
+            font-weight: bold;
+            color: #007bff;
+        }
+        .subtasks-visible {
+            display: block !important;
+        }
+        .nested-subtasks-list {
+            margin-top: 5px;
+            margin-left: 20px;
+            padding-left: 0;
+            list-style-type: none;
+        }
+        .nested-subtask-item {
+            background-color: #f0f8ff;
+            padding: 6px 8px;
+            margin: 4px 0;
+            border-left: 2px solid #4682b4;
+            border-radius: 3px;
+            font-size: 0.95em;
+        }
+        .nested-indicator {
+            color: #4682b4;
+            font-weight: bold;
+            margin-right: 5px;
+        }
     </style>
 </head>
 <body>
@@ -257,6 +336,20 @@
                     <button type="button" class="button" id="pauseSubtaskButton" disabled>Pause</button>
                     <button type="button" class="button" id="resumeSubtaskButton" disabled>Resume</button>
                     <button type="button" class="button" id="completeSubtaskButton" disabled>Complete</button>
+                    <button type="button" class="button" id="nestedSubtaskButton" disabled>Start Nested Subtask</button>
+                </div>
+            </div>
+            
+            <!-- Nested Subtask section (initially hidden) -->
+            <div class="subtask-container nested-subtask" id="nestedSubtaskContainer">
+                <label for="nested_subtask_title" class="subtask-title">Nested Subtask:</label>
+                <input type="text" id="nested_subtask_title" required placeholder="e.g., Research specific API endpoint">
+                <div class="subtask-timer" id="nestedSubtaskTimerDisplay">00:00:00</div>
+                <div>
+                    <button type="button" class="button" id="startNestedSubtaskButton">Start</button>
+                    <button type="button" class="button" id="pauseNestedSubtaskButton" disabled>Pause</button>
+                    <button type="button" class="button" id="resumeNestedSubtaskButton" disabled>Resume</button>
+                    <button type="button" class="button" id="completeNestedSubtaskButton" disabled>Complete</button>
                 </div>
             </div>
             
@@ -272,8 +365,12 @@
     <h2>Metrics</h2>
     <div class="metrics">
         <p>Total tasks completed: {{ total_tasks }}</p>
-        <p>Total time today: {{ daily_total|floatformat:0 }} seconds ({{ daily_total|divisibleby:3600 }} hours, {{ daily_total|divisibleby:60 }} minutes)</p>
-        <p>Total time this week: {{ weekly_total|floatformat:0 }} seconds ({{ weekly_total|divisibleby:3600 }} hours, {{ weekly_total|divisibleby:60 }} minutes)</p>
+        <p>Total time today: 
+            <span class="formatted-time">({{ daily_total|default:0|floatformat:0|time_format }})</span>
+        </p>
+        <p>Total time this week: 
+            <span class="formatted-time">({{ weekly_total|default:0|floatformat:0|time_format }})</span>
+        </p>
     </div>
 
     <!-- Completed Tasks -->
@@ -306,456 +403,707 @@
     </div>
 
     <a href="{% url 'home' %}" class="home-button">Home</a>
-
-    <script>
-        // Timer state variables for main task
-        let timerInterval;
-        let elapsed = 0;
-        const timerDisplay = document.getElementById('timerDisplay');
-        const taskDurationInput = document.getElementById('task_duration');
-        const startButton = document.getElementById('startButton');
-        const pauseButton = document.getElementById('pauseButton');
-        const resumeButton = document.getElementById('resumeButton');
-        const stopButton = document.getElementById('stopButton');
-        const subtaskButton = document.getElementById('subtaskButton');
-        const mainTaskActiveIndicator = document.getElementById('mainTaskActive');
-        
-        // Timer state variables for subtasks
-        let subtaskTimerInterval;
-        let subtaskElapsed = 0;
-        const subtaskTimerDisplay = document.getElementById('subtaskTimerDisplay');
-        const subtaskContainer = document.getElementById('subtaskContainer');
-        const currentSubtasksList = document.getElementById('currentSubtasksList');
-        const startSubtaskButton = document.getElementById('startSubtaskButton');
-        const pauseSubtaskButton = document.getElementById('pauseSubtaskButton');
-        const resumeSubtaskButton = document.getElementById('resumeSubtaskButton');
-        const completeSubtaskButton = document.getElementById('completeSubtaskButton');
-        
-        // Subtasks data array
-        let subtasks = [];
-        const subtasksDataInput = document.getElementById('subtasks_data');
-        
-        // Constants for localStorage keys
-        const TIMER_START_KEY = 'wir_timer_start';
-        const TIMER_ELAPSED_KEY = 'wir_timer_elapsed';
-        const TIMER_STATE_KEY = 'wir_timer_state';
-        const TASK_TITLE_KEY = 'wir_task_title';
-        const SUBTASK_DATA_KEY = 'wir_subtask_data';
-        const CURRENT_SUBTASK_KEY = 'wir_current_subtask';
-        const SUBTASK_START_KEY = 'wir_subtask_start';
-        const SUBTASK_ELAPSED_KEY = 'wir_subtask_elapsed';
-        const SUBTASK_STATE_KEY = 'wir_subtask_state';
-        
-        // Timer states
-        const TIMER_STATES = {
-            STOPPED: 'stopped',
-            RUNNING: 'running',
-            PAUSED: 'paused'
-        };
-        
-        // Function to toggle subtasks visibility for a task
-        function toggleTaskSubtasks(taskId) {
-            const subtasksList = document.getElementById(`subtasks-list-${taskId}`);
-            if (subtasksList) {
-                if (subtasksList.classList.contains('subtasks-visible')) {
-                    subtasksList.classList.remove('subtasks-visible');
-                } else {
-                    subtasksList.classList.add('subtasks-visible');
-                }
-            }
-        }
-        
-        // Initialize timers from local storage
-        function initializeTimers() {
-            const timerState = localStorage.getItem(TIMER_STATE_KEY);
-            const taskTitle = localStorage.getItem(TASK_TITLE_KEY);
-            const subtaskState = localStorage.getItem(SUBTASK_STATE_KEY);
-            const subtaskData = localStorage.getItem(SUBTASK_DATA_KEY);
-            const currentSubtask = localStorage.getItem(CURRENT_SUBTASK_KEY);
-            
-            // Restore main task
-            if (taskTitle) {
-                document.getElementById('task_title').value = taskTitle;
-            }
-            
-            // Restore subtasks
-            if (subtaskData) {
-                try {
-                    subtasks = JSON.parse(subtaskData);
-                    updateSubtasksList();
-                    
-                    if (subtasks.length > 0) {
-                        currentSubtasksList.style.display = 'block';
-                    }
-                } catch (e) {
-                    console.error('Error parsing subtasks data', e);
-                    subtasks = [];
-                }
-            }
-            
-            // Restore current subtask if any
-            if (currentSubtask) {
-                try {
-                    const subtaskInfo = JSON.parse(currentSubtask);
-                    document.getElementById('subtask_title').value = subtaskInfo.title;
-                    
-                    if (subtaskState === TIMER_STATES.RUNNING || subtaskState === TIMER_STATES.PAUSED) {
-                        subtaskContainer.style.display = 'block';
-                    }
-                } catch (e) {
-                    console.error('Error parsing current subtask', e);
-                }
-            }
-            
-            // Handle main task timer state
-            if (timerState === TIMER_STATES.RUNNING) {
-                // If subtask is running, main task should be paused
-                if (subtaskState === TIMER_STATES.RUNNING) {
-                    updateMainTaskState(TIMER_STATES.PAUSED);
-                } else {
-                    // Otherwise resume main task
-                    const startTimestamp = parseInt(localStorage.getItem(TIMER_START_KEY));
-                    if (startTimestamp) {
-                        timerInterval = setInterval(updateTimer, 1000);
-                        updateMainTaskState(TIMER_STATES.RUNNING);
-                    }
-                }
-            } else if (timerState === TIMER_STATES.PAUSED) {
-                elapsed = parseFloat(localStorage.getItem(TIMER_ELAPSED_KEY)) || 0;
-                updateTimerDisplay();
-                updateMainTaskState(TIMER_STATES.PAUSED);
-            }
-            
-            // Handle subtask timer state
-            if (subtaskState === TIMER_STATES.RUNNING) {
-                const subtaskStartTime = parseInt(localStorage.getItem(SUBTASK_START_KEY));
-                if (subtaskStartTime) {
-                    subtaskTimerInterval = setInterval(updateSubtaskTimer, 1000);
-                    updateSubtaskState(TIMER_STATES.RUNNING);
-                }
-            } else if (subtaskState === TIMER_STATES.PAUSED) {
-                subtaskElapsed = parseFloat(localStorage.getItem(SUBTASK_ELAPSED_KEY)) || 0;
-                updateSubtaskTimerDisplay();
-                updateSubtaskState(TIMER_STATES.PAUSED);
-            }
-        }
-        
-        // Update main timer display
-        function updateTimerDisplay() {
-            timerDisplay.textContent = formatTime(elapsed);
-        }
-        
-        // Update subtask timer display
-        function updateSubtaskTimerDisplay() {
-            subtaskTimerDisplay.textContent = formatTime(subtaskElapsed);
-        }
-        
-        // Format time as HH:MM:SS
-        function formatTime(seconds) {
-            let hours = Math.floor(seconds / 3600);
-            let minutes = Math.floor((seconds % 3600) / 60);
-            let secs = Math.floor(seconds % 60);
-            return String(hours).padStart(2, '0') + ':' +
-                   String(minutes).padStart(2, '0') + ':' +
-                   String(secs).padStart(2, '0');
-        }
-        
-        // Update main task timer
-        function updateTimer() {
-            const now = Date.now();
-            elapsed = parseFloat(localStorage.getItem(TIMER_ELAPSED_KEY)) || 0;
-            const startTime = parseInt(localStorage.getItem(TIMER_START_KEY));
-            
-            if (startTime) {
-                elapsed = elapsed + (now - startTime) / 1000;
-                localStorage.setItem(TIMER_ELAPSED_KEY, elapsed.toString());
-                localStorage.setItem(TIMER_START_KEY, now.toString());
-            }
-            
-            updateTimerDisplay();
-        }
-        
-        // Update subtask timer
-        function updateSubtaskTimer() {
-            const now = Date.now();
-            subtaskElapsed = parseFloat(localStorage.getItem(SUBTASK_ELAPSED_KEY)) || 0;
-            const startTime = parseInt(localStorage.getItem(SUBTASK_START_KEY));
-            
-            if (startTime) {
-                subtaskElapsed = subtaskElapsed + (now - startTime) / 1000;
-                localStorage.setItem(SUBTASK_ELAPSED_KEY, subtaskElapsed.toString());
-                localStorage.setItem(SUBTASK_START_KEY, now.toString());
-            }
-            
-            updateSubtaskTimerDisplay();
-        }
-        
-        // Update main task button state
-        function updateMainTaskState(state) {
-            switch(state) {
-                case TIMER_STATES.RUNNING:
-                    startButton.disabled = true;
-                    pauseButton.disabled = false;
-                    resumeButton.disabled = true;
-                    stopButton.disabled = false;
-                    subtaskButton.disabled = false;
-                    mainTaskActiveIndicator.classList.add('active');
-                    break;
-                case TIMER_STATES.PAUSED:
-                    startButton.disabled = true;
-                    pauseButton.disabled = true;
-                    resumeButton.disabled = false;
-                    stopButton.disabled = false;
-                    subtaskButton.disabled = true;
-                    mainTaskActiveIndicator.classList.remove('active');
-                    break;
-                case TIMER_STATES.STOPPED:
-                default:
-                    startButton.disabled = false;
-                    pauseButton.disabled = true;
-                    resumeButton.disabled = true;
-                    stopButton.disabled = true;
-                    subtaskButton.disabled = true;
-                    mainTaskActiveIndicator.classList.remove('active');
-                    break;
-            }
-        }
-        
-        // Update subtask button state
-        function updateSubtaskState(state) {
-            switch(state) {
-                case TIMER_STATES.RUNNING:
-                    startSubtaskButton.disabled = true;
-                    pauseSubtaskButton.disabled = false;
-                    resumeSubtaskButton.disabled = true;
-                    completeSubtaskButton.disabled = false;
-                    break;
-                case TIMER_STATES.PAUSED:
-                    startSubtaskButton.disabled = true;
-                    pauseSubtaskButton.disabled = true;
-                    resumeSubtaskButton.disabled = false;
-                    completeSubtaskButton.disabled = false;
-                    break;
-                case TIMER_STATES.STOPPED:
-                default:
-                    startSubtaskButton.disabled = false;
-                    pauseSubtaskButton.disabled = true;
-                    resumeSubtaskButton.disabled = true;
-                    completeSubtaskButton.disabled = true;
-                    break;
-            }
-        }
-        
-        // Update the subtasks list in the UI
-        function updateSubtasksList() {
-            const container = document.getElementById('subtasksContainer');
-            container.innerHTML = '';
-            
-            subtasks.forEach(subtask => {
-                const subtaskElement = document.createElement('div');
-                subtaskElement.className = 'subtask-item';
-                subtaskElement.innerHTML = `
-                    <span class="subtask-name">${subtask.title}</span>
-                    <span class="subtask-duration">${formatTime(subtask.duration)}</span>
-                `;
-                container.appendChild(subtaskElement);
-            });
-            
-            // Update the hidden input with the subtasks data
-            subtasksDataInput.value = JSON.stringify(subtasks);
-            localStorage.setItem(SUBTASK_DATA_KEY, JSON.stringify(subtasks));
-        }
-        
-        // Main Task Button Event Listeners
-        startButton.addEventListener('click', function() {
-            const taskTitle = document.getElementById('task_title').value;
-            localStorage.setItem(TASK_TITLE_KEY, taskTitle);
-            
-            elapsed = 0;
-            const now = Date.now();
-            localStorage.setItem(TIMER_START_KEY, now.toString());
-            localStorage.setItem(TIMER_ELAPSED_KEY, '0');
-            localStorage.setItem(TIMER_STATE_KEY, TIMER_STATES.RUNNING);
-            
-            timerInterval = setInterval(updateTimer, 1000);
-            updateMainTaskState(TIMER_STATES.RUNNING);
-        });
-
-        pauseButton.addEventListener('click', function() {
-            clearInterval(timerInterval);
-            updateTimer(); // Update one last time
-            localStorage.setItem(TIMER_STATE_KEY, TIMER_STATES.PAUSED);
-            updateMainTaskState(TIMER_STATES.PAUSED);
-        });
-
-        resumeButton.addEventListener('click', function() {
-            const now = Date.now();
-            localStorage.setItem(TIMER_START_KEY, now.toString());
-            localStorage.setItem(TIMER_STATE_KEY, TIMER_STATES.RUNNING);
-            
-            timerInterval = setInterval(updateTimer, 1000);
-            updateMainTaskState(TIMER_STATES.RUNNING);
-        });
-
-        stopButton.addEventListener('click', function() {
-            // First check if there are any ongoing subtasks
-            if (localStorage.getItem(SUBTASK_STATE_KEY) === TIMER_STATES.RUNNING ||
-                localStorage.getItem(SUBTASK_STATE_KEY) === TIMER_STATES.PAUSED) {
-                if (!confirm("You have an active subtask. Stopping the main task will also stop the subtask. Continue?")) {
-                    return;
-                }
-                // Stop the subtask timer
-                clearInterval(subtaskTimerInterval);
-                localStorage.removeItem(SUBTASK_START_KEY);
-                localStorage.removeItem(SUBTASK_ELAPSED_KEY);
-                localStorage.removeItem(SUBTASK_STATE_KEY);
-                localStorage.removeItem(CURRENT_SUBTASK_KEY);
-            }
-            
-            // Stop the main task timer
-            clearInterval(timerInterval);
-            updateTimer(); // Update one last time
-            
-            taskDurationInput.value = elapsed;
-            
-            // Clear timer state from localStorage
-            localStorage.removeItem(TIMER_START_KEY);
-            localStorage.removeItem(TIMER_ELAPSED_KEY);
-            localStorage.removeItem(TIMER_STATE_KEY);
-            localStorage.removeItem(TASK_TITLE_KEY);
-            localStorage.removeItem(SUBTASK_DATA_KEY);
-            
-            // Submit the form
-            document.getElementById('taskForm').submit();
-        });
-        
-        // Subtask Button Event Listeners
-        subtaskButton.addEventListener('click', function() {
-            // Pause the main task
-            clearInterval(timerInterval);
-            updateTimer(); // Update one last time
-            localStorage.setItem(TIMER_STATE_KEY, TIMER_STATES.PAUSED);
-            updateMainTaskState(TIMER_STATES.PAUSED);
-            
-            // Show the subtask container
-            subtaskContainer.style.display = 'block';
-            document.getElementById('subtask_title').focus();
-        });
-        
-        startSubtaskButton.addEventListener('click', function() {
-            const subtaskTitle = document.getElementById('subtask_title').value;
-            if (!subtaskTitle) {
-                alert('Please enter a subtask title');
-                return;
-            }
-            
-            // Save current subtask info
-            const currentSubtask = {
-                title: subtaskTitle,
-                startTime: new Date().toISOString()
-            };
-            localStorage.setItem(CURRENT_SUBTASK_KEY, JSON.stringify(currentSubtask));
-            
-            // Start the subtask timer
-            subtaskElapsed = 0;
-            const now = Date.now();
-            localStorage.setItem(SUBTASK_START_KEY, now.toString());
-            localStorage.setItem(SUBTASK_ELAPSED_KEY, '0');
-            localStorage.setItem(SUBTASK_STATE_KEY, TIMER_STATES.RUNNING);
-            
-            subtaskTimerInterval = setInterval(updateSubtaskTimer, 1000);
-            updateSubtaskState(TIMER_STATES.RUNNING);
-        });
-        
-        pauseSubtaskButton.addEventListener('click', function() {
-            clearInterval(subtaskTimerInterval);
-            updateSubtaskTimer(); // Update one last time
-            localStorage.setItem(SUBTASK_STATE_KEY, TIMER_STATES.PAUSED);
-            updateSubtaskState(TIMER_STATES.PAUSED);
-        });
-        
-        resumeSubtaskButton.addEventListener('click', function() {
-            const now = Date.now();
-            localStorage.setItem(SUBTASK_START_KEY, now.toString());
-            localStorage.setItem(SUBTASK_STATE_KEY, TIMER_STATES.RUNNING);
-            
-            subtaskTimerInterval = setInterval(updateSubtaskTimer, 1000);
-            updateSubtaskState(TIMER_STATES.RUNNING);
-        });
-        
-        completeSubtaskButton.addEventListener('click', function() {
-            // Stop the subtask timer
-            clearInterval(subtaskTimerInterval);
-            updateSubtaskTimer(); // Update one last time
-            
-            // Save the completed subtask
-            const currentSubtaskData = localStorage.getItem(CURRENT_SUBTASK_KEY);
-            if (currentSubtaskData) {
-                try {
-                    const subtaskInfo = JSON.parse(currentSubtaskData);
-                    const completedSubtask = {
-                        title: subtaskInfo.title,
-                        duration: subtaskElapsed,
-                        completed: new Date().toISOString()
-                    };
-                    
-                    subtasks.push(completedSubtask);
-                    updateSubtasksList();
-                    
-                    // Show the subtasks list if this is the first subtask
-                    if (subtasks.length === 1) {
-                        currentSubtasksList.style.display = 'block';
-                    }
-                    
-                } catch (e) {
-                    console.error('Error processing subtask data', e);
-                }
-            }
-            
-            // Clear subtask form and hide it
-            document.getElementById('subtask_title').value = '';
-            subtaskContainer.style.display = 'none';
-            subtaskElapsed = 0;
-            updateSubtaskTimerDisplay();
-            
-            // Clear subtask state from localStorage
-            localStorage.removeItem(SUBTASK_START_KEY);
-            localStorage.removeItem(SUBTASK_ELAPSED_KEY);
-            localStorage.removeItem(SUBTASK_STATE_KEY);
-            localStorage.removeItem(CURRENT_SUBTASK_KEY);
-            
-            // Resume the main task
-            const now = Date.now();
-            localStorage.setItem(TIMER_START_KEY, now.toString());
-            localStorage.setItem(TIMER_STATE_KEY, TIMER_STATES.RUNNING);
-            
-            timerInterval = setInterval(updateTimer, 1000);
-            updateMainTaskState(TIMER_STATES.RUNNING);
-        });
-        
-        // Add event listeners to toggle subtask buttons
-        document.addEventListener('click', function(e) {
-            if (e.target.classList.contains('toggle-subtasks-btn')) {
-                const taskId = e.target.getAttribute('data-task-id');
-                toggleTaskSubtasks(taskId);
-            }
-        });
-        
-        // Initialize timers on page load
-        initializeTimers();
-        
-        // Handle page unload
-        window.addEventListener('beforeunload', function() {
-            // Update the main task timer
-            if (localStorage.getItem(TIMER_STATE_KEY) === TIMER_STATES.RUNNING) {
-                updateTimer();
-            }
-            
-            // Update the subtask timer
-            if (localStorage.getItem(SUBTASK_STATE_KEY) === TIMER_STATES.RUNNING) {
-                updateSubtaskTimer();
-            }
-        });
-    </script>
 </body>
 </html>
+
+<!-- JavaScript at the end to ensure DOM is fully loaded -->
+<script>
+// Global variables and DOM references
+const timerDisplay = document.getElementById('timerDisplay');
+const taskDurationInput = document.getElementById('task_duration');
+const startButton = document.getElementById('startButton');
+const pauseButton = document.getElementById('pauseButton');
+const resumeButton = document.getElementById('resumeButton');
+const stopButton = document.getElementById('stopButton');
+const subtaskButton = document.getElementById('subtaskButton');
+const mainTaskActiveIndicator = document.getElementById('mainTaskActive');
+
+const subtaskTimerDisplay = document.getElementById('subtaskTimerDisplay');
+const subtaskContainer = document.getElementById('subtaskContainer');
+const nestedSubtaskContainer = document.getElementById('nestedSubtaskContainer');
+const currentSubtasksList = document.getElementById('currentSubtasksList');
+const startSubtaskButton = document.getElementById('startSubtaskButton');
+const pauseSubtaskButton = document.getElementById('pauseSubtaskButton');
+const resumeSubtaskButton = document.getElementById('resumeSubtaskButton');
+const completeSubtaskButton = document.getElementById('completeSubtaskButton');
+const nestedSubtaskButton = document.getElementById('nestedSubtaskButton');
+
+const nestedSubtaskTimerDisplay = document.getElementById('nestedSubtaskTimerDisplay');
+const startNestedSubtaskButton = document.getElementById('startNestedSubtaskButton');
+const pauseNestedSubtaskButton = document.getElementById('pauseNestedSubtaskButton');
+const resumeNestedSubtaskButton = document.getElementById('resumeNestedSubtaskButton');
+const completeNestedSubtaskButton = document.getElementById('completeNestedSubtaskButton');
+
+const subtasksDataInput = document.getElementById('subtasks_data');
+
+// Constants for localStorage keys
+const TIMER_START_KEY = 'wir_timer_start';
+const TIMER_ELAPSED_KEY = 'wir_timer_elapsed';
+const TIMER_STATE_KEY = 'wir_timer_state';
+const TASK_TITLE_KEY = 'wir_task_title';
+const SUBTASK_DATA_KEY = 'wir_subtask_data';
+const CURRENT_SUBTASK_KEY = 'wir_current_subtask';
+const SUBTASK_START_KEY = 'wir_subtask_start';
+const SUBTASK_ELAPSED_KEY = 'wir_subtask_elapsed';
+const SUBTASK_STATE_KEY = 'wir_subtask_state';
+const NESTED_SUBTASK_START_KEY = 'wir_nested_subtask_start';
+const NESTED_SUBTASK_ELAPSED_KEY = 'wir_nested_subtask_elapsed';
+const NESTED_SUBTASK_STATE_KEY = 'wir_nested_subtask_state';
+const CURRENT_NESTED_SUBTASK_KEY = 'wir_current_nested_subtask';
+const SUBTASK_ID_COUNTER_KEY = 'wir_subtask_id_counter';
+
+// Timer states
+const TIMER_STATES = {
+    STOPPED: 'stopped',
+    RUNNING: 'running',
+    PAUSED: 'paused'
+};
+
+// Global state variables
+let timerInterval;
+let subtaskTimerInterval;
+let nestedSubtaskTimerInterval;
+let elapsed = 0;
+let subtaskElapsed = 0;
+let nestedSubtaskElapsed = 0;
+let subtasks = [];
+let subtaskIdCounter = parseInt(localStorage.getItem(SUBTASK_ID_COUNTER_KEY) || '0');
+
+// Function to toggle subtasks visibility for a task
+function toggleTaskSubtasks(taskId) {
+    const subtasksList = document.getElementById(`subtasks-list-${taskId}`);
+    if (subtasksList) {
+        // Simply toggle between display:none and display:block
+        if (subtasksList.style.display === 'block') {
+            subtasksList.style.display = 'none';
+            subtasksList.classList.remove('subtasks-visible');
+        } else {
+            subtasksList.style.display = 'block';
+            subtasksList.classList.add('subtasks-visible');
+        }
+    }
+}
+
+// Initialize timers from local storage
+function initializeTimers() {
+    const timerState = localStorage.getItem(TIMER_STATE_KEY);
+    const taskTitle = localStorage.getItem(TASK_TITLE_KEY);
+    const subtaskState = localStorage.getItem(SUBTASK_STATE_KEY);
+    const subtaskData = localStorage.getItem(SUBTASK_DATA_KEY);
+    const currentSubtask = localStorage.getItem(CURRENT_SUBTASK_KEY);
+    
+    // Restore main task
+    if (taskTitle) {
+        document.getElementById('task_title').value = taskTitle;
+    }
+    
+    // Restore subtasks
+    if (subtaskData) {
+        try {
+            subtasks = JSON.parse(subtaskData);
+            updateSubtasksList();
+            
+            if (subtasks.length > 0) {
+                currentSubtasksList.style.display = 'block';
+            }
+        } catch (e) {
+            console.error('Error parsing subtasks data', e);
+            subtasks = [];
+        }
+    }
+    
+    // Restore current subtask if any
+    if (currentSubtask) {
+        try {
+            const subtaskInfo = JSON.parse(currentSubtask);
+            document.getElementById('subtask_title').value = subtaskInfo.title;
+            
+            if (subtaskState === TIMER_STATES.RUNNING || subtaskState === TIMER_STATES.PAUSED) {
+                subtaskContainer.style.display = 'block';
+            }
+        } catch (e) {
+            console.error('Error parsing current subtask', e);
+        }
+    }
+    
+    // Handle main task timer state
+    if (timerState === TIMER_STATES.RUNNING) {
+        // If subtask is running, main task should be paused
+        if (subtaskState === TIMER_STATES.RUNNING) {
+            updateMainTaskState(TIMER_STATES.PAUSED);
+        } else {
+            // Otherwise resume main task
+            const startTimestamp = parseInt(localStorage.getItem(TIMER_START_KEY));
+            if (startTimestamp) {
+                timerInterval = setInterval(updateTimer, 1000);
+                updateMainTaskState(TIMER_STATES.RUNNING);
+            }
+        }
+    } else if (timerState === TIMER_STATES.PAUSED) {
+        elapsed = parseFloat(localStorage.getItem(TIMER_ELAPSED_KEY)) || 0;
+        updateTimerDisplay();
+        updateMainTaskState(TIMER_STATES.PAUSED);
+    }
+    
+    // Handle subtask timer state
+    if (subtaskState === TIMER_STATES.RUNNING) {
+        const subtaskStartTime = parseInt(localStorage.getItem(SUBTASK_START_KEY));
+        if (subtaskStartTime) {
+            subtaskTimerInterval = setInterval(updateSubtaskTimer, 1000);
+            updateSubtaskState(TIMER_STATES.RUNNING);
+        }
+    } else if (subtaskState === TIMER_STATES.PAUSED) {
+        subtaskElapsed = parseFloat(localStorage.getItem(SUBTASK_ELAPSED_KEY)) || 0;
+        updateSubtaskTimerDisplay();
+        updateSubtaskState(TIMER_STATES.PAUSED);
+    }
+}
+
+// Update main timer display
+function updateTimerDisplay() {
+    timerDisplay.textContent = formatTime(elapsed);
+}
+
+// Update subtask timer display
+function updateSubtaskTimerDisplay() {
+    subtaskTimerDisplay.textContent = formatTime(subtaskElapsed);
+}
+
+// Format time as HH:MM:SS
+function formatTime(seconds) {
+    let hours = Math.floor(seconds / 3600);
+    let minutes = Math.floor((seconds % 3600) / 60);
+    let secs = Math.floor(seconds % 60);
+    return String(hours).padStart(2, '0') + ':' +
+           String(minutes).padStart(2, '0') + ':' +
+           String(secs).padStart(2, '0');
+}
+
+// Update main task timer
+function updateTimer() {
+    const now = Date.now();
+    elapsed = parseFloat(localStorage.getItem(TIMER_ELAPSED_KEY)) || 0;
+    const startTime = parseInt(localStorage.getItem(TIMER_START_KEY));
+    
+    if (startTime) {
+        elapsed = elapsed + (now - startTime) / 1000;
+        localStorage.setItem(TIMER_ELAPSED_KEY, elapsed.toString());
+        localStorage.setItem(TIMER_START_KEY, now.toString());
+    }
+    
+    updateTimerDisplay();
+}
+
+// Update subtask timer
+function updateSubtaskTimer() {
+    const now = Date.now();
+    subtaskElapsed = parseFloat(localStorage.getItem(SUBTASK_ELAPSED_KEY)) || 0;
+    const startTime = parseInt(localStorage.getItem(SUBTASK_START_KEY));
+    
+    if (startTime) {
+        subtaskElapsed = subtaskElapsed + (now - startTime) / 1000;
+        localStorage.setItem(SUBTASK_ELAPSED_KEY, subtaskElapsed.toString());
+        localStorage.setItem(SUBTASK_START_KEY, now.toString());
+    }
+    
+    updateSubtaskTimerDisplay();
+}
+
+// Update nested subtask timer
+function updateNestedSubtaskTimer() {
+    const now = Date.now();
+    nestedSubtaskElapsed = parseFloat(localStorage.getItem(NESTED_SUBTASK_ELAPSED_KEY)) || 0;
+    const startTime = parseInt(localStorage.getItem(NESTED_SUBTASK_START_KEY));
+    
+    if (startTime) {
+        nestedSubtaskElapsed = nestedSubtaskElapsed + (now - startTime) / 1000;
+        localStorage.setItem(NESTED_SUBTASK_ELAPSED_KEY, nestedSubtaskElapsed.toString());
+        localStorage.setItem(NESTED_SUBTASK_START_KEY, now.toString());
+    }
+    
+    nestedSubtaskTimerDisplay.textContent = formatTime(nestedSubtaskElapsed);
+}
+
+// Update main task button state
+function updateMainTaskState(state) {
+    switch(state) {
+        case TIMER_STATES.RUNNING:
+            startButton.disabled = true;
+            pauseButton.disabled = false;
+            resumeButton.disabled = true;
+            stopButton.disabled = false;
+            subtaskButton.disabled = false;
+            mainTaskActiveIndicator.classList.add('active');
+            break;
+        case TIMER_STATES.PAUSED:
+            startButton.disabled = true;
+            pauseButton.disabled = true;
+            resumeButton.disabled = false;
+            stopButton.disabled = false;
+            subtaskButton.disabled = true;
+            mainTaskActiveIndicator.classList.remove('active');
+            break;
+        case TIMER_STATES.STOPPED:
+        default:
+            startButton.disabled = false;
+            pauseButton.disabled = true;
+            resumeButton.disabled = true;
+            stopButton.disabled = true;
+            subtaskButton.disabled = true;
+            mainTaskActiveIndicator.classList.remove('active');
+            break;
+    }
+}
+
+// Update subtask button state
+function updateSubtaskState(state) {
+    switch(state) {
+        case TIMER_STATES.RUNNING:
+            startSubtaskButton.disabled = true;
+            pauseSubtaskButton.disabled = false;
+            resumeSubtaskButton.disabled = true;
+            completeSubtaskButton.disabled = false;
+            nestedSubtaskButton.disabled = false;
+            break;
+        case TIMER_STATES.PAUSED:
+            startSubtaskButton.disabled = true;
+            pauseSubtaskButton.disabled = true;
+            resumeSubtaskButton.disabled = false;
+            completeSubtaskButton.disabled = false;
+            nestedSubtaskButton.disabled = true;
+            break;
+        case TIMER_STATES.STOPPED:
+        default:
+            startSubtaskButton.disabled = false;
+            pauseSubtaskButton.disabled = true;
+            resumeSubtaskButton.disabled = true;
+            completeSubtaskButton.disabled = true;
+            nestedSubtaskButton.disabled = true;
+            break;
+    }
+}
+
+// Update nested subtask button state
+function updateNestedSubtaskState(state) {
+    switch(state) {
+        case TIMER_STATES.RUNNING:
+            startNestedSubtaskButton.disabled = true;
+            pauseNestedSubtaskButton.disabled = false;
+            resumeNestedSubtaskButton.disabled = true;
+            completeNestedSubtaskButton.disabled = false;
+            break;
+        case TIMER_STATES.PAUSED:
+            startNestedSubtaskButton.disabled = true;
+            pauseNestedSubtaskButton.disabled = true;
+            resumeNestedSubtaskButton.disabled = false;
+            completeNestedSubtaskButton.disabled = false;
+            break;
+        case TIMER_STATES.STOPPED:
+        default:
+            startNestedSubtaskButton.disabled = false;
+            pauseNestedSubtaskButton.disabled = true;
+            resumeNestedSubtaskButton.disabled = true;
+            completeNestedSubtaskButton.disabled = true;
+            break;
+    }
+}
+
+// Update the subtasks list in the UI
+function updateSubtasksList() {
+    const container = document.getElementById('subtasksContainer');
+    container.innerHTML = '';
+    
+    subtasks.forEach(subtask => {
+        const subtaskElement = document.createElement('div');
+        subtaskElement.className = 'subtask-item';
+        
+        // Check if this subtask has nested subtasks
+        const hasNestedSubtasks = subtask.nestedSubtasks && subtask.nestedSubtasks.length > 0;
+        const nestedSubtasksInfo = hasNestedSubtasks ? 
+            `<div class="task-hierarchy">
+                ${subtask.nestedSubtasks.map(nested => 
+                    `<div class="subtask-item">
+                        <span class="subtask-name">${nested.title}</span>
+                        <span class="subtask-duration">${formatTime(nested.duration)}</span>
+                    </div>`
+                ).join('')}
+            </div>` : '';
+        
+        subtaskElement.innerHTML = `
+            <span class="subtask-name ${hasNestedSubtasks ? 'parent-task' : ''}">${subtask.title}</span>
+            <span class="subtask-duration">${formatTime(subtask.duration)}</span>
+            ${nestedSubtasksInfo}
+        `;
+        container.appendChild(subtaskElement);
+    });
+    
+    // Update the hidden input with the subtasks data
+    subtasksDataInput.value = JSON.stringify(subtasks);
+    localStorage.setItem(SUBTASK_DATA_KEY, JSON.stringify(subtasks));
+}
+
+// Main Task Button Event Listeners
+startButton.addEventListener('click', function() {
+    const taskTitle = document.getElementById('task_title').value;
+    localStorage.setItem(TASK_TITLE_KEY, taskTitle);
+    
+    elapsed = 0;
+    const now = Date.now();
+    localStorage.setItem(TIMER_START_KEY, now.toString());
+    localStorage.setItem(TIMER_ELAPSED_KEY, '0');
+    localStorage.setItem(TIMER_STATE_KEY, TIMER_STATES.RUNNING);
+    
+    timerInterval = setInterval(updateTimer, 1000);
+    updateMainTaskState(TIMER_STATES.RUNNING);
+});
+
+pauseButton.addEventListener('click', function() {
+    clearInterval(timerInterval);
+    updateTimer(); // Update one last time
+    localStorage.setItem(TIMER_STATE_KEY, TIMER_STATES.PAUSED);
+    updateMainTaskState(TIMER_STATES.PAUSED);
+});
+
+resumeButton.addEventListener('click', function() {
+    const now = Date.now();
+    localStorage.setItem(TIMER_START_KEY, now.toString());
+    localStorage.setItem(TIMER_STATE_KEY, TIMER_STATES.RUNNING);
+    
+    timerInterval = setInterval(updateTimer, 1000);
+    updateMainTaskState(TIMER_STATES.RUNNING);
+});
+
+stopButton.addEventListener('click', function() {
+    // First check if there are any ongoing subtasks
+    if (localStorage.getItem(SUBTASK_STATE_KEY) === TIMER_STATES.RUNNING ||
+        localStorage.getItem(SUBTASK_STATE_KEY) === TIMER_STATES.PAUSED) {
+        if (!confirm("You have an active subtask. Stopping the main task will also stop the subtask. Continue?")) {
+            return;
+        }
+        // Stop the subtask timer
+        clearInterval(subtaskTimerInterval);
+        localStorage.removeItem(SUBTASK_START_KEY);
+        localStorage.removeItem(SUBTASK_ELAPSED_KEY);
+        localStorage.removeItem(SUBTASK_STATE_KEY);
+        localStorage.removeItem(CURRENT_SUBTASK_KEY);
+    }
+    
+    // Stop the main task timer
+    clearInterval(timerInterval);
+    updateTimer(); // Update one last time
+    
+    taskDurationInput.value = elapsed;
+    
+    // Prepare a flattened list of all subtasks including nested ones for easier processing on server
+    const allSubtasks = [];
+    
+    // Recursively process subtasks to ensure all levels of nesting are captured
+    function processSubtasks(subtasks, parentId = null) {
+        subtasks.forEach(subtask => {
+            // Add the current subtask
+            allSubtasks.push({
+                id: subtask.id,
+                title: subtask.title,
+                duration: subtask.duration,
+                parentId: parentId
+            });
+            
+            // Process any nested subtasks (recursive)
+            if (subtask.nestedSubtasks && subtask.nestedSubtasks.length > 0) {
+                processSubtasks(subtask.nestedSubtasks, subtask.id);
+            }
+        });
+    }
+    
+    // Process all subtasks recursively
+    processSubtasks(subtasks);
+    
+    // Update the form data with all subtasks
+    subtasksDataInput.value = JSON.stringify(allSubtasks);
+    
+    // Save the ID counter to localStorage
+    localStorage.setItem(SUBTASK_ID_COUNTER_KEY, subtaskIdCounter.toString());
+    
+    // Clear timer state from localStorage
+    localStorage.removeItem(TIMER_START_KEY);
+    localStorage.removeItem(TIMER_ELAPSED_KEY);
+    localStorage.removeItem(TIMER_STATE_KEY);
+    localStorage.removeItem(TASK_TITLE_KEY);
+    localStorage.removeItem(SUBTASK_DATA_KEY);
+    
+    // Submit the form
+    document.getElementById('taskForm').submit();
+});
+
+// Subtask Button Event Listeners
+subtaskButton.addEventListener('click', function() {
+    // Pause the main task
+    clearInterval(timerInterval);
+    updateTimer(); // Update one last time
+    localStorage.setItem(TIMER_STATE_KEY, TIMER_STATES.PAUSED);
+    updateMainTaskState(TIMER_STATES.PAUSED);
+    
+    // Show the subtask container
+    subtaskContainer.style.display = 'block';
+    document.getElementById('subtask_title').focus();
+});
+
+// Nested Subtask Button Event Listeners
+nestedSubtaskButton.addEventListener('click', function() {
+    // Pause the subtask
+    clearInterval(subtaskTimerInterval);
+    updateSubtaskTimer(); // Update one last time
+    localStorage.setItem(SUBTASK_STATE_KEY, TIMER_STATES.PAUSED);
+    updateSubtaskState(TIMER_STATES.PAUSED);
+    
+    // Show the nested subtask container
+    nestedSubtaskContainer.style.display = 'block';
+    document.getElementById('nested_subtask_title').focus();
+});
+
+startSubtaskButton.addEventListener('click', function() {
+    const subtaskTitle = document.getElementById('subtask_title').value;
+    if (!subtaskTitle) {
+        alert('Please enter a subtask title');
+        return;
+    }
+    
+    // Save current subtask info with unique ID
+    const currentSubtask = {
+        id: subtaskIdCounter,
+        title: subtaskTitle,
+        startTime: new Date().toISOString()
+    };
+    
+    // Increment counter after using it
+    subtaskIdCounter++;
+    localStorage.setItem(SUBTASK_ID_COUNTER_KEY, subtaskIdCounter.toString());
+    
+    localStorage.setItem(CURRENT_SUBTASK_KEY, JSON.stringify(currentSubtask));
+    
+    // Start the subtask timer
+    subtaskElapsed = 0;
+    const now = Date.now();
+    localStorage.setItem(SUBTASK_START_KEY, now.toString());
+    localStorage.setItem(SUBTASK_ELAPSED_KEY, '0');
+    localStorage.setItem(SUBTASK_STATE_KEY, TIMER_STATES.RUNNING);
+    
+    subtaskTimerInterval = setInterval(updateSubtaskTimer, 1000);
+    updateSubtaskState(TIMER_STATES.RUNNING);
+});
+
+pauseSubtaskButton.addEventListener('click', function() {
+    clearInterval(subtaskTimerInterval);
+    updateSubtaskTimer(); // Update one last time
+    localStorage.setItem(SUBTASK_STATE_KEY, TIMER_STATES.PAUSED);
+    updateSubtaskState(TIMER_STATES.PAUSED);
+});
+
+resumeSubtaskButton.addEventListener('click', function() {
+    const now = Date.now();
+    localStorage.setItem(SUBTASK_START_KEY, now.toString());
+    localStorage.setItem(SUBTASK_STATE_KEY, TIMER_STATES.RUNNING);
+    
+    subtaskTimerInterval = setInterval(updateSubtaskTimer, 1000);
+    updateSubtaskState(TIMER_STATES.RUNNING);
+});
+
+completeSubtaskButton.addEventListener('click', function() {
+    // Stop the subtask timer
+    clearInterval(subtaskTimerInterval);
+    updateSubtaskTimer(); // Update one last time
+    
+    // Save the completed subtask
+    const currentSubtaskData = localStorage.getItem(CURRENT_SUBTASK_KEY);
+    if (currentSubtaskData) {
+        try {
+            const subtaskInfo = JSON.parse(currentSubtaskData);
+            const completedSubtask = {
+                id: subtaskInfo.id,
+                title: subtaskInfo.title,
+                duration: subtaskElapsed,
+                completed: new Date().toISOString()
+            };
+            
+            subtasks.push(completedSubtask);
+            updateSubtasksList();
+            
+            // Show the subtasks list if this is the first subtask
+            if (subtasks.length === 1) {
+                currentSubtasksList.style.display = 'block';
+            }
+            
+        } catch (e) {
+            console.error('Error processing subtask data', e);
+        }
+    }
+    
+    // Clear subtask form and hide it
+    document.getElementById('subtask_title').value = '';
+    subtaskContainer.style.display = 'none';
+    subtaskElapsed = 0;
+    updateSubtaskTimerDisplay();
+    
+    // Clear subtask state from localStorage
+    localStorage.removeItem(SUBTASK_START_KEY);
+    localStorage.removeItem(SUBTASK_ELAPSED_KEY);
+    localStorage.removeItem(SUBTASK_STATE_KEY);
+    localStorage.removeItem(CURRENT_SUBTASK_KEY);
+    
+    // Resume the main task
+    const now = Date.now();
+    localStorage.setItem(TIMER_START_KEY, now.toString());
+    localStorage.setItem(TIMER_STATE_KEY, TIMER_STATES.RUNNING);
+    
+    timerInterval = setInterval(updateTimer, 1000);
+    updateMainTaskState(TIMER_STATES.RUNNING);
+});
+
+startNestedSubtaskButton.addEventListener('click', function() {
+    const nestedSubtaskTitle = document.getElementById('nested_subtask_title').value;
+    if (!nestedSubtaskTitle) {
+        alert('Please enter a nested subtask title');
+        return;
+    }
+    
+    // Get parent subtask info
+    const currentSubtaskData = localStorage.getItem(CURRENT_SUBTASK_KEY);
+    if (!currentSubtaskData) {
+        alert('Parent subtask information not found');
+        return;
+    }
+    
+    const parentSubtask = JSON.parse(currentSubtaskData);
+    
+    // Save current nested subtask info with unique ID
+    const currentNestedSubtask = {
+        id: subtaskIdCounter,
+        title: nestedSubtaskTitle,
+        startTime: new Date().toISOString(),
+        parentId: parentSubtask.id
+    };
+    
+    // Increment counter after using it
+    subtaskIdCounter++;
+    localStorage.setItem(SUBTASK_ID_COUNTER_KEY, subtaskIdCounter.toString());
+    
+    localStorage.setItem(CURRENT_NESTED_SUBTASK_KEY, JSON.stringify(currentNestedSubtask));
+    
+    // Start the nested subtask timer
+    nestedSubtaskElapsed = 0;
+    const now = Date.now();
+    localStorage.setItem(NESTED_SUBTASK_START_KEY, now.toString());
+    localStorage.setItem(NESTED_SUBTASK_ELAPSED_KEY, '0');
+    localStorage.setItem(NESTED_SUBTASK_STATE_KEY, TIMER_STATES.RUNNING);
+    
+    nestedSubtaskTimerInterval = setInterval(updateNestedSubtaskTimer, 1000);
+    updateNestedSubtaskState(TIMER_STATES.RUNNING);
+});
+
+pauseNestedSubtaskButton.addEventListener('click', function() {
+    clearInterval(nestedSubtaskTimerInterval);
+    updateNestedSubtaskTimer(); // Update one last time
+    localStorage.setItem(NESTED_SUBTASK_STATE_KEY, TIMER_STATES.PAUSED);
+    updateNestedSubtaskState(TIMER_STATES.PAUSED);
+});
+
+resumeNestedSubtaskButton.addEventListener('click', function() {
+    const now = Date.now();
+    localStorage.setItem(NESTED_SUBTASK_START_KEY, now.toString());
+    localStorage.setItem(NESTED_SUBTASK_STATE_KEY, TIMER_STATES.RUNNING);
+    
+    nestedSubtaskTimerInterval = setInterval(updateNestedSubtaskTimer, 1000);
+    updateNestedSubtaskState(TIMER_STATES.RUNNING);
+});
+
+completeNestedSubtaskButton.addEventListener('click', function() {
+    // Stop the nested subtask timer
+    clearInterval(nestedSubtaskTimerInterval);
+    updateNestedSubtaskTimer(); // Update one last time
+    
+    // Save the completed nested subtask
+    const currentNestedSubtaskData = localStorage.getItem(CURRENT_NESTED_SUBTASK_KEY);
+    const currentSubtaskData = localStorage.getItem(CURRENT_SUBTASK_KEY);
+    
+    if (currentNestedSubtaskData && currentSubtaskData) {
+        try {
+            const nestedSubtaskInfo = JSON.parse(currentNestedSubtaskData);
+            const currentSubtaskInfo = JSON.parse(currentSubtaskData);
+            
+            const completedNestedSubtask = {
+                id: nestedSubtaskInfo.id,
+                title: nestedSubtaskInfo.title,
+                duration: nestedSubtaskElapsed,
+                completed: new Date().toISOString(),
+                parentId: nestedSubtaskInfo.parentId
+            };
+            
+            // Find the parent subtask in the subtasks array to add this nested subtask
+            for (let i = 0; i < subtasks.length; i++) {
+                if (subtasks[i].id === completedNestedSubtask.parentId) {
+                    // Initialize nestedSubtasks array if it doesn't exist
+                    if (!subtasks[i].nestedSubtasks) {
+                        subtasks[i].nestedSubtasks = [];
+                    }
+                    subtasks[i].nestedSubtasks.push(completedNestedSubtask);
+                    break;
+                }
+            }
+            
+            updateSubtasksList();
+            
+        } catch (e) {
+            console.error('Error processing nested subtask data', e);
+        }
+    }
+    
+    // Clear nested subtask form and hide it
+    document.getElementById('nested_subtask_title').value = '';
+    nestedSubtaskContainer.style.display = 'none';
+    nestedSubtaskElapsed = 0;
+    nestedSubtaskTimerDisplay.textContent = formatTime(0);
+    
+    // Clear nested subtask state from localStorage
+    localStorage.removeItem(NESTED_SUBTASK_START_KEY);
+    localStorage.removeItem(NESTED_SUBTASK_ELAPSED_KEY);
+    localStorage.removeItem(NESTED_SUBTASK_STATE_KEY);
+    localStorage.removeItem(CURRENT_NESTED_SUBTASK_KEY);
+    
+    // Resume the subtask
+    const now = Date.now();
+    localStorage.setItem(SUBTASK_START_KEY, now.toString());
+    localStorage.setItem(SUBTASK_STATE_KEY, TIMER_STATES.RUNNING);
+    
+    subtaskTimerInterval = setInterval(updateSubtaskTimer, 1000);
+    updateSubtaskState(TIMER_STATES.RUNNING);
+});
+
+// Add event listeners to toggle subtask buttons
+document.addEventListener('click', function(e) {
+    if (e.target.classList.contains('toggle-subtasks-btn')) {
+        const taskId = e.target.getAttribute('data-task-id');
+        toggleTaskSubtasks(taskId);
+    }
+});
+
+// Initialize timers on page load
+initializeTimers();
+
+// Handle page unload
+window.addEventListener('beforeunload', function() {
+    // Update the main task timer
+    if (localStorage.getItem(TIMER_STATE_KEY) === TIMER_STATES.RUNNING) {
+        updateTimer();
+    }
+    
+    // Update the subtask timer
+    if (localStorage.getItem(SUBTASK_STATE_KEY) === TIMER_STATES.RUNNING) {
+        updateSubtaskTimer();
+    }
+    
+    // Update the nested subtask timer
+    if (localStorage.getItem(NESTED_SUBTASK_STATE_KEY) === TIMER_STATES.RUNNING) {
+        updateNestedSubtaskTimer();
+    }
+});
+</script>
