@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html>
 <head>
@@ -205,6 +206,23 @@
         .active-task-indicator.active {
             display: flex;
         }
+        .toggle-subtasks-btn {
+            background: none;
+            border: none;
+            color: #007bff;
+            cursor: pointer;
+            font-size: 0.9em;
+            margin-left: 10px;
+            padding: 2px 5px;
+            border-radius: 3px;
+        }
+        .toggle-subtasks-btn:hover {
+            background-color: #e9f5ff;
+            text-decoration: underline;
+        }
+        .subtasks-visible {
+            display: block !important;
+        }
     </style>
 </head>
 <body>
@@ -254,8 +272,8 @@
     <h2>Metrics</h2>
     <div class="metrics">
         <p>Total tasks completed: {{ total_tasks }}</p>
-        <p>Total time today: {{ daily_total|floatformat:0 }} seconds ({{ daily_total|floatformat:0|divisibleby:3600 }} hours, {{ daily_total|floatformat:0|divisibleby:60 }} minutes)</p>
-        <p>Total time this week: {{ weekly_total|floatformat:0 }} seconds ({{ weekly_total|floatformat:0|divisibleby:3600 }} hours, {{ weekly_total|floatformat:0|divisibleby:60 }} minutes)</p>
+        <p>Total time today: {{ daily_total|floatformat:0 }} seconds ({{ daily_total|divisibleby:3600 }} hours, {{ daily_total|divisibleby:60 }} minutes)</p>
+        <p>Total time this week: {{ weekly_total|floatformat:0 }} seconds ({{ weekly_total|divisibleby:3600 }} hours, {{ weekly_total|divisibleby:60 }} minutes)</p>
     </div>
 
     <!-- Completed Tasks -->
@@ -263,7 +281,7 @@
     <div class="task-list">
         <ul>
             {% for task in tasks %}
-                <li>
+                <li id="task-{{ task.id }}">
                     <div class="task-details">
                         <span class="task-title-display">{{ task.title }}</span>
                         <span class="task-duration">{{ task.duration.total_seconds|floatformat:0 }} seconds</span>
@@ -271,9 +289,9 @@
                     
                     <!-- Subtasks section (if any) -->
                     {% if task.subtasks.all %}
-                    <div class="subtasks-section has-subtasks">
-                        <h4>Subtasks:</h4>
-                        <ul>
+                    <div class="subtasks-section has-subtasks" id="subtasks-{{ task.id }}">
+                        <h4>Subtasks: <button type="button" class="toggle-subtasks-btn" data-task-id="{{ task.id }}">Show/Hide</button></h4>
+                        <ul class="subtasks-list" id="subtasks-list-{{ task.id }}">
                             {% for subtask in task.subtasks.all %}
                                 <li>{{ subtask.title }} - {{ subtask.duration.total_seconds|floatformat:0 }} seconds</li>
                             {% endfor %}
@@ -334,6 +352,18 @@
             RUNNING: 'running',
             PAUSED: 'paused'
         };
+        
+        // Function to toggle subtasks visibility for a task
+        function toggleTaskSubtasks(taskId) {
+            const subtasksList = document.getElementById(`subtasks-list-${taskId}`);
+            if (subtasksList) {
+                if (subtasksList.classList.contains('subtasks-visible')) {
+                    subtasksList.classList.remove('subtasks-visible');
+                } else {
+                    subtasksList.classList.add('subtasks-visible');
+                }
+            }
+        }
         
         // Initialize timers from local storage
         function initializeTimers() {
@@ -701,6 +731,14 @@
             
             timerInterval = setInterval(updateTimer, 1000);
             updateMainTaskState(TIMER_STATES.RUNNING);
+        });
+        
+        // Add event listeners to toggle subtask buttons
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('toggle-subtasks-btn')) {
+                const taskId = e.target.getAttribute('data-task-id');
+                toggleTaskSubtasks(taskId);
+            }
         });
         
         // Initialize timers on page load

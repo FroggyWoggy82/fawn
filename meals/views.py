@@ -548,18 +548,60 @@ def wir_view(request):
 
         # For simplicity, we store start_time and end_time as the time of submission.
         now = timezone.now()
-        Task.objects.create(
+        task = Task.objects.create(
             title=task_title,
             start_time=now,
             end_time=now,
             duration=duration,
             date=now.date()
         )
+        
+        # Process subtasks data
+        subtasks_data = request.POST.get("subtasks_data")
+        if subtasks_data:
+            try:
+                subtasks = json.loads(subtasks_data)
+                
+                # Create a map to track parent-child relationships
+                subtask_map = {}
+                
+                # First pass: Create all subtasks
+                for subtask_info in subtasks:
+                    subtask_duration = timedelta(seconds=float(subtask_info.get("duration", 0)))
+                    
+                    subtask = SubTask.objects.create(
+                        task=task,
+                        title=subtask_info["title"],
+                        start_time=now,
+                        end_time=now,
+                        duration=subtask_duration,
+                        # Parent will be set in the second pass
+                    )
+                    
+                    # Store the ID mapping
+                    subtask_map[subtask_info["id"]] = subtask
+                
+                # Second pass: Set parent-child relationships
+                for subtask_info in subtasks:
+                    if subtask_info.get("parentId"):
+                        # Find the Django model instances
+                        child = subtask_map.get(subtask_info["id"])
+                        parent = subtask_map.get(subtask_info["parentId"])
+                        
+                        if child and parent:
+                            child.parent = parent
+                            child.save()
+                            
+            except (json.JSONDecodeError, KeyError, ValueError) as e:
+                # Log the error but continue
+                print(f"Error processing subtasks: {e}")
+        
         return redirect("wir_view")
     
     tasks = Task.objects.all().order_by("-id")
     today = timezone.now().date()
     start_of_week = today - timedelta(days=today.weekday())
+    
     # Sum durations (in seconds) for today and this week
     daily_total = sum((t.duration.total_seconds() for t in tasks if t.date == today), 0)
     weekly_total = sum((t.duration.total_seconds() for t in tasks if t.date >= start_of_week), 0)
