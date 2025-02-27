@@ -179,6 +179,20 @@ EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
 DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', EMAIL_HOST_USER)
 
-# Media files (User uploaded files)
-MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+# For production environment (Render)
+if ENVIRONMENT == "production":
+    # Configure media storage on Render's disk
+    MEDIA_ROOT = '/opt/render/project/media/'
+    MEDIA_URL = '/media/'
+    
+   
+    
+
+ # Ensure WhiteNoise is properly configured
+ # 
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+# Add this to the bottom of settings.py to enable media URLs in production
+from django.conf import settings
+from django.conf.urls.static import static
+

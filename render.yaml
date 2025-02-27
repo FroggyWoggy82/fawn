@@ -11,6 +11,8 @@ services:
         fromSecret: DJANGO_SECRET_KEY
       - key: DJANGO_DEBUG
         value: "False"
+      - key: DJANGO_ENV
+        value: "production"
       - key: DJANGO_ALLOWED_HOSTS
         value: "mealplanner.onrender.com"
       - key: EMAIL_HOST_USER
@@ -29,8 +31,15 @@ services:
         value: "redis://:password@host:port/0"
       - key: CELERY_RESULT_BACKEND
         value: "redis://:password@host:port/0"
+    disk:
+      name: media-storage
+      mountPath: /opt/render/project/media
+      sizeGB: 1
     healthCheckPath: /
     autoDeploy: true
     gitBranch: master
     run:
       - "python manage.py migrate"
+      - "python manage.py collectstatic --no-input"
+      - "mkdir -p /opt/render/project/media"
+      - "chmod -R 755 /opt/render/project/media"
