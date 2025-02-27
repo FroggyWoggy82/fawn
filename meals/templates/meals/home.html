@@ -45,14 +45,44 @@
         .acne-btn:hover {
             background-color: #7d3c98;
         }
+        .meal-planner-btn {
+            background-color: #2196F3;
+        }
+        .meal-planner-btn:hover {
+            background-color: #0b7dda;
+        }
+        .dish-calculator-btn {
+            background-color: #ff9800;
+        }
+        .dish-calculator-btn:hover {
+            background-color: #e68a00;
+        }
+        .section-title {
+            text-align: center;
+            margin-top: 20px;
+            color: #555;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 5px;
+        }
     </style>
 </head>
 <body>
     <h1>Welcome to the Meal Planner</h1>
+
+    <!-- New Meal Planning Section -->
+    <h2 class="section-title">Meal Planning</h2>
+    <a href="{% url 'meal_planner' %}" class="meal-planner-btn">Weekly Meal Planner</a>
+    <a href="{% url 'dish_calculator' %}" class="dish-calculator-btn">Dish Calculator</a>
+    
+    <!-- Regular Features -->
+    <h2 class="section-title">Daily Tracking</h2>
     <a href="{% url 'daily_submission' %}">Submit a Daily Meal</a>
     <a href="{% url 'submissions_list' %}">View Submissions</a>
     <a href="{% url 'dashboard' %}">Dashboard</a>
     <a href="{% url 'wir_view' %}" class="btn btn-primary">WIR</a>
+    
+    <!-- Other Features -->
+    <h2 class="section-title">Other Tools</h2>
     <a href="{% url 'acne_home' %}" class="acne-btn">Acne Tracker</a>
     <a href="/admin/">Admin Access</a>
 </body>

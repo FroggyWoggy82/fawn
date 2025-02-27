@@ -17,5 +17,9 @@ urlpatterns = [
     path('acne/history/', views.acne_history, name='acne_history'),
     path('acne/entry/<int:entry_id>/', views.acne_entry_detail, name='acne_entry_detail'),
     path('acne/products/', views.product_analysis, name='product_analysis'),
+    path('meal-planner/', views.meal_planner_view, name='meal_planner'),
+    path('generate-grocery-list/', views.generate_grocery_list, name='generate_grocery_list'),
+    path('dish-calculator/', views.dish_calculator_view, name='dish_calculator'),
+    path('calculate-dish/', views.calculate_dish, name='calculate_dish'),
 
 ]

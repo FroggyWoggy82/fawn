@@ -8,9 +8,165 @@ import calendar
 from datetime import date, datetime, timedelta
 from .models import Task, SubTask
 from django.utils import timezone
+import json
 
 def home_view(request):
     return render(request, 'meals/home.html')
+
+def calculate_dish(request):
+    """Calculate adjusted ingredients based on nutritional targets"""
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        dish_id = data.get('dish_id')
+        calorie_target = float(data.get('calorie_target', 0))
+        protein_target = float(data.get('protein_target', 0))
+        
+        dish = get_object_or_404(Dish, id=dish_id)
+        dish_ingredients = DishIngredient.objects.filter(dish=dish)
+        
+        # Calculate base nutritional values
+        base_calories = 0
+        base_protein = 0
+        base_fats = 0
+        base_carbs = 0
+        
+        for di in dish_ingredients:
+            ingredient = di.ingredient
+            quantity = di.default_quantity or 0
+            base_calories += ingredient.calories_per_gram * quantity
+            base_protein += ingredient.protein_per_gram * quantity
+            base_fats += ingredient.fats_per_gram * quantity
+            base_carbs += ingredient.carbohydrates_per_gram * quantity
+        
+        # Determine adjustment factor
+        calorie_adjustment = calorie_target / base_calories if base_calories > 0 else 1
+        protein_adjustment = protein_target / base_protein if base_protein > 0 else 1
+        adjustment_factor = max(calorie_adjustment, protein_adjustment)
+        
+        # Calculate adjusted values
+        adjusted_calories = base_calories * adjustment_factor
+        adjusted_protein = base_protein * adjustment_factor
+        adjusted_fats = base_fats * adjustment_factor
+        adjusted_carbs = base_carbs * adjustment_factor
+        
+        # Generate ingredient list with adjusted quantities
+        ingredients = []
+        total_cost = 0
+        
+        for di in dish_ingredients:
+            ingredient = di.ingredient
+            base_quantity = di.default_quantity or 0
+            adjusted_quantity = base_quantity * adjustment_factor
+            
+            ingredients.append({
+                'name': ingredient.name,
+                'base_quantity': base_quantity,
+                'adjusted_quantity': adjusted_quantity,
+                'cost_per_gram': ingredient.cost_per_gram
+            })
+            
+            total_cost += adjusted_quantity * ingredient.cost_per_gram
+        
+        return JsonResponse({
+            'status': 'success',
+            'dish_name': dish.name,
+            'base_calories': round(base_calories, 2),
+            'base_protein': round(base_protein, 2),
+            'base_fats': round(base_fats, 2),
+            'base_carbs': round(base_carbs, 2),
+            'adjusted_calories': round(adjusted_calories, 2),
+            'adjusted_protein': round(adjusted_protein, 2),
+            'adjusted_fats': round(adjusted_fats, 2),
+            'adjusted_carbs': round(adjusted_carbs, 2),
+            'adjustment_factor': adjustment_factor,
+            'ingredients': ingredients,
+            'total_cost': total_cost
+        })
+    
+    return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=400)
+
+def dish_calculator_view(request):
+    """View for calculating a single dish with specific nutritional targets"""
+    dishes = Dish.objects.all().order_by('name')
+    return render(request, 'meals/dish_calculator.html', {'dishes': dishes})
+
+def generate_grocery_list(request):
+    """Generate a grocery list based on the meal plan"""
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        meal_plan = data.get('meal_plan', {})
+        
+        # Aggregate ingredients across all meals
+        grocery_list = {}
+        total_cost = 0
+        
+        for date_str, meals in meal_plan.items():
+            for meal_type, meal_details in meals.items():
+                dish_id = meal_details.get('dish_id')
+                servings = float(meal_details.get('servings', 1))
+                calorie_target = float(meal_details.get('calorie_target', 0))
+                
+                if dish_id:
+                    dish = get_object_or_404(Dish, id=dish_id)
+                    
+                    # Calculate base nutrition values
+                    base_calories = 0
+                    dish_ingredients = DishIngredient.objects.filter(dish=dish)
+                    
+                    for di in dish_ingredients:
+                        ingredient = di.ingredient
+                        quantity = di.default_quantity or 0
+                        base_calories += ingredient.calories_per_gram * quantity
+                    
+                    # Calculate adjustment factor based on calorie target
+                    adjustment_factor = calorie_target / base_calories if base_calories > 0 else 1
+                    
+                    # Adjust ingredient quantities
+                    for di in dish_ingredients:
+                        ingredient = di.ingredient
+                        base_quantity = di.default_quantity or 0
+                        adjusted_quantity = base_quantity * adjustment_factor * servings
+                        
+                        if ingredient.id in grocery_list:
+                            grocery_list[ingredient.id]['quantity'] += adjusted_quantity
+                        else:
+                            grocery_list[ingredient.id] = {
+                                'name': ingredient.name,
+                                'quantity': adjusted_quantity,
+                                'cost_per_gram': ingredient.cost_per_gram
+                            }
+                        
+                        # Update total cost
+                        total_cost += adjusted_quantity * ingredient.cost_per_gram
+        
+        # Convert dictionary to list for the response
+        grocery_items = list(grocery_list.values())
+        
+        return JsonResponse({
+            'groceries': grocery_items,
+            'total_cost': round(total_cost, 2)
+        })
+    
+    return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=400)
+
+def meal_planner_view(request):
+    """View for the weekly meal planner interface"""
+    # Get all available dishes
+    dishes = Dish.objects.all().order_by('name')
+    
+    # Get the current week's dates
+    today = date.today()
+    start_of_week = today - timedelta(days=today.weekday())
+    week_dates = [(start_of_week + timedelta(days=i)) for i in range(7)]
+    
+    context = {
+        'dishes': dishes,
+        'week_dates': week_dates,
+    }
+    
+    return render(request, 'meals/meal_planner.html', context)
+
+
 
 def acne_home(request):
     entries = AcneEntry.objects.all().order_by('-entry_date')[:5]  # Latest 5 entries
