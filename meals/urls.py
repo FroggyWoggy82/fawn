@@ -12,5 +12,10 @@ urlpatterns = [
     path('submission/delete/<int:submission_id>/', views.delete_submission, name='delete_submission'),
     path('dashboard/', views.dashboard_view, name='dashboard'),
     path('wir/', views.wir_view, name='wir_view'),
+    path('acne/', views.acne_home, name='acne_home'),
+    path('acne/new/', views.acne_entry_create, name='acne_entry_create'),
+    path('acne/history/', views.acne_history, name='acne_history'),
+    path('acne/entry/<int:entry_id>/', views.acne_entry_detail, name='acne_entry_detail'),
+    path('acne/products/', views.product_analysis, name='product_analysis'),
 
 ]

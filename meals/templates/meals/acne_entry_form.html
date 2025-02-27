@@ -1,0 +1,254 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>New Acne Entry</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f9f9f9;
+            color: #333;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        header {
+            background-color: #8e44ad;
+            color: white;
+            padding: 15px 0;
+            text-align: center;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        header h1 {
+            margin: 0;
+        }
+        .card {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+        input[type="text"],
+        input[type="date"],
+        textarea,
+        select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        select[multiple] {
+            height: 120px;
+        }
+        .severity-selector {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .severity-option {
+            flex: 1;
+            text-align: center;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .severity-option.selected {
+            background-color: #8e44ad;
+            color: white;
+            border-color: #8e44ad;
+        }
+        .severity-1 { background-color: #2ecc71; color: white; }
+        .severity-2 { background-color: #27ae60; color: white; }
+        .severity-3 { background-color: #f39c12; color: white; }
+        .severity-4 { background-color: #e67e22; color: white; }
+        .severity-5 { background-color: #c0392b; color: white; }
+        
+        .image-preview {
+            width: 100%;
+            height: 200px;
+            border: 2px dashed #ddd;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 15px;
+            overflow: hidden;
+        }
+        .image-preview img {
+            max-width: 100%;
+            max-height: 100%;
+            display: none;
+        }
+        .upload-label {
+            display: inline-block;
+            background-color: #8e44ad;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .upload-label:hover {
+            background-color: #7d3c98;
+        }
+        input[type="file"] {
+            display: none;
+        }
+        button, .submit-btn {
+            background-color: #8e44ad;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+        button:hover, .submit-btn:hover {
+            background-color: #7d3c98;
+        }
+        .new-product-section {
+            margin-top: 15px;
+            border-top: 1px solid #eee;
+            padding-top: 15px;
+        }
+        .back-link {
+            display: inline-block;
+            margin-top: 10px;
+            color: #8e44ad;
+            text-decoration: none;
+        }
+        .back-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>New Acne Entry</h1>
+    </header>
+    
+    <div class="container">
+        <div class="card">
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                
+                <div class="form-group">
+                    <label for="{{ form.entry_date.id_for_label }}">Date:</label>
+                    {{ form.entry_date }}
+                </div>
+                
+                <div class="form-group">
+                    <label>Severity:</label>
+                    <div class="severity-selector">
+                        <div class="severity-option severity-1" data-value="1">Clear</div>
+                        <div class="severity-option severity-2" data-value="2">Almost Clear</div>
+                        <div class="severity-option severity-3" data-value="3">Mild</div>
+                        <div class="severity-option severity-4" data-value="4">Moderate</div>
+                        <div class="severity-option severity-5" data-value="5">Severe</div>
+                    </div>
+                    {{ form.severity.as_hidden }}
+                </div>
+                
+                <div class="form-group">
+                    <label>Image:</label>
+                    <div class="image-preview">
+                        <img id="preview-img" src="#" alt="Your skin preview">
+                        <span id="upload-text">Click to upload an image</span>
+                    </div>
+                    <label for="{{ form.image.id_for_label }}" class="upload-label">
+                        Choose Image
+                    </label>
+                    {{ form.image }}
+                </div>
+                
+                <div class="form-group">
+                    <label for="{{ form.products_used.id_for_label }}">Products Used:</label>
+                    {{ form.products_used }}
+                    <small>Hold Ctrl/Cmd to select multiple products</small>
+                </div>
+                
+                <div class="new-product-section">
+                    <h3>Add New Product</h3>
+                    <div class="form-group">
+                        <label for="{{ form.new_product.id_for_label }}">Product Name:</label>
+                        {{ form.new_product }}
+                    </div>
+                    <div class="form-group">
+                        <label for="{{ form.new_product_brand.id_for_label }}">Brand (optional):</label>
+                        {{ form.new_product_brand }}
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="{{ form.notes.id_for_label }}">Notes:</label>
+                    {{ form.notes }}
+                </div>
+                
+                <button type="submit" class="submit-btn">Save Entry</button>
+            </form>
+            
+            <a href="{% url 'acne_home' %}" class="back-link">← Back to Acne Tracker</a>
+        </div>
+    </div>
+    
+    <script>
+        // Image preview functionality
+        document.getElementById('{{ form.image.id_for_label }}').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                const preview = document.getElementById('preview-img');
+                const uploadText = document.getElementById('upload-text');
+                
+                reader.onload = function(e) {
+                    preview.src = e.target.result;
+                    preview.style.display = 'block';
+                    uploadText.style.display = 'none';
+                };
+                
+                reader.readAsDataURL(file);
+            }
+        });
+        
+        // Severity selector
+        document.querySelectorAll('.severity-option').forEach(option => {
+            option.addEventListener('click', function() {
+                // Remove selected class from all options
+                document.querySelectorAll('.severity-option').forEach(opt => {
+                    opt.classList.remove('selected');
+                });
+                
+                // Add selected class to clicked option
+                this.classList.add('selected');
+                
+                // Update hidden input value
+                document.getElementById('{{ form.severity.id_for_label }}').value = this.dataset.value;
+            });
+        });
+        
+        // Set default selected severity
+        const defaultSeverity = '{{ form.severity.value|default:"3" }}';
+        document.querySelector(`.severity-option[data-value="${defaultSeverity}"]`).classList.add('selected');
+        document.getElementById('{{ form.severity.id_for_label }}').value = defaultSeverity;
+    </script>
+</body>
+</html>

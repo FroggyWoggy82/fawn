@@ -1,6 +1,33 @@
 from django.db import models
 from django.utils import timezone
 
+class SkinProduct(models.Model):
+    name = models.CharField(max_length=255)
+    brand = models.CharField(max_length=255, blank=True)
+    product_type = models.CharField(max_length=100, blank=True)
+    
+    def __str__(self):
+        return f"{self.brand} {self.name}" if self.brand else self.name
+
+class AcneEntry(models.Model):
+    entry_date = models.DateField(default=timezone.now)
+    severity = models.IntegerField(choices=[(1, "Clear"), (2, "Almost Clear"), 
+                                           (3, "Mild"), (4, "Moderate"), 
+                                           (5, "Severe")], default=3)
+    image = models.ImageField(upload_to='acne_images/')
+    notes = models.TextField(blank=True)
+    products_used = models.ManyToManyField(SkinProduct, blank=True)
+    
+    class Meta:
+        ordering = ['-entry_date']
+        verbose_name_plural = "Acne Entries"
+    
+    def __str__(self):
+        return f"Acne Entry on {self.entry_date}"
+
+
+
+
 class Ingredient(models.Model):
     name = models.CharField(max_length=255)
     calories_per_gram = models.FloatField(default=0)

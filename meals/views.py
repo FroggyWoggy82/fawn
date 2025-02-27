@@ -1,7 +1,7 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import JsonResponse
-from .forms import DailySubmissionForm, DishForm, CalorieGoalRangeForm
-from .models import DailySubmission, DishIngredient, DailySubmissionIngredient, Dish, Ingredient, DailyCalorieGoal
+from .forms import DailySubmissionForm, DishForm, CalorieGoalRangeForm, AcneEntryForm, SkinProductForm
+from .models import DailySubmission, DishIngredient, DailySubmissionIngredient, Dish, Ingredient, DailyCalorieGoal, AcneEntry, SkinProduct
 from .custom_calendar import CustomHTMLCalendar
 from django.core.cache import cache
 import calendar
@@ -11,6 +11,121 @@ from django.utils import timezone
 
 def home_view(request):
     return render(request, 'meals/home.html')
+
+def acne_home(request):
+    entries = AcneEntry.objects.all().order_by('-entry_date')[:5]  # Latest 5 entries
+    products = SkinProduct.objects.all()
+    
+    context = {
+        'recent_entries': entries,
+        'products': products,
+    }
+    return render(request, 'meals/acne_home.html', context)
+
+def acne_entry_create(request):
+    if request.method == 'POST':
+        form = AcneEntryForm(request.POST, request.FILES)
+        if form.is_valid():
+            entry = form.save(commit=False)
+            entry.save()
+            
+            # Handle selected products
+            form.save_m2m()  # Save the many-to-many relationships
+            
+            # Handle new product creation if provided
+            new_product = request.POST.get('new_product')
+            if new_product:
+                brand = request.POST.get('new_product_brand', '')
+                product = SkinProduct.objects.create(
+                    name=new_product,
+                    brand=brand
+                )
+                entry.products_used.add(product)
+                
+            return redirect('acne_history')
+    else:
+        form = AcneEntryForm()
+    
+    return render(request, 'meals/acne_entry_form.html', {'form': form})
+
+def acne_history(request):
+    entries = AcneEntry.objects.all().order_by('-entry_date')
+    
+    # Group entries by month for easier browsing
+    grouped_entries = {}
+    for entry in entries:
+        month_year = f"{entry.entry_date.strftime('%B %Y')}"
+        if month_year not in grouped_entries:
+            grouped_entries[month_year] = []
+        grouped_entries[month_year].append(entry)
+    
+    return render(request, 'meals/acne_history.html', {
+        'grouped_entries': grouped_entries,
+    })
+
+def acne_entry_detail(request, entry_id):
+    entry = get_object_or_404(AcneEntry, id=entry_id)
+    
+    # Find previous and next entries for navigation
+    prev_entry = AcneEntry.objects.filter(entry_date__lt=entry.entry_date).order_by('-entry_date').first()
+    next_entry = AcneEntry.objects.filter(entry_date__gt=entry.entry_date).order_by('entry_date').first()
+    
+    context = {
+        'entry': entry,
+        'prev_entry': prev_entry,
+        'next_entry': next_entry,
+    }
+    return render(request, 'meals/acne_entry_detail.html', context)
+
+def product_analysis(request):
+    products = SkinProduct.objects.all()
+    product_analysis = {}
+    
+    for product in products:
+        entries = AcneEntry.objects.filter(products_used=product).order_by('entry_date')
+        if entries:
+            # Calculate average severity when using this product
+            avg_severity = sum(entry.severity for entry in entries) / len(entries)
+            # Get the trend by comparing first and last entry
+            if len(entries) >= 2:
+                first_severity = entries.first().severity
+                last_severity = entries.last().severity
+                trend = last_severity - first_severity  # Negative is improvement
+            else:
+                trend = 0
+                
+            product_analysis[product] = {
+                'avg_severity': round(avg_severity, 1),
+                'num_uses': len(entries),
+                'trend': trend,
+                'last_used': entries.last().entry_date
+            }
+    
+    return render(request, 'meals/product_analysis.html', {
+        'product_analysis': product_analysis
+    })
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 def dashboard_view(request):
     now = datetime.now()

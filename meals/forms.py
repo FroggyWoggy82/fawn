@@ -1,5 +1,5 @@
 from django import forms
-from .models import DailySubmission, Dish
+from .models import DailySubmission, Dish, AcneEntry, SkinProduct
 
 class DailySubmissionForm(forms.ModelForm):
     class Meta:
@@ -16,3 +16,24 @@ class CalorieGoalRangeForm(forms.Form):
     start_date = forms.DateField(widget=forms.DateInput(attrs={'type': 'date'}))
     end_date = forms.DateField(widget=forms.DateInput(attrs={'type': 'date'}))
     calorie_goal = forms.IntegerField(min_value=0, initial=0)
+
+class SkinProductForm(forms.ModelForm):
+    class Meta:
+        model = SkinProduct
+        fields = ['name', 'brand', 'product_type']
+
+class AcneEntryForm(forms.ModelForm):
+    new_product = forms.CharField(required=False, widget=forms.TextInput(attrs={
+        'placeholder': 'Add new product name'
+    }))
+    new_product_brand = forms.CharField(required=False, widget=forms.TextInput(attrs={
+        'placeholder': 'Brand name (optional)'
+    }))
+    
+    class Meta:
+        model = AcneEntry
+        fields = ['entry_date', 'severity', 'image', 'notes', 'products_used']
+        widgets = {
+            'entry_date': forms.DateInput(attrs={'type': 'date'}),
+            'notes': forms.Textarea(attrs={'rows': 3}),
+        }
