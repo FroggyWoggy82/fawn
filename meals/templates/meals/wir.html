@@ -93,16 +93,56 @@
     </div>
 
     <script>
-        let startTime, timerInterval, elapsed = 0;
+        // Timer state variables
+        let timerInterval;
+        let elapsed = 0;
         const timerDisplay = document.getElementById('timerDisplay');
         const taskDurationInput = document.getElementById('task_duration');
         const startButton = document.getElementById('startButton');
         const pauseButton = document.getElementById('pauseButton');
         const resumeButton = document.getElementById('resumeButton');
         const stopButton = document.getElementById('stopButton');
-
-        function updateTimer() {
-            elapsed = (Date.now() - startTime) / 1000;
+        
+        // Constants for localStorage keys
+        const TIMER_START_KEY = 'wir_timer_start';
+        const TIMER_ELAPSED_KEY = 'wir_timer_elapsed';
+        const TIMER_STATE_KEY = 'wir_timer_state';
+        const TASK_TITLE_KEY = 'wir_task_title';
+        
+        // Timer states
+        const TIMER_STATES = {
+            STOPPED: 'stopped',
+            RUNNING: 'running',
+            PAUSED: 'paused'
+        };
+        
+        // Initialize timer from local storage
+        function initializeTimer() {
+            const timerState = localStorage.getItem(TIMER_STATE_KEY);
+            const taskTitle = localStorage.getItem(TASK_TITLE_KEY);
+            
+            if (taskTitle) {
+                document.getElementById('task_title').value = taskTitle;
+            }
+            
+            if (timerState === TIMER_STATES.RUNNING) {
+                // Timer was running, resume it
+                const startTimestamp = parseInt(localStorage.getItem(TIMER_START_KEY));
+                if (startTimestamp) {
+                    startTime = startTimestamp;
+                    timerInterval = setInterval(updateTimer, 1000);
+                    updateButtonState(TIMER_STATES.RUNNING);
+                }
+            } else if (timerState === TIMER_STATES.PAUSED) {
+                // Timer was paused, restore elapsed time
+                elapsed = parseFloat(localStorage.getItem(TIMER_ELAPSED_KEY)) || 0;
+                updateTimerDisplay();
+                updateButtonState(TIMER_STATES.PAUSED);
+            }
+        }
+        
+        // Update timer display based on elapsed time
+        function updateTimerDisplay() {
             let hours = Math.floor(elapsed / 3600);
             let minutes = Math.floor((elapsed % 3600) / 60);
             let seconds = Math.floor(elapsed % 60);
@@ -111,34 +151,109 @@
                 String(minutes).padStart(2, '0') + ':' +
                 String(seconds).padStart(2, '0');
         }
-
+        
+        // Update elapsed time
+        function updateTimer() {
+            const now = Date.now();
+            elapsed = parseFloat(localStorage.getItem(TIMER_ELAPSED_KEY)) || 0;
+            const startTime = parseInt(localStorage.getItem(TIMER_START_KEY));
+            
+            if (startTime) {
+                elapsed = elapsed + (now - startTime) / 1000;
+                // Save current elapsed time
+                localStorage.setItem(TIMER_ELAPSED_KEY, elapsed.toString());
+                // Update start time for next calculation
+                localStorage.setItem(TIMER_START_KEY, now.toString());
+            }
+            
+            updateTimerDisplay();
+        }
+        
+        // Update button state based on timer state
+        function updateButtonState(state) {
+            switch(state) {
+                case TIMER_STATES.RUNNING:
+                    startButton.disabled = true;
+                    pauseButton.disabled = false;
+                    resumeButton.disabled = true;
+                    stopButton.disabled = false;
+                    break;
+                case TIMER_STATES.PAUSED:
+                    startButton.disabled = true;
+                    pauseButton.disabled = true;
+                    resumeButton.disabled = false;
+                    stopButton.disabled = false;
+                    break;
+                case TIMER_STATES.STOPPED:
+                default:
+                    startButton.disabled = false;
+                    pauseButton.disabled = true;
+                    resumeButton.disabled = true;
+                    stopButton.disabled = true;
+                    break;
+            }
+        }
+        
         startButton.addEventListener('click', function() {
-            startTime = Date.now();
+            // Store task title
+            const taskTitle = document.getElementById('task_title').value;
+            localStorage.setItem(TASK_TITLE_KEY, taskTitle);
+            
+            // Reset and start timer
+            elapsed = 0;
+            const now = Date.now();
+            localStorage.setItem(TIMER_START_KEY, now.toString());
+            localStorage.setItem(TIMER_ELAPSED_KEY, '0');
+            localStorage.setItem(TIMER_STATE_KEY, TIMER_STATES.RUNNING);
+            
             timerInterval = setInterval(updateTimer, 1000);
-            startButton.disabled = true;
-            pauseButton.disabled = false;
-            stopButton.disabled = false;
+            updateButtonState(TIMER_STATES.RUNNING);
         });
 
         pauseButton.addEventListener('click', function() {
             clearInterval(timerInterval);
-            pauseButton.disabled = true;
-            resumeButton.disabled = false;
+            updateTimer(); // Update one last time to get current elapsed time
+            localStorage.setItem(TIMER_STATE_KEY, TIMER_STATES.PAUSED);
+            updateButtonState(TIMER_STATES.PAUSED);
         });
 
         resumeButton.addEventListener('click', function() {
-            startTime = Date.now() - elapsed * 1000;
+            const now = Date.now();
+            localStorage.setItem(TIMER_START_KEY, now.toString());
+            localStorage.setItem(TIMER_STATE_KEY, TIMER_STATES.RUNNING);
+            
             timerInterval = setInterval(updateTimer, 1000);
-            pauseButton.disabled = false;
-            resumeButton.disabled = true;
+            updateButtonState(TIMER_STATES.RUNNING);
         });
 
         stopButton.addEventListener('click', function() {
             clearInterval(timerInterval);
-            // Store the elapsed time in seconds in the hidden field
+            
+            // Update one last time to get final elapsed time
+            updateTimer();
+            
+            // Store elapsed time for form submission
             taskDurationInput.value = elapsed;
-            // Submit the form (this will create the task on the server)
+            
+            // Clear timer state from localStorage
+            localStorage.removeItem(TIMER_START_KEY);
+            localStorage.removeItem(TIMER_ELAPSED_KEY);
+            localStorage.removeItem(TIMER_STATE_KEY);
+            localStorage.removeItem(TASK_TITLE_KEY);
+            
+            // Submit the form
             document.getElementById('taskForm').submit();
+        });
+        
+        // Initialize timer on page load
+        initializeTimer();
+        
+        // Add event listener for when page is about to unload
+        window.addEventListener('beforeunload', function() {
+            if (localStorage.getItem(TIMER_STATE_KEY) === TIMER_STATES.RUNNING) {
+                // Update elapsed time one last time before navigating away
+                updateTimer();
+            }
         });
     </script>
 
