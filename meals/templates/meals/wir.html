@@ -845,6 +845,14 @@ subtaskButton.addEventListener('click', function() {
     
     // Show the subtask container
     subtaskContainer.style.display = 'block';
+    
+    // IMPORTANT FIX: Reset subtask button states
+    startSubtaskButton.disabled = false;
+    pauseSubtaskButton.disabled = true;
+    resumeSubtaskButton.disabled = true;
+    completeSubtaskButton.disabled = true;
+    nestedSubtaskButton.disabled = true;
+    
     document.getElementById('subtask_title').focus();
 });
 
@@ -908,6 +916,7 @@ resumeSubtaskButton.addEventListener('click', function() {
     updateSubtaskState(TIMER_STATES.RUNNING);
 });
 
+// Find completeSubtaskButton event listener and change it
 completeSubtaskButton.addEventListener('click', function() {
     // Stop the subtask timer
     clearInterval(subtaskTimerInterval);
@@ -957,6 +966,9 @@ completeSubtaskButton.addEventListener('click', function() {
     
     timerInterval = setInterval(updateTimer, 1000);
     updateMainTaskState(TIMER_STATES.RUNNING);
+    
+    // IMPORTANT ADDITION: Make subtask button enabled again
+    subtaskButton.disabled = false;
 });
 
 startNestedSubtaskButton.addEventListener('click', function() {
