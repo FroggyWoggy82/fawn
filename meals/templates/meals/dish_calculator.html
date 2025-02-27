@@ -284,8 +284,17 @@
                 .then(data => {
                     if (data.status === 'success') {
                         // Update nutritional results
+                        let warningMessage = '';
+                        if (data.warning) {
+                            warningMessage = `<div style="background-color: #fff3cd; color: #856404; padding: 10px; border-radius: 4px; margin-bottom: 15px;">
+                                <strong>Note:</strong> ${data.warning}
+                                <p><small>To fix this, go to the Admin interface, edit your Dish ingredients, and ensure all ingredients have nutritional data and quantities set.</small></p>
+                            </div>`;
+                        }
+                        
                         const resultsHTML = `
                             <h4>${data.dish_name}</h4>
+                            ${warningMessage}
                             <p>Adjustment factor: ${data.adjustment_factor.toFixed(2)}x the original recipe</p>
                             
                             <div class="nutritional-info">

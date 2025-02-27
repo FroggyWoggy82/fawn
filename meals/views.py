@@ -22,7 +22,14 @@ def calculate_dish(request):
         protein_target = float(data.get('protein_target', 0))
         
         dish = get_object_or_404(Dish, id=dish_id)
-        dish_ingredients = DishIngredient.objects.filter(dish=dish)
+        dish_ingredients = DishIngredient.objects.filter(dish=dish).select_related('ingredient')
+        
+        # Check if the dish has any ingredients
+        if not dish_ingredients.exists():
+            return JsonResponse({
+                'status': 'error',
+                'message': f'Dish "{dish.name}" has no ingredients defined. Please add ingredients in the admin interface.'
+            })
         
         # Calculate base nutritional values
         base_calories = 0
@@ -30,17 +37,49 @@ def calculate_dish(request):
         base_fats = 0
         base_carbs = 0
         
+        # Debug information
+        ingredient_details = []
+        missing_quantities = False
+        missing_nutritional_data = False
+        
         for di in dish_ingredients:
             ingredient = di.ingredient
-            quantity = di.default_quantity or 0
+            # If default_quantity is None or 0, use a default value of 100g for calculation
+            quantity = di.default_quantity if di.default_quantity else 100
+            
+            if not di.default_quantity:
+                missing_quantities = True
+            
+            # Check if nutritional values exist
+            if (ingredient.calories_per_gram == 0 and 
+                ingredient.protein_per_gram == 0 and 
+                ingredient.fats_per_gram == 0 and 
+                ingredient.carbohydrates_per_gram == 0):
+                missing_nutritional_data = True
+            
+            # Add to base values
             base_calories += ingredient.calories_per_gram * quantity
             base_protein += ingredient.protein_per_gram * quantity
             base_fats += ingredient.fats_per_gram * quantity
             base_carbs += ingredient.carbohydrates_per_gram * quantity
+            
+            ingredient_details.append({
+                'name': ingredient.name,
+                'quantity': quantity,
+                'calories': ingredient.calories_per_gram * quantity,
+                'protein': ingredient.protein_per_gram * quantity
+            })
         
-        # Determine adjustment factor
-        calorie_adjustment = calorie_target / base_calories if base_calories > 0 else 1
-        protein_adjustment = protein_target / base_protein if base_protein > 0 else 1
+        # Add warning messages
+        warning_message = ""
+        if missing_quantities:
+            warning_message += "Some ingredients have no default quantity. Using 100g as a fallback. "
+        if missing_nutritional_data:
+            warning_message += "Some ingredients have missing nutritional data. "
+        
+        # Determine adjustment factor (avoid division by zero)
+        calorie_adjustment = calorie_target / max(base_calories, 0.001)
+        protein_adjustment = protein_target / max(base_protein, 0.001)
         adjustment_factor = max(calorie_adjustment, protein_adjustment)
         
         # Calculate adjusted values
@@ -55,7 +94,7 @@ def calculate_dish(request):
         
         for di in dish_ingredients:
             ingredient = di.ingredient
-            base_quantity = di.default_quantity or 0
+            base_quantity = di.default_quantity if di.default_quantity else 100
             adjusted_quantity = base_quantity * adjustment_factor
             
             ingredients.append({
@@ -80,7 +119,9 @@ def calculate_dish(request):
             'adjusted_carbs': round(adjusted_carbs, 2),
             'adjustment_factor': adjustment_factor,
             'ingredients': ingredients,
-            'total_cost': total_cost
+            'total_cost': total_cost,
+            'warning': warning_message if warning_message else None,
+            'debug_info': ingredient_details
         })
     
     return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=400)
@@ -148,7 +189,6 @@ def generate_grocery_list(request):
         })
     
     return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=400)
-
 def meal_planner_view(request):
     """View for the weekly meal planner interface"""
     # Get all available dishes
@@ -165,7 +205,6 @@ def meal_planner_view(request):
     }
     
     return render(request, 'meals/meal_planner.html', context)
-
 
 
 def acne_home(request):
