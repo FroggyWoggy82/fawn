@@ -1,7 +1,7 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import JsonResponse
 from .forms import DailySubmissionForm, DishForm, CalorieGoalRangeForm, AcneEntryForm, SkinProductForm 
-from .models import DailySubmission, DishIngredient, DailySubmissionIngredient, Dish, Ingredient, DailyCalorieGoal, AcneEntry, SkinProduct
+from .models import DailySubmission, DishIngredient, DailySubmissionIngredient, Dish, Ingredient, DailyCalorieGoal, AcneEntry, SkinProduct, Workout, Exercise, WorkoutExercise, ExerciseSet
 from .custom_calendar import CustomHTMLCalendar
 from django.core.cache import cache
 import calendar
@@ -12,6 +12,214 @@ import json
 
 def home_view(request):
     return render(request, 'meals/home.html')
+
+# Add these views to meals/views.py
+
+def workout_home(request):
+    """View for the workout home page"""
+    # Get all workouts
+    workouts = Workout.objects.all().order_by('-start_time')
+    
+    # Get all exercises
+    exercises = Exercise.objects.all().order_by('name')
+    
+    context = {
+        'workouts': workouts,
+        'exercises': exercises,
+    }
+    
+    return render(request, 'meals/workout_home.html', context)
+
+def start_workout(request):
+    """View for starting a new workout"""
+    if request.method == 'POST':
+        # Create a new workout
+        workout = Workout.objects.create()
+        return redirect('active_workout', workout_id=workout.id)
+    
+    # If GET request, just render the page
+    return render(request, 'meals/start_workout.html')
+
+def active_workout(request, workout_id):
+    """View for an active workout"""
+    workout = get_object_or_404(Workout, id=workout_id)
+    
+    # If the workout is already finished, redirect to the workout details
+    if not workout.is_active():
+        return redirect('workout_detail', workout_id=workout.id)
+    
+    # Get all exercises for selection
+    exercises = Exercise.objects.all().order_by('name')
+    
+    # Get all workout exercises for this workout
+    workout_exercises = WorkoutExercise.objects.filter(workout=workout)
+    
+    context = {
+        'workout': workout,
+        'exercises': exercises,
+        'workout_exercises': workout_exercises,
+    }
+    
+    return render(request, 'meals/active_workout.html', context)
+
+def finish_workout(request, workout_id):
+    """View for finishing a workout"""
+    workout = get_object_or_404(Workout, id=workout_id)
+    
+    if request.method == 'POST':
+        # Set the end time
+        workout.end_time = timezone.now()
+        workout.duration = workout.calculate_duration()
+        workout.save()
+        
+        return redirect('workout_detail', workout_id=workout.id)
+    
+    return redirect('active_workout', workout_id=workout.id)
+
+def workout_detail(request, workout_id):
+    """View for viewing a completed workout"""
+    workout = get_object_or_404(Workout, id=workout_id)
+    
+    context = {
+        'workout': workout,
+    }
+    
+    return render(request, 'meals/workout_detail.html', context)
+
+def add_exercise_to_workout(request, workout_id):
+    """API view for adding an exercise to a workout"""
+    if request.method == 'POST':
+        workout = get_object_or_404(Workout, id=workout_id)
+        
+        # Check if the workout is active
+        if not workout.is_active():
+            return JsonResponse({'status': 'error', 'message': 'Cannot add exercise to a finished workout'})
+        
+        # Get the exercise_id from POST data or create a new exercise
+        exercise_id = request.POST.get('exercise_id')
+        
+        if exercise_id:
+            # Use existing exercise
+            exercise = get_object_or_404(Exercise, id=exercise_id)
+        else:
+            # Create a new exercise
+            exercise_name = request.POST.get('exercise_name')
+            exercise_category = request.POST.get('exercise_category')
+            
+            if not exercise_name or not exercise_category:
+                return JsonResponse({'status': 'error', 'message': 'Exercise name and category are required'})
+            
+            exercise = Exercise.objects.create(
+                name=exercise_name,
+                category=exercise_category
+            )
+        
+        # Get the order (highest existing order + 1)
+        order = WorkoutExercise.objects.filter(workout=workout).count() + 1
+        
+        # Create the workout exercise
+        workout_exercise = WorkoutExercise.objects.create(
+            workout=workout,
+            exercise=exercise,
+            order=order
+        )
+        
+        # Return the new workout exercise data
+        return JsonResponse({
+            'status': 'success',
+            'workout_exercise_id': workout_exercise.id,
+            'exercise_name': exercise.name,
+            'exercise_category': exercise.category,
+        })
+    
+    return JsonResponse({'status': 'error', 'message': 'Invalid request method'})
+
+def add_set_to_exercise(request, workout_exercise_id):
+    """API view for adding a set to a workout exercise"""
+    if request.method == 'POST':
+        workout_exercise = get_object_or_404(WorkoutExercise, id=workout_exercise_id)
+        
+        # Check if the workout is active
+        if not workout_exercise.workout.is_active():
+            return JsonResponse({'status': 'error', 'message': 'Cannot add set to an exercise in a finished workout'})
+        
+        # Get the set data
+        weight = request.POST.get('weight')
+        weight_unit = request.POST.get('weight_unit', 'lb')
+        reps = request.POST.get('reps')
+        
+        if not weight or not reps:
+            return JsonResponse({'status': 'error', 'message': 'Weight and reps are required'})
+        
+        try:
+            weight = float(weight)
+            reps = int(reps)
+        except ValueError:
+            return JsonResponse({'status': 'error', 'message': 'Invalid weight or reps format'})
+        
+        # Get the set number (highest existing set number + 1)
+        set_number = ExerciseSet.objects.filter(workout_exercise=workout_exercise).count() + 1
+        
+        # Create the exercise set
+        exercise_set = ExerciseSet.objects.create(
+            workout_exercise=workout_exercise,
+            set_number=set_number,
+            weight=weight,
+            weight_unit=weight_unit,
+            reps=reps
+        )
+        
+        # Return the new exercise set data
+        return JsonResponse({
+            'status': 'success',
+            'set_id': exercise_set.id,
+            'set_number': exercise_set.set_number,
+            'weight': float(exercise_set.weight),
+            'weight_unit': exercise_set.weight_unit,
+            'reps': exercise_set.reps,
+        })
+    
+    return JsonResponse({'status': 'error', 'message': 'Invalid request method'})
+
+def get_previous_exercise_data(request, exercise_id):
+    """API view for getting previous exercise data"""
+    exercise = get_object_or_404(Exercise, id=exercise_id)
+    
+    # Get the most recent workout exercise for this exercise
+    previous_workout_exercise = WorkoutExercise.objects.filter(
+        exercise=exercise
+    ).order_by('-created_at').first()
+    
+    if not previous_workout_exercise:
+        return JsonResponse({'status': 'success', 'has_previous': False})
+    
+    # Get the sets for this previous workout exercise
+    previous_sets = ExerciseSet.objects.filter(workout_exercise=previous_workout_exercise)
+    
+    if not previous_sets:
+        return JsonResponse({'status': 'success', 'has_previous': False})
+    
+    # Format the previous sets data
+    previous_sets_data = []
+    for set_obj in previous_sets:
+        previous_sets_data.append({
+            'set_number': set_obj.set_number,
+            'weight': float(set_obj.weight),
+            'weight_unit': set_obj.weight_unit,
+            'reps': set_obj.reps,
+        })
+    
+    return JsonResponse({
+        'status': 'success',
+        'has_previous': True,
+        'previous_sets': previous_sets_data,
+        'previous_date': previous_workout_exercise.created_at.strftime('%Y-%m-%d'),
+    })
+
+
+
+
+
 
 def calculate_dish(request):
     """Calculate adjusted ingredients based on nutritional targets"""

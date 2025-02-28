@@ -1,0 +1,177 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Workout Tracker</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        header {
+            background-color: #e74c3c;
+            color: white;
+            padding: 15px 0;
+            text-align: center;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        header h1 {
+            margin: 0;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .card {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .card-title {
+            color: #e74c3c;
+            margin-top: 0;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+        .btn {
+            display: inline-block;
+            padding: 12px 24px;
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 16px;
+            font-weight: 500;
+            text-align: center;
+            transition: background-color 0.3s;
+        }
+        .btn:hover {
+            background-color: #c0392b;
+        }
+        .btn-lg {
+            font-size: 18px;
+            padding: 15px 30px;
+        }
+        .btn-outline {
+            background-color: transparent;
+            border: 2px solid #e74c3c;
+            color: #e74c3c;
+        }
+        .btn-outline:hover {
+            background-color: #e74c3c;
+            color: white;
+        }
+        .workout-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        .workout-card {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 15px;
+            transition: transform 0.2s;
+            text-decoration: none;
+            color: inherit;
+        }
+        .workout-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        .workout-date {
+            font-weight: 600;
+            color: #e74c3c;
+            margin-bottom: 5px;
+        }
+        .workout-stats {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+            color: #666;
+            font-size: 14px;
+        }
+        .home-button {
+            display: block;
+            margin: 20px auto;
+            width: 200px;
+        }
+        .cta-section {
+            text-align: center;
+            margin: 30px 0;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Workout Tracker</h1>
+    </header>
+    
+    <div class="container">
+        <div class="cta-section">
+            <h2>Ready to crush your workout?</h2>
+            <form action="{% url 'start_workout' %}" method="post">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-lg">Start Workout</button>
+            </form>
+        </div>
+        
+        <div class="card">
+            <h3 class="card-title">Recent Workouts</h3>
+            {% if workouts %}
+                <div class="workout-grid">
+                    {% for workout in workouts|slice:":6" %}
+                        <a href="{% if workout.is_active %}{% url 'active_workout' workout.id %}{% else %}{% url 'workout_detail' workout.id %}{% endif %}" class="workout-card">
+                            <div class="workout-date">{{ workout.start_time|date:"F j, Y" }}</div>
+                            <div>{{ workout.start_time|date:"g:i A" }}</div>
+                            <div class="workout-stats">
+                                <span>
+                                    {% with exercise_count=workout.exercises.count %}
+                                        {{ exercise_count }} exercise{% if exercise_count != 1 %}s{% endif %}
+                                    {% endwith %}
+                                </span>
+                                <span>
+                                    {% if workout.duration %}
+                                        {{ workout.duration }}
+                                    {% else %}
+                                        In progress
+                                    {% endif %}
+                                </span>
+                            </div>
+                        </a>
+                    {% endfor %}
+                </div>
+                {% if workouts.count > 6 %}
+                    <p style="text-align: center; margin-top: 15px;">
+                        <a href="#" class="btn btn-outline">View All Workouts</a>
+                    </p>
+                {% endif %}
+            {% else %}
+                <p>No workouts yet. Start your first workout!</p>
+            {% endif %}
+        </div>
+        
+        <div class="card">
+            <h3 class="card-title">Exercises</h3>
+            {% if exercises %}
+                <p>You have {{ exercises.count }} saved exercises across multiple categories.</p>
+                <p>Start a workout to add more exercises or use your existing ones.</p>
+            {% else %}
+                <p>No exercises saved yet. You can add exercises during your workout.</p>
+            {% endif %}
+        </div>
+        
+        <a href="{% url 'home' %}" class="btn home-button">Back to Home</a>
+    </div>
+</body>
+</html>

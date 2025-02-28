@@ -1,0 +1,264 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Workout Details</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        header {
+            background-color: #e74c3c;
+            color: white;
+            padding: 15px 0;
+            text-align: center;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        header h1 {
+            margin: 0;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .card {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .card-title {
+            color: #e74c3c;
+            margin-top: 0;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+        .workout-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .workout-date {
+            font-size: 18px;
+            font-weight: 500;
+        }
+        .workout-duration {
+            font-size: 18px;
+            font-weight: 500;
+            color: #e74c3c;
+        }
+        .exercise-list {
+            margin-bottom: 20px;
+        }
+        .exercise-card {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+        .exercise-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .exercise-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin: 0;
+        }
+        .exercise-category {
+            background-color: #f1c40f;
+            color: #333;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .category-back { background-color: #3498db; color: white; }
+        .category-arms { background-color: #e67e22; color: white; }
+        .category-chest { background-color: #9b59b6; color: white; }
+        .category-shoulders { background-color: #f1c40f; color: #333; }
+        .category-core { background-color: #1abc9c; color: white; }
+        .category-legs { background-color: #e74c3c; color: white; }
+        .category-other { background-color: #95a5a6; color: white; }
+        
+        .sets-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        .sets-table th, .sets-table td {
+            padding: 8px;
+            text-align: center;
+            border-bottom: 1px solid #eee;
+        }
+        .sets-table th {
+            background-color: #f8f8f8;
+            font-weight: 500;
+        }
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 16px;
+            font-weight: 500;
+            text-align: center;
+            transition: background-color 0.3s;
+        }
+        .btn:hover {
+            background-color: #c0392b;
+        }
+        .btn-outline {
+            background-color: transparent;
+            border: 2px solid #e74c3c;
+            color: #e74c3c;
+        }
+        .btn-outline:hover {
+            background-color: #e74c3c;
+            color: white;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 20px;
+            color: #7f8c8d;
+        }
+        .action-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+        .summary-stats {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .stat-card {
+            flex: 1;
+            min-width: 120px;
+            background-color: #f8f8f8;
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 24px;
+            font-weight: 600;
+            color: #e74c3c;
+            margin-bottom: 5px;
+        }
+        .stat-label {
+            color: #7f8c8d;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Workout Details</h1>
+    </header>
+    
+    <div class="container">
+        <div class="card">
+            <div class="workout-meta">
+                <div class="workout-date">{{ workout.start_time|date:"F j, Y" }}</div>
+                <div class="workout-duration">{{ workout.duration }}</div>
+            </div>
+            
+            <div class="summary-stats">
+                <div class="stat-card">
+                    <div class="stat-value">{{ workout.exercises.count }}</div>
+                    <div class="stat-label">Exercises</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">
+                        {% with total_sets=0 %}
+                            {% for exercise in workout.exercises.all %}
+                                {% with exercise_sets=exercise.sets.count %}
+                                    {% with total_sets=total_sets|add:exercise_sets %}{% endwith %}
+                                {% endwith %}
+                            {% endfor %}
+                            {{ total_sets }}
+                        {% endwith %}
+                    </div>
+                    <div class="stat-label">Total Sets</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">
+                        {% with start_time=workout.start_time|date:"g:i A" %}
+                            {{ start_time }}
+                        {% endwith %}
+                    </div>
+                    <div class="stat-label">Start Time</div>
+                </div>
+            </div>
+        </div>
+        
+        <h2>Exercises</h2>
+        <div class="exercise-list">
+            {% if workout.exercises.all %}
+                {% for workout_exercise in workout.exercises.all %}
+                    <div class="exercise-card">
+                        <div class="exercise-header">
+                            <h3 class="exercise-title">{{ workout_exercise.exercise.name }}</h3>
+                            <span class="exercise-category category-{{ workout_exercise.exercise.category }}">
+                                {{ workout_exercise.exercise.get_category_display }}
+                            </span>
+                        </div>
+                        
+                        {% if workout_exercise.sets.all %}
+                            <table class="sets-table">
+                                <thead>
+                                    <tr>
+                                        <th>Set</th>
+                                        <th>Weight</th>
+                                        <th>Reps</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for set in workout_exercise.sets.all %}
+                                        <tr>
+                                            <td>{{ set.set_number }}</td>
+                                            <td>{{ set.weight }} {{ set.weight_unit }}</td>
+                                            <td>{{ set.reps }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        {% else %}
+                            <div class="empty-state">
+                                <p>No sets recorded for this exercise</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty-state">
+                    <p>No exercises recorded for this workout</p>
+                </div>
+            {% endif %}
+        </div>
+        
+        <div class="action-buttons">
+            <a href="{% url 'workout_home' %}" class="btn btn-outline">Back to Workouts</a>
+            <a href="{% url 'start_workout' %}" class="btn">Start New Workout</a>
+        </div>
+    </div>
+</body>
+</html>

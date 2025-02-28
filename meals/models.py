@@ -1,6 +1,80 @@
 from django.db import models
 from django.utils import timezone
 
+class Exercise(models.Model):
+    CATEGORY_CHOICES = [
+        ('back', 'Back'),
+        ('arms', 'Arms'),
+        ('chest', 'Chest'),
+        ('shoulders', 'Shoulders'),
+        ('core', 'Core'),
+        ('legs', 'Legs'),
+        ('other', 'Other'),
+    ]
+    
+    name = models.CharField(max_length=200)
+    category = models.CharField(max_length=50, choices=CATEGORY_CHOICES)
+    
+    def __str__(self):
+        return self.name
+
+class Workout(models.Model):
+    start_time = models.DateTimeField(auto_now_add=True)
+    end_time = models.DateTimeField(null=True, blank=True)
+    duration = models.DurationField(null=True, blank=True)
+    
+    def __str__(self):
+        return f"Workout on {self.start_time.strftime('%Y-%m-%d')}"
+    
+    def is_active(self):
+        return self.end_time is None
+    
+    def calculate_duration(self):
+        if self.start_time and self.end_time:
+            return self.end_time - self.start_time
+        return None
+
+class WorkoutExercise(models.Model):
+    workout = models.ForeignKey(Workout, on_delete=models.CASCADE, related_name='exercises')
+    exercise = models.ForeignKey(Exercise, on_delete=models.CASCADE)
+    order = models.PositiveIntegerField(default=0)
+    notes = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        ordering = ['order']
+    
+    def __str__(self):
+        return f"{self.exercise.name} for {self.workout}"
+    
+    def previous_workout_exercise(self):
+        """Get the most recent previous workout exercise for the same exercise"""
+        return WorkoutExercise.objects.filter(
+            exercise=self.exercise,
+            created_at__lt=self.created_at
+        ).order_by('-created_at').first()
+
+class ExerciseSet(models.Model):
+    UNIT_CHOICES = [
+        ('kg', 'Kilograms'),
+        ('lb', 'Pounds'),
+    ]
+    
+    workout_exercise = models.ForeignKey(WorkoutExercise, on_delete=models.CASCADE, related_name='sets')
+    set_number = models.PositiveIntegerField()
+    weight = models.DecimalField(max_digits=6, decimal_places=2)
+    weight_unit = models.CharField(max_length=2, choices=UNIT_CHOICES, default='lb')
+    reps = models.PositiveIntegerField()
+    
+    class Meta:
+        ordering = ['set_number']
+    
+    def __str__(self):
+        return f"Set {self.set_number}: {self.weight} {self.weight_unit} x {self.reps} reps"
+
+
+
+
 class SkinProduct(models.Model):
     name = models.CharField(max_length=255)
     brand = models.CharField(max_length=255, blank=True)

@@ -21,5 +21,13 @@ urlpatterns = [
     path('generate-grocery-list/', views.generate_grocery_list, name='generate_grocery_list'),
     path('dish-calculator/', views.dish_calculator_view, name='dish_calculator'),
     path('calculate-dish/', views.calculate_dish, name='calculate_dish'),
+    path('workout/', views.workout_home, name='workout_home'),
+    path('workout/start/', views.start_workout, name='start_workout'),
+    path('workout/<int:workout_id>/', views.active_workout, name='active_workout'),
+    path('workout/<int:workout_id>/finish/', views.finish_workout, name='finish_workout'),
+    path('workout/<int:workout_id>/detail/', views.workout_detail, name='workout_detail'),
+    path('workout/<int:workout_id>/add-exercise/', views.add_exercise_to_workout, name='add_exercise_to_workout'),
+    path('workout-exercise/<int:workout_exercise_id>/add-set/', views.add_set_to_exercise, name='add_set_to_exercise'),
+    path('exercise/<int:exercise_id>/previous-data/', views.get_previous_exercise_data, name='get_previous_exercise_data'),
     
 ]

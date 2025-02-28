@@ -48,6 +48,12 @@
         .meal-planner-btn {
             background-color: #2196F3;
         }
+        .workout-btn {
+            background-color: #e74c3c;
+        }
+        .workout-btn:hover {
+            background-color: #c0392b;
+        }
         .meal-planner-btn:hover {
             background-color: #0b7dda;
         }
@@ -80,6 +86,7 @@
     <a href="{% url 'submissions_list' %}">View Submissions</a>
     <a href="{% url 'dashboard' %}">Dashboard</a>
     <a href="{% url 'wir_view' %}" class="btn btn-primary">WIR</a>
+    <a href="{% url 'workout_home' %}" class="workout-btn">Workout</a>
     
     <!-- Other Features -->
     <h2 class="section-title">Other Tools</h2>
