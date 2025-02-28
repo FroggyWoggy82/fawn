@@ -137,3 +137,14 @@ class SubTask(models.Model):
 
     def __str__(self):
         return self.title
+    
+class RecipeTemplate(models.Model):
+    name = models.CharField(max_length=200)
+    base_calories = models.FloatField()
+    base_servings = models.FloatField(default=1)
+    ingredients = models.ManyToManyField(Ingredient, through='RecipeIngredient')
+
+class RecipeIngredient(models.Model):
+    recipe = models.ForeignKey(RecipeTemplate, on_delete=models.CASCADE)
+    ingredient = models.ForeignKey(Ingredient, on_delete=models.CASCADE)
+    base_quantity = models.FloatField()

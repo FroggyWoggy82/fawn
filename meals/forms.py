@@ -1,5 +1,5 @@
 from django import forms
-from .models import DailySubmission, Dish, AcneEntry, SkinProduct
+from .models import DailySubmission, Dish, AcneEntry, SkinProduct, RecipeTemplate
 
 class DailySubmissionForm(forms.ModelForm):
     class Meta:
@@ -37,3 +37,8 @@ class AcneEntryForm(forms.ModelForm):
             'entry_date': forms.DateInput(attrs={'type': 'date'}),
             'notes': forms.Textarea(attrs={'rows': 3}),
         }
+
+class RecipeTemplateForm(forms.ModelForm):
+    class Meta:
+        model = RecipeTemplate
+        fields = ['name', 'base_calories', 'base_servings']

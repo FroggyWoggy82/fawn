@@ -1,6 +1,6 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import JsonResponse
-from .forms import DailySubmissionForm, DishForm, CalorieGoalRangeForm, AcneEntryForm, SkinProductForm
+from .forms import DailySubmissionForm, DishForm, CalorieGoalRangeForm, AcneEntryForm, SkinProductForm 
 from .models import DailySubmission, DishIngredient, DailySubmissionIngredient, Dish, Ingredient, DailyCalorieGoal, AcneEntry, SkinProduct
 from .custom_calendar import CustomHTMLCalendar
 from django.core.cache import cache
@@ -37,6 +37,11 @@ def calculate_dish(request):
         base_fats = 0
         base_carbs = 0
         
+        # Find the ingredient with highest protein content
+        highest_protein_ingredient = None
+        highest_protein_content = 0
+        highest_protein_per_gram = 0
+        
         # Debug information
         ingredient_details = []
         missing_quantities = False
@@ -57,9 +62,18 @@ def calculate_dish(request):
                 ingredient.carbohydrates_per_gram == 0):
                 missing_nutritional_data = True
             
+            # Calculate protein content for this ingredient
+            protein_content = ingredient.protein_per_gram * quantity
+            
+            # Track highest protein ingredient
+            if ingredient.protein_per_gram > highest_protein_per_gram:
+                highest_protein_per_gram = ingredient.protein_per_gram
+                highest_protein_ingredient = di
+                highest_protein_content = protein_content
+            
             # Add to base values
             base_calories += ingredient.calories_per_gram * quantity
-            base_protein += ingredient.protein_per_gram * quantity
+            base_protein += protein_content
             base_fats += ingredient.fats_per_gram * quantity
             base_carbs += ingredient.carbohydrates_per_gram * quantity
             
@@ -67,7 +81,7 @@ def calculate_dish(request):
                 'name': ingredient.name,
                 'quantity': quantity,
                 'calories': ingredient.calories_per_gram * quantity,
-                'protein': ingredient.protein_per_gram * quantity
+                'protein': protein_content
             })
         
         # Add warning messages
@@ -77,34 +91,86 @@ def calculate_dish(request):
         if missing_nutritional_data:
             warning_message += "Some ingredients have missing nutritional data. "
         
-        # Determine adjustment factor (avoid division by zero)
-        calorie_adjustment = calorie_target / max(base_calories, 0.001)
-        protein_adjustment = protein_target / max(base_protein, 0.001)
-        adjustment_factor = max(calorie_adjustment, protein_adjustment)
-        
-        # Calculate adjusted values
-        adjusted_calories = base_calories * adjustment_factor
-        adjusted_protein = base_protein * adjustment_factor
-        adjusted_fats = base_fats * adjustment_factor
-        adjusted_carbs = base_carbs * adjustment_factor
-        
-        # Generate ingredient list with adjusted quantities
-        ingredients = []
-        total_cost = 0
-        
-        for di in dish_ingredients:
-            ingredient = di.ingredient
-            base_quantity = di.default_quantity if di.default_quantity else 100
-            adjusted_quantity = base_quantity * adjustment_factor
+        # Determine if we're prioritizing calories or protein
+        if protein_target > 0 and protein_target > base_protein:
+            # Calculate how much additional protein we need
+            protein_needed = protein_target - base_protein
             
-            ingredients.append({
-                'name': ingredient.name,
-                'base_quantity': base_quantity,
-                'adjusted_quantity': adjusted_quantity,
-                'cost_per_gram': ingredient.cost_per_gram
-            })
+            # Calculate how much of high-protein ingredient to add to reach target
+            if highest_protein_per_gram > 0:
+                additional_protein_ingredient = protein_needed / highest_protein_per_gram
+                high_protein_scaling = (highest_protein_ingredient.default_quantity + additional_protein_ingredient) / highest_protein_ingredient.default_quantity
+            else:
+                high_protein_scaling = protein_target / max(base_protein, 0.001)
             
-            total_cost += adjusted_quantity * ingredient.cost_per_gram
+            # Scale other ingredients more conservatively
+            other_scaling = min(1.5, max(1.0, high_protein_scaling * 0.4))
+            
+            # Generate ingredient list with intelligent scaling
+            ingredients = []
+            total_cost = 0
+            adjusted_calories = 0
+            adjusted_protein = 0
+            adjusted_fats = 0
+            adjusted_carbs = 0
+            
+            for di in dish_ingredients:
+                ingredient = di.ingredient
+                base_quantity = di.default_quantity if di.default_quantity else 100
+                
+                # Apply different scaling factors
+                if di == highest_protein_ingredient:
+                    scaling = high_protein_scaling
+                else:
+                    scaling = other_scaling
+                
+                adjusted_quantity = base_quantity * scaling
+                
+                # Update adjusted nutrition totals
+                adjusted_calories += ingredient.calories_per_gram * adjusted_quantity
+                adjusted_protein += ingredient.protein_per_gram * adjusted_quantity
+                adjusted_fats += ingredient.fats_per_gram * adjusted_quantity
+                adjusted_carbs += ingredient.carbohydrates_per_gram * adjusted_quantity
+                
+                ingredients.append({
+                    'name': ingredient.name,
+                    'base_quantity': base_quantity,
+                    'adjusted_quantity': adjusted_quantity,
+                    'cost_per_gram': ingredient.cost_per_gram
+                })
+                
+                total_cost += adjusted_quantity * ingredient.cost_per_gram
+                
+            # For display, use protein-based adjustment factor
+            adjustment_factor = high_protein_scaling
+        else:
+            # Use standard calorie-based adjustment
+            calorie_adjustment = calorie_target / max(base_calories, 0.001)
+            adjustment_factor = calorie_adjustment
+            
+            # Calculate adjusted values
+            adjusted_calories = base_calories * adjustment_factor
+            adjusted_protein = base_protein * adjustment_factor
+            adjusted_fats = base_fats * adjustment_factor
+            adjusted_carbs = base_carbs * adjustment_factor
+            
+            # Generate ingredient list with adjusted quantities
+            ingredients = []
+            total_cost = 0
+            
+            for di in dish_ingredients:
+                ingredient = di.ingredient
+                base_quantity = di.default_quantity if di.default_quantity else 100
+                adjusted_quantity = base_quantity * adjustment_factor
+                
+                ingredients.append({
+                    'name': ingredient.name,
+                    'base_quantity': base_quantity,
+                    'adjusted_quantity': adjusted_quantity,
+                    'cost_per_gram': ingredient.cost_per_gram
+                })
+                
+                total_cost += adjusted_quantity * ingredient.cost_per_gram
         
         return JsonResponse({
             'status': 'success',
@@ -132,12 +198,10 @@ def dish_calculator_view(request):
     return render(request, 'meals/dish_calculator.html', {'dishes': dishes})
 
 def generate_grocery_list(request):
-    """Generate a grocery list based on the meal plan"""
     if request.method == 'POST':
         data = json.loads(request.body)
         meal_plan = data.get('meal_plan', {})
         
-        # Aggregate ingredients across all meals
         grocery_list = {}
         total_cost = 0
         
@@ -149,46 +213,41 @@ def generate_grocery_list(request):
                 
                 if dish_id:
                     dish = get_object_or_404(Dish, id=dish_id)
-                    
-                    # Calculate base nutrition values
-                    base_calories = 0
                     dish_ingredients = DishIngredient.objects.filter(dish=dish)
                     
+                    # Get original recipe proportions
+                    original_quantities = {}
+                    original_calories = 0
+                    
                     for di in dish_ingredients:
-                        ingredient = di.ingredient
                         quantity = di.default_quantity or 0
-                        base_calories += ingredient.calories_per_gram * quantity
+                        original_quantities[di.id] = quantity
+                        original_calories += di.ingredient.calories_per_gram * quantity
                     
-                    # Calculate adjustment factor based on calorie target
-                    adjustment_factor = calorie_target / base_calories if base_calories > 0 else 1
+                    # Calculate overall scaling factor for calories
+                    cal_scaling = calorie_target / max(original_calories, 0.001)
                     
-                    # Adjust ingredient quantities
+                    # Apply recipe-proportional scaling
                     for di in dish_ingredients:
                         ingredient = di.ingredient
-                        base_quantity = di.default_quantity or 0
-                        adjusted_quantity = base_quantity * adjustment_factor * servings
+                        original_qty = original_quantities[di.id]
+                        adjusted_qty = original_qty * cal_scaling * servings
                         
                         if ingredient.id in grocery_list:
-                            grocery_list[ingredient.id]['quantity'] += adjusted_quantity
+                            grocery_list[ingredient.id]['quantity'] += adjusted_qty
                         else:
                             grocery_list[ingredient.id] = {
                                 'name': ingredient.name,
-                                'quantity': adjusted_quantity,
+                                'quantity': adjusted_qty,
                                 'cost_per_gram': ingredient.cost_per_gram
                             }
                         
-                        # Update total cost
-                        total_cost += adjusted_quantity * ingredient.cost_per_gram
+                        total_cost += adjusted_qty * ingredient.cost_per_gram
         
-        # Convert dictionary to list for the response
         grocery_items = list(grocery_list.values())
-        
-        return JsonResponse({
-            'groceries': grocery_items,
-            'total_cost': round(total_cost, 2)
-        })
+        return JsonResponse({'groceries': grocery_items, 'total_cost': round(total_cost, 2)})
     
-    return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=400)
+
 def meal_planner_view(request):
     """View for the weekly meal planner interface"""
     # Get all available dishes
@@ -299,22 +358,6 @@ def product_analysis(request):
     return render(request, 'meals/product_analysis.html', {
         'product_analysis': product_analysis
     })
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
