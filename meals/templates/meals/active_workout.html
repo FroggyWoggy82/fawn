@@ -1,250 +1,251 @@
+{% extends 'meals/base.html' %}
 {% load static %}
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Active Workout</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #f5f5f5;
-            color: #333;
-        }
-        header {
-            background-color: #e74c3c;
-            color: white;
-            padding: 15px;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        .header-content {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            max-width: 1000px;
-            margin: 0 auto;
-        }
-        header h1 {
-            margin: 0;
-            font-size: 24px;
-        }
-        .container {
-            max-width: 1000px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        .timer-card {
-            background-color: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-            padding: 15px;
-            margin-bottom: 20px;
-            text-align: center;
-        }
-        .timer {
-            font-size: 36px;
-            font-weight: 600;
-            margin: 10px 0;
-        }
-        .btn {
-            display: inline-block;
-            padding: 10px 20px;
-            background-color: #e74c3c;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            text-decoration: none;
-            font-size: 16px;
-            font-weight: 500;
-            margin: 5px;
-            transition: background-color 0.3s;
-        }
-        .btn:hover {
-            background-color: #c0392b;
-        }
-        .btn-outline {
-            background-color: transparent;
-            border: 2px solid #e74c3c;
-            color: #e74c3c;
-        }
-        .btn-outline:hover {
-            background-color: #e74c3c;
-            color: white;
-        }
-        .btn-green {
-            background-color: #2ecc71;
-        }
-        .btn-green:hover {
-            background-color: #27ae60;
-        }
-        .exercise-list {
-            margin-bottom: 20px;
-        }
-        .exercise-card {
-            background-color: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-            padding: 15px;
-            margin-bottom: 15px;
-        }
-        .exercise-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
-        }
-        .exercise-title {
-            font-size: 18px;
-            font-weight: 600;
-            margin: 0;
-        }
-        .exercise-category {
-            background-color: #f1c40f;
-            color: #333;
-            padding: 3px 8px;
-            border-radius: 12px;
-            font-size: 12px;
-            font-weight: 500;
-        }
-        .category-back { background-color: #3498db; color: white; }
-        .category-arms { background-color: #e67e22; color: white; }
-        .category-chest { background-color: #9b59b6; color: white; }
-        .category-shoulders { background-color: #f1c40f; color: #333; }
-        .category-core { background-color: #1abc9c; color: white; }
-        .category-legs { background-color: #e74c3c; color: white; }
-        .category-other { background-color: #95a5a6; color: white; }
-        
-        .sets-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 10px;
-        }
-        .sets-table th, .sets-table td {
-            padding: 8px;
-            text-align: center;
-            border-bottom: 1px solid #eee;
-        }
-        .sets-table th {
-            background-color: #f8f8f8;
-            font-weight: 500;
-        }
-        .previous-set {
-            color: #7f8c8d;
-            font-size: 14px;
-        }
-        .add-set-form {
-            display: flex;
-            gap: 10px;
-            margin-top: 15px;
-        }
-        .form-group {
-            flex: 1;
-        }
-        .form-input {
-            width: 100%;
-            padding: 8px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 14px;
-        }
-        .unit-toggle {
-            display: flex;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            overflow: hidden;
-        }
-        .unit-toggle label {
-            flex: 1;
-            padding: 8px;
-            text-align: center;
-            cursor: pointer;
-            background-color: #f8f8f8;
-            transition: background-color 0.3s;
-        }
-        .unit-toggle input[type="radio"] {
-            display: none;
-        }
-        .unit-toggle input[type="radio"]:checked + label {
-            background-color: #e74c3c;
-            color: white;
-        }
-        .add-exercise-section {
-            margin-top: 30px;
-        }
-        .add-exercise-form {
-            background-color: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-            padding: 15px;
-        }
-        .form-row {
-            display: flex;
-            gap: 15px;
-            margin-bottom: 15px;
-        }
-        .form-row .form-group {
-            flex: 1;
-        }
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 1000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-        }
-        .modal-content {
-            background-color: white;
-            margin: 15% auto;
-            padding: 20px;
-            border-radius: 8px;
-            width: 80%;
-            max-width: 500px;
-        }
-        .close-modal {
-            float: right;
-            font-size: 24px;
-            font-weight: bold;
-            cursor: pointer;
-        }
-        .empty-state {
-            text-align: center;
-            padding: 40px 0;
-            color: #7f8c8d;
-        }
-        .exercise-select {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 16px;
-        }
-        .category-select {
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 16px;
-        }
-        /* Make the finish workout button sticky at the bottom */
-        .finish-workout-btn {
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 90;
-            padding: 12px 30px;
-            font-size: 18px;
-        }
-    </style>
-</head>
-<body>
+
+{% block title %}Active Workout{% endblock %}
+
+{% block style %}
+<style>
+    body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        margin: 0;
+        padding: 0;
+        background-color: #f5f5f5;
+        color: #333;
+    }
+    header {
+        background-color: #e74c3c;
+        color: white;
+        padding: 15px;
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .header-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        max-width: 1000px;
+        margin: 0 auto;
+    }
+    header h1 {
+        margin: 0;
+        font-size: 24px;
+    }
+    .container {
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+    .timer-card {
+        background-color: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        padding: 15px;
+        margin-bottom: 20px;
+        text-align: center;
+    }
+    .timer {
+        font-size: 36px;
+        font-weight: 600;
+        margin: 10px 0;
+    }
+    .btn {
+        display: inline-block;
+        padding: 10px 20px;
+        background-color: #e74c3c;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        text-decoration: none;
+        font-size: 16px;
+        font-weight: 500;
+        margin: 5px;
+        transition: background-color 0.3s;
+    }
+    .btn:hover {
+        background-color: #c0392b;
+    }
+    .btn-outline {
+        background-color: transparent;
+        border: 2px solid #e74c3c;
+        color: #e74c3c;
+    }
+    .btn-outline:hover {
+        background-color: #e74c3c;
+        color: white;
+    }
+    .btn-green {
+        background-color: #2ecc71;
+    }
+    .btn-green:hover {
+        background-color: #27ae60;
+    }
+    .exercise-list {
+        margin-bottom: 20px;
+    }
+    .exercise-card {
+        background-color: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        padding: 15px;
+        margin-bottom: 15px;
+    }
+    .exercise-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+    }
+    .exercise-title {
+        font-size: 18px;
+        font-weight: 600;
+        margin: 0;
+    }
+    .exercise-category {
+        background-color: #f1c40f;
+        color: #333;
+        padding: 3px 8px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 500;
+    }
+    .category-back { background-color: #3498db; color: white; }
+    .category-arms { background-color: #e67e22; color: white; }
+    .category-chest { background-color: #9b59b6; color: white; }
+    .category-shoulders { background-color: #f1c40f; color: #333; }
+    .category-core { background-color: #1abc9c; color: white; }
+    .category-legs { background-color: #e74c3c; color: white; }
+    .category-other { background-color: #95a5a6; color: white; }
+    
+    .sets-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 10px;
+    }
+    .sets-table th, .sets-table td {
+        padding: 8px;
+        text-align: center;
+        border-bottom: 1px solid #eee;
+    }
+    .sets-table th {
+        background-color: #f8f8f8;
+        font-weight: 500;
+    }
+    .previous-set {
+        color: #7f8c8d;
+        font-size: 14px;
+    }
+    .add-set-form {
+        display: flex;
+        gap: 10px;
+        margin-top: 15px;
+    }
+    .form-group {
+        flex: 1;
+    }
+    .form-input {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 14px;
+    }
+    .unit-toggle {
+        display: flex;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        overflow: hidden;
+    }
+    .unit-toggle label {
+        flex: 1;
+        padding: 8px;
+        text-align: center;
+        cursor: pointer;
+        background-color: #f8f8f8;
+        transition: background-color 0.3s;
+    }
+    .unit-toggle input[type="radio"] {
+        display: none;
+    }
+    .unit-toggle input[type="radio"]:checked + label {
+        background-color: #e74c3c;
+        color: white;
+    }
+    .add-exercise-section {
+        margin-top: 30px;
+    }
+    .add-exercise-form {
+        background-color: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        padding: 15px;
+    }
+    .form-row {
+        display: flex;
+        gap: 15px;
+        margin-bottom: 15px;
+    }
+    .form-row .form-group {
+        flex: 1;
+    }
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+    }
+    .modal-content {
+        background-color: white;
+        margin: 15% auto;
+        padding: 20px;
+        border-radius: 8px;
+        width: 80%;
+        max-width: 500px;
+    }
+    .close-modal {
+        float: right;
+        font-size: 24px;
+        font-weight: bold;
+        cursor: pointer;
+    }
+    .empty-state {
+        text-align: center;
+        padding: 40px 0;
+        color: #7f8c8d;
+    }
+    .exercise-select {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 16px;
+    }
+    .category-select {
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 16px;
+    }
+    /* Make the finish workout button sticky at the bottom */
+    .finish-workout-btn {
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 90;
+        padding: 12px 30px;
+        font-size: 18px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
     <header>
         <div class="header-content">
             <h1>Active Workout</h1>
@@ -390,362 +391,363 @@
             ]
         }
     </script>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Workout Timer
+    let startTime = new Date();
+    let timerInterval;
     
-    <script>
-        // Workout Timer
-        let startTime = new Date();
-        let timerInterval;
-        
-        // Parse workout data from the JSON element
-        let workoutData = { workoutId: 0, exercises: [] };
-        try {
-            const dataElement = document.getElementById('workout-data');
-            if (dataElement) {
-                workoutData = JSON.parse(dataElement.textContent);
-            }
-        } catch (error) {
-            console.error('Error parsing workout data:', error);
+    // Parse workout data from the JSON element
+    let workoutData = { workoutId: 0, exercises: [] };
+    try {
+        const dataElement = document.getElementById('workout-data');
+        if (dataElement) {
+            workoutData = JSON.parse(dataElement.textContent);
         }
+    } catch (error) {
+        console.error('Error parsing workout data:', error);
+    }
+    
+    function startTimer() {
+        startTime = new Date();
+        timerInterval = setInterval(updateTimer, 1000);
+    }
+    
+    function updateTimer() {
+        const now = new Date();
+        const diff = now - startTime;
         
-        function startTimer() {
-            startTime = new Date();
-            timerInterval = setInterval(updateTimer, 1000);
-        }
+        const hours = Math.floor(diff / (1000 * 60 * 60));
+        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((diff % (1000 * 60)) / 1000);
         
-        function updateTimer() {
-            const now = new Date();
-            const diff = now - startTime;
-            
-            const hours = Math.floor(diff / (1000 * 60 * 60));
-            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-            
-            document.getElementById('workout-timer').textContent = 
-                `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-        }
+        document.getElementById('workout-timer').textContent = 
+            `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+    }
+    
+    // Add Exercise
+    function addExercise() {
+        const exerciseId = document.getElementById('exercise-select').value;
+        let exerciseName, exerciseCategory;
         
-        // Add Exercise
-        function addExercise() {
-            const exerciseId = document.getElementById('exercise-select').value;
-            let exerciseName, exerciseCategory;
+        if (exerciseId) {
+            // Using existing exercise
+            const exerciseSelect = document.getElementById('exercise-select');
+            exerciseName = exerciseSelect.options[exerciseSelect.selectedIndex].text.split(' (')[0];
+        } else {
+            // Creating new exercise
+            exerciseName = document.getElementById('exercise-name').value;
+            exerciseCategory = document.getElementById('exercise-category').value;
             
-            if (exerciseId) {
-                // Using existing exercise
-                const exerciseSelect = document.getElementById('exercise-select');
-                exerciseName = exerciseSelect.options[exerciseSelect.selectedIndex].text.split(' (')[0];
-            } else {
-                // Creating new exercise
-                exerciseName = document.getElementById('exercise-name').value;
-                exerciseCategory = document.getElementById('exercise-category').value;
-                
-                if (!exerciseName) {
-                    alert('Please enter an exercise name');
-                    return;
-                }
-            }
-            
-            // Make API request to add exercise
-            const formData = new FormData();
-            formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
-            
-            if (exerciseId) {
-                formData.append('exercise_id', exerciseId);
-            } else {
-                formData.append('exercise_name', exerciseName);
-                formData.append('exercise_category', exerciseCategory);
-            }
-            
-            fetch(`/workout/${workoutData.workoutId}/add-exercise/`, {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.status === 'success') {
-                    // Remove empty state if needed
-                    const emptyState = document.getElementById('empty-state');
-                    if (emptyState) {
-                        emptyState.remove();
-                    }
-                    
-                    // Check if we need to fetch previous data
-                    if (exerciseId) {
-                        fetchPreviousExerciseData(exerciseId, data.workout_exercise_id);
-                    }
-                    
-                    // Determine the category and display name
-                    let finalCategory;
-                    if (exerciseId) {
-                        // For existing exercise, extract category from the dropdown text
-                        const selectElement = document.getElementById('exercise-select');
-                        const optionText = selectElement.options[selectElement.selectedIndex].text;
-                        const categoryText = optionText.split('(')[1].slice(0, -1).toLowerCase();
-                        finalCategory = categoryText;
-                    } else {
-                        // For new exercise, use the category from the dropdown
-                        finalCategory = exerciseCategory;
-                    }
-                    
-                    // Get display name for the category
-                    const categoryMap = {
-                        'back': 'Back',
-                        'arms': 'Arms',
-                        'chest': 'Chest', 
-                        'shoulders': 'Shoulders',
-                        'core': 'Core',
-                        'legs': 'Legs',
-                        'other': 'Other'
-                    };
-                    const categoryDisplay = categoryMap[finalCategory] || finalCategory;
-                    
-                    const exerciseList = document.getElementById('exercise-list');
-                    const exerciseCard = document.createElement('div');
-                    exerciseCard.className = 'exercise-card';
-                    exerciseCard.id = `exercise-${data.workout_exercise_id}`;
-                    exerciseCard.innerHTML = `
-                        <div class="exercise-header">
-                            <h3 class="exercise-title">${exerciseName}</h3>
-                            <span class="exercise-category category-${finalCategory}">
-                                ${categoryDisplay}
-                            </span>
-                        </div>
-                        
-                        <table class="sets-table" id="sets-table-${data.workout_exercise_id}">
-                            <thead>
-                                <tr>
-                                    <th>Set</th>
-                                    <th>Weight</th>
-                                    <th>Reps</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr class="previous-set" id="previous-set-placeholder-${data.workout_exercise_id}">
-                                    <td colspan="3">No sets added yet</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                        
-                        <div class="add-set-form">
-                            <div class="form-group">
-                                <input type="number" id="weight-${data.workout_exercise_id}" class="form-input" placeholder="Weight" min="0" step="2.5">
-                            </div>
-                            <div class="form-group">
-                                <div class="unit-toggle">
-                                    <input type="radio" id="unit-lb-${data.workout_exercise_id}" name="unit-${data.workout_exercise_id}" value="lb" checked>
-                                    <label for="unit-lb-${data.workout_exercise_id}">lb</label>
-                                    <input type="radio" id="unit-kg-${data.workout_exercise_id}" name="unit-${data.workout_exercise_id}" value="kg">
-                                    <label for="unit-kg-${data.workout_exercise_id}">kg</label>
-                                </div>
-                            </div>
-                            <div class="form-group">
-                                <input type="number" id="reps-${data.workout_exercise_id}" class="form-input" placeholder="Reps" min="1">
-                            </div>
-                            <button type="button" class="btn" id="add-set-btn-${data.workout_exercise_id}">Add Set</button>
-                        </div>
-                    `;
-                    
-                    exerciseList.appendChild(exerciseCard);
-                    
-                    // Add event listener for the new Add Set button
-                    const newSetBtn = document.getElementById(`add-set-btn-${data.workout_exercise_id}`);
-                    if (newSetBtn) {
-                        newSetBtn.addEventListener('click', function() {
-                            const exerciseIdToUse = exerciseId || data.workout_exercise_id;
-                            addSet(data.workout_exercise_id, exerciseIdToUse);
-                        });
-                    }
-                    
-                    // Update workoutData with the new exercise
-                    workoutData.exercises.push({
-                        id: data.workout_exercise_id,
-                        exerciseId: exerciseId || data.workout_exercise_id
-                    });
-                    
-                    // Clear the form
-                    document.getElementById('exercise-select').value = '';
-                    if (!exerciseId) {
-                        document.getElementById('exercise-name').value = '';
-                    }
-                    
-                    showNewExerciseForm(true);
-                } else {
-                    alert('Error adding exercise: ' + data.message);
-                }
-            })
-            .catch(error => {
-                console.error('Error adding exercise:', error);
-                alert('An error occurred while adding the exercise');
-            });
-        }
-        
-        // Add Set
-        function addSet(workoutExerciseId, exerciseId) {
-            const weightInput = document.getElementById(`weight-${workoutExerciseId}`);
-            const repsInput = document.getElementById(`reps-${workoutExerciseId}`);
-            const weight = weightInput.value;
-            const reps = repsInput.value;
-            
-            if (!weight || !reps) {
-                alert('Please enter both weight and reps');
+            if (!exerciseName) {
+                alert('Please enter an exercise name');
                 return;
             }
-            
-            // Get the selected weight unit
-            const unitLb = document.getElementById(`unit-lb-${workoutExerciseId}`);
-            const weightUnit = unitLb.checked ? 'lb' : 'kg';
-            
-            // Make API request to add set
-            const formData = new FormData();
-            formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
-            formData.append('weight', weight);
-            formData.append('weight_unit', weightUnit);
-            formData.append('reps', reps);
-            
-            fetch(`/workout-exercise/${workoutExerciseId}/add-set/`, {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.status === 'success') {
-                    // Remove the placeholder row if it exists
-                    const placeholder = document.getElementById(`previous-set-placeholder-${workoutExerciseId}`);
-                    if (placeholder) {
-                        placeholder.remove();
-                    }
-                    
-                    // Add the new set to the table
-                    const setsTable = document.getElementById(`sets-table-${workoutExerciseId}`).querySelector('tbody');
-                    const newRow = document.createElement('tr');
-                    newRow.innerHTML = `
-                        <td>${data.set_number}</td>
-                        <td>${data.weight} ${data.weight_unit}</td>
-                        <td>${data.reps}</td>
-                    `;
-                    setsTable.appendChild(newRow);
-                    
-                    // Clear the inputs
-                    weightInput.value = '';
-                    repsInput.value = '';
-                    weightInput.focus();
-                } else {
-                    alert('Error adding set: ' + data.message);
-                }
-            })
-            .catch(error => {
-                console.error('Error adding set:', error);
-                alert('An error occurred while adding the set');
-            });
         }
         
-        // Fetch Previous Exercise Data
-        function fetchPreviousExerciseData(exerciseId, workoutExerciseId) {
-            fetch(`/exercise/${exerciseId}/previous-data/`)
-            .then(response => response.json())
-            .then(data => {
-                if (data.status === 'success' && data.has_previous) {
-                    // Add the previous workout data to the table
-                    const previousSets = data.previous_sets;
-                    const setsTable = document.getElementById(`sets-table-${workoutExerciseId}`).querySelector('tbody');
+        // Make API request to add exercise
+        const formData = new FormData();
+        formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+        
+        if (exerciseId) {
+            formData.append('exercise_id', exerciseId);
+        } else {
+            formData.append('exercise_name', exerciseName);
+            formData.append('exercise_category', exerciseCategory);
+        }
+        
+        fetch(`/workout/${workoutData.workoutId}/add-exercise/`, {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                // Remove empty state if needed
+                const emptyState = document.getElementById('empty-state');
+                if (emptyState) {
+                    emptyState.remove();
+                }
+                
+                // Check if we need to fetch previous data
+                if (exerciseId) {
+                    fetchPreviousExerciseData(exerciseId, data.workout_exercise_id);
+                }
+                
+                // Determine the category and display name
+                let finalCategory;
+                if (exerciseId) {
+                    // For existing exercise, extract category from the dropdown text
+                    const selectElement = document.getElementById('exercise-select');
+                    const optionText = selectElement.options[selectElement.selectedIndex].text;
+                    const categoryText = optionText.split('(')[1].slice(0, -1).toLowerCase();
+                    finalCategory = categoryText;
+                } else {
+                    // For new exercise, use the category from the dropdown
+                    finalCategory = exerciseCategory;
+                }
+                
+                // Get display name for the category
+                const categoryMap = {
+                    'back': 'Back',
+                    'arms': 'Arms',
+                    'chest': 'Chest', 
+                    'shoulders': 'Shoulders',
+                    'core': 'Core',
+                    'legs': 'Legs',
+                    'other': 'Other'
+                };
+                const categoryDisplay = categoryMap[finalCategory] || finalCategory;
+                
+                const exerciseList = document.getElementById('exercise-list');
+                const exerciseCard = document.createElement('div');
+                exerciseCard.className = 'exercise-card';
+                exerciseCard.id = `exercise-${data.workout_exercise_id}`;
+                exerciseCard.innerHTML = `
+                    <div class="exercise-header">
+                        <h3 class="exercise-title">${exerciseName}</h3>
+                        <span class="exercise-category category-${finalCategory}">
+                            ${categoryDisplay}
+                        </span>
+                    </div>
                     
-                    // Clear the placeholder if it exists
-                    const placeholder = document.getElementById(`previous-set-placeholder-${workoutExerciseId}`);
-                    if (placeholder) {
-                        placeholder.remove();
-                    }
+                    <table class="sets-table" id="sets-table-${data.workout_exercise_id}">
+                        <thead>
+                            <tr>
+                                <th>Set</th>
+                                <th>Weight</th>
+                                <th>Reps</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="previous-set" id="previous-set-placeholder-${data.workout_exercise_id}">
+                                <td colspan="3">No sets added yet</td>
+                            </tr>
+                        </tbody>
+                    </table>
                     
-                    // Add a header row for previous sets
-                    const headerRow = document.createElement('tr');
-                    headerRow.className = 'previous-set';
-                    headerRow.innerHTML = `<td colspan="3">Previous workout (${data.previous_date}):</td>`;
-                    setsTable.appendChild(headerRow);
-                    
-                    // Add each previous set
-                    previousSets.forEach(set => {
-                        const newRow = document.createElement('tr');
-                        newRow.className = 'previous-set';
-                        newRow.innerHTML = `
-                            <td>${set.set_number}</td>
-                            <td>${set.weight} ${set.weight_unit}</td>
-                            <td>${set.reps}</td>
-                        `;
-                        setsTable.appendChild(newRow);
+                    <div class="add-set-form">
+                        <div class="form-group">
+                            <input type="number" id="weight-${data.workout_exercise_id}" class="form-input" placeholder="Weight" min="0" step="2.5">
+                        </div>
+                        <div class="form-group">
+                            <div class="unit-toggle">
+                                <input type="radio" id="unit-lb-${data.workout_exercise_id}" name="unit-${data.workout_exercise_id}" value="lb" checked>
+                                <label for="unit-lb-${data.workout_exercise_id}">lb</label>
+                                <input type="radio" id="unit-kg-${data.workout_exercise_id}" name="unit-${data.workout_exercise_id}" value="kg">
+                                <label for="unit-kg-${data.workout_exercise_id}">kg</label>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <input type="number" id="reps-${data.workout_exercise_id}" class="form-input" placeholder="Reps" min="1">
+                        </div>
+                        <button type="button" class="btn" id="add-set-btn-${data.workout_exercise_id}">Add Set</button>
+                    </div>
+                `;
+                
+                exerciseList.appendChild(exerciseCard);
+                
+                // Add event listener for the new Add Set button
+                const newSetBtn = document.getElementById(`add-set-btn-${data.workout_exercise_id}`);
+                if (newSetBtn) {
+                    newSetBtn.addEventListener('click', function() {
+                        const exerciseIdToUse = exerciseId || data.workout_exercise_id;
+                        addSet(data.workout_exercise_id, exerciseIdToUse);
                     });
                 }
-            })
-            .catch(error => {
-                console.error('Error fetching previous exercise data:', error);
-            });
-        }
-        
-        // Toggle between existing and new exercise form
-        function showNewExerciseForm(show) {
-            const newExerciseForm = document.getElementById('new-exercise-form');
-            
-            if (show) {
-                newExerciseForm.style.display = 'block';
+                
+                // Update workoutData with the new exercise
+                workoutData.exercises.push({
+                    id: data.workout_exercise_id,
+                    exerciseId: exerciseId || data.workout_exercise_id
+                });
+                
+                // Clear the form
+                document.getElementById('exercise-select').value = '';
+                if (!exerciseId) {
+                    document.getElementById('exercise-name').value = '';
+                }
+                
+                showNewExerciseForm(true);
             } else {
-                newExerciseForm.style.display = 'none';
+                alert('Error adding exercise: ' + data.message);
             }
+        })
+        .catch(error => {
+            console.error('Error adding exercise:', error);
+            alert('An error occurred while adding the exercise');
+        });
+    }
+    
+    // Add Set
+    function addSet(workoutExerciseId, exerciseId) {
+        const weightInput = document.getElementById(`weight-${workoutExerciseId}`);
+        const repsInput = document.getElementById(`reps-${workoutExerciseId}`);
+        const weight = weightInput.value;
+        const reps = repsInput.value;
+        
+        if (!weight || !reps) {
+            alert('Please enter both weight and reps');
+            return;
         }
         
-        // Modal functions
-        function openModal() {
-            document.getElementById('previous-workout-modal').style.display = 'block';
-        }
+        // Get the selected weight unit
+        const unitLb = document.getElementById(`unit-lb-${workoutExerciseId}`);
+        const weightUnit = unitLb.checked ? 'lb' : 'kg';
         
-        function closeModal() {
-            document.getElementById('previous-workout-modal').style.display = 'none';
-        }
+        // Make API request to add set
+        const formData = new FormData();
+        formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+        formData.append('weight', weight);
+        formData.append('weight_unit', weightUnit);
+        formData.append('reps', reps);
         
-        // Initialize
-        document.addEventListener('DOMContentLoaded', function() {
-            // Start the timer
-            startTimer();
-            
-            // Set up event listeners for add set buttons
-            if (workoutData.exercises && workoutData.exercises.length > 0) {
-                workoutData.exercises.forEach(function(exercise) {
-                    const addSetBtn = document.getElementById(`add-set-btn-${exercise.id}`);
-                    if (addSetBtn) {
-                        addSetBtn.addEventListener('click', function() {
-                            addSet(exercise.id, exercise.exerciseId);
-                        });
-                    }
+        fetch(`/workout-exercise/${workoutExerciseId}/add-set/`, {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                // Remove the placeholder row if it exists
+                const placeholder = document.getElementById(`previous-set-placeholder-${workoutExerciseId}`);
+                if (placeholder) {
+                    placeholder.remove();
+                }
+                
+                // Add the new set to the table
+                const setsTable = document.getElementById(`sets-table-${workoutExerciseId}`).querySelector('tbody');
+                const newRow = document.createElement('tr');
+                newRow.innerHTML = `
+                    <td>${data.set_number}</td>
+                    <td>${data.weight} ${data.weight_unit}</td>
+                    <td>${data.reps}</td>
+                `;
+                setsTable.appendChild(newRow);
+                
+                // Clear the inputs
+                weightInput.value = '';
+                repsInput.value = '';
+                weightInput.focus();
+            } else {
+                alert('Error adding set: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error adding set:', error);
+            alert('An error occurred while adding the set');
+        });
+    }
+    
+    // Fetch Previous Exercise Data
+    function fetchPreviousExerciseData(exerciseId, workoutExerciseId) {
+        fetch(`/exercise/${exerciseId}/previous-data/`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success' && data.has_previous) {
+                // Add the previous workout data to the table
+                const previousSets = data.previous_sets;
+                const setsTable = document.getElementById(`sets-table-${workoutExerciseId}`).querySelector('tbody');
+                
+                // Clear the placeholder if it exists
+                const placeholder = document.getElementById(`previous-set-placeholder-${workoutExerciseId}`);
+                if (placeholder) {
+                    placeholder.remove();
+                }
+                
+                // Add a header row for previous sets
+                const headerRow = document.createElement('tr');
+                headerRow.className = 'previous-set';
+                headerRow.innerHTML = `<td colspan="3">Previous workout (${data.previous_date}):</td>`;
+                setsTable.appendChild(headerRow);
+                
+                // Add each previous set
+                previousSets.forEach(set => {
+                    const newRow = document.createElement('tr');
+                    newRow.className = 'previous-set';
+                    newRow.innerHTML = `
+                        <td>${set.set_number}</td>
+                        <td>${set.weight} ${set.weight_unit}</td>
+                        <td>${set.reps}</td>
+                    `;
+                    setsTable.appendChild(newRow);
                 });
             }
-            
-            // Add exercise button
-            const addExerciseBtn = document.getElementById('add-exercise-btn');
-            if (addExerciseBtn) {
-                addExerciseBtn.addEventListener('click', addExercise);
-            }
-            
-            // Close modal button
-            const closeModalBtn = document.getElementById('close-modal-btn');
-            if (closeModalBtn) {
-                closeModalBtn.addEventListener('click', closeModal);
-            }
-            
-            // Toggle between existing and new exercise
-            const exerciseSelect = document.getElementById('exercise-select');
-            if (exerciseSelect) {
-                exerciseSelect.addEventListener('change', function() {
-                    showNewExerciseForm(!this.value);
-                });
-            }
-            
-            // When the user clicks anywhere outside of the modal, close it
-            window.addEventListener('click', function(event) {
-                const modal = document.getElementById('previous-workout-modal');
-                if (event.target === modal) {
-                    closeModal();
+        })
+        .catch(error => {
+            console.error('Error fetching previous exercise data:', error);
+        });
+    }
+    
+    // Toggle between existing and new exercise form
+    function showNewExerciseForm(show) {
+        const newExerciseForm = document.getElementById('new-exercise-form');
+        
+        if (show) {
+            newExerciseForm.style.display = 'block';
+        } else {
+            newExerciseForm.style.display = 'none';
+        }
+    }
+    
+    // Modal functions
+    function openModal() {
+        document.getElementById('previous-workout-modal').style.display = 'block';
+    }
+    
+    function closeModal() {
+        document.getElementById('previous-workout-modal').style.display = 'none';
+    }
+    
+    // Initialize
+    document.addEventListener('DOMContentLoaded', function() {
+        // Start the timer
+        startTimer();
+        
+        // Set up event listeners for add set buttons
+        if (workoutData.exercises && workoutData.exercises.length > 0) {
+            workoutData.exercises.forEach(function(exercise) {
+                const addSetBtn = document.getElementById(`add-set-btn-${exercise.id}`);
+                if (addSetBtn) {
+                    addSetBtn.addEventListener('click', function() {
+                        addSet(exercise.id, exercise.exerciseId);
+                    });
                 }
             });
-            
-            // Show the new exercise form by default
-            showNewExerciseForm(true);
+        }
+        
+        // Add exercise button
+        const addExerciseBtn = document.getElementById('add-exercise-btn');
+        if (addExerciseBtn) {
+            addExerciseBtn.addEventListener('click', addExercise);
+        }
+        
+        // Close modal button
+        const closeModalBtn = document.getElementById('close-modal-btn');
+        if (closeModalBtn) {
+            closeModalBtn.addEventListener('click', closeModal);
+        }
+        
+        // Toggle between existing and new exercise
+        const exerciseSelect = document.getElementById('exercise-select');
+        if (exerciseSelect) {
+            exerciseSelect.addEventListener('change', function() {
+                showNewExerciseForm(!this.value);
+            });
+        }
+        
+        // When the user clicks anywhere outside of the modal, close it
+        window.addEventListener('click', function(event) {
+            const modal = document.getElementById('previous-workout-modal');
+            if (event.target === modal) {
+                closeModal();
+            }
         });
-    </script>
-</body>
-</html>
+        
+        // Show the new exercise form by default
+        showNewExerciseForm(true);
+    });
+</script>
+{% endblock %}

@@ -1,168 +1,171 @@
-<!DOCTYPE html>
-<html>
-    <head>
-        <style>
-            .table-container {
-                width: 100%;
-                overflow-x: auto;
-            }
-        
-            table {
-                width: 100%;
-                border-collapse: collapse;
-                text-align: center;
-                background: #fff;
-            }
-        
-            th, td {
-                border: 1px solid #ddd;
-                padding: 10px;
-            }
-        
-            th {
-                background: #f4f4f4;
-                font-weight: bold;
-            }
-        
-            tr:nth-child(even) {
-                background: #f9f9f9;
-            }
-        
-            input[type="number"] {
-                width: 80px;
-                padding: 5px;
-                text-align: center;
-                border: 1px solid #ccc;
-                border-radius: 4px;
-            }
-    
-            /* Add styles for the dropdown accordion */
-            .ingredient-dropdown {
-                cursor: pointer;
-                text-decoration: underline;
-                color: #007bff;
-            }
-    
-            .ingredient-list {
-                display: none;
-                list-style-type: none;
-                padding-left: 0;
-                margin-top: 5px;
-            }
-    
-            .ingredient-list li {
-                padding: 5px;
-                background-color: #f9f9f9;
-                margin: 2px 0;
-            }
-    
-            .arrow {
-                margin-left: 5px;
-                transform: rotate(0deg);
-                transition: transform 0.3s;
-            }
-    
-            .opened .arrow {
-                transform: rotate(90deg);
-            }
-    
-            /* Home button style */
-            .home-button {
-                padding: 10px 20px;
-                font-size: 16px;
-                background-color: #007bff;
-                color: white;
-                border: none;
-                border-radius: 5px;
-                cursor: pointer;
-                text-decoration: none;
-                display: inline-block;
-                margin: 20px 0;
-            }
-    
-            .home-button:hover {
-                background-color: #0056b3;
-            }
-        </style>
-    </head>
-    <body>
-        <h1>All Daily Submissions</h1>
-    
-    
-        <div class="table-container">
-            <table>
-                <thead>
+{% extends 'meals/base.html' %}
+{% load static %}
+
+{% block title %}All Daily Submissions{% endblock %}
+
+{% block style %}
+<style>
+    .table-container {
+        width: 100%;
+        overflow-x: auto;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        text-align: center;
+        background: #fff;
+    }
+
+    th, td {
+        border: 1px solid #ddd;
+        padding: 10px;
+    }
+
+    th {
+        background: #f4f4f4;
+        font-weight: bold;
+    }
+
+    tr:nth-child(even) {
+        background: #f9f9f9;
+    }
+
+    input[type="number"] {
+        width: 80px;
+        padding: 5px;
+        text-align: center;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+    }
+
+    /* Add styles for the dropdown accordion */
+    .ingredient-dropdown {
+        cursor: pointer;
+        text-decoration: underline;
+        color: #007bff;
+    }
+
+    .ingredient-list {
+        display: none;
+        list-style-type: none;
+        padding-left: 0;
+        margin-top: 5px;
+    }
+
+    .ingredient-list li {
+        padding: 5px;
+        background-color: #f9f9f9;
+        margin: 2px 0;
+    }
+
+    .arrow {
+        margin-left: 5px;
+        transform: rotate(0deg);
+        transition: transform 0.3s;
+    }
+
+    .opened .arrow {
+        transform: rotate(90deg);
+    }
+
+    /* Home button style */
+    .home-button {
+        padding: 10px 20px;
+        font-size: 16px;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-block;
+        margin: 20px 0;
+    }
+
+    .home-button:hover {
+        background-color: #0056b3;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+    <h1>All Daily Submissions</h1>
+
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Dish</th>
+                    <th>Image</th>
+                    <th>Ingredients</th>
+                    <th>Total Calories</th>
+                    <th>Total Protein</th>
+                    <th>Total Fats</th>
+                    <th>Total Carbohydrates</th>
+                    <th>Total Cost per Serving</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for submission_total in submissions %}
                     <tr>
-                        <th>Date</th>
-                        <th>Dish</th>
-                        <th>Image</th>  <!-- Add this new column -->
-                        <th>Ingredients</th>
-                        <th>Total Calories</th>
-                        <th>Total Protein</th>
-                        <th>Total Fats</th>
-                        <th>Total Carbohydrates</th>
-                        <th>Total Cost per Serving</th>
-                        <th>Actions</th>  <!-- New column for actions -->
+                        <td>{{ submission_total.submission.submission_date }}</td>
+                        <td>{{ submission_total.submission.dish.name }}</td>
+                        <td>
+                            {% if submission_total.submission.image %}
+                                <img src="{{ submission_total.submission.image.url }}" alt="Food Image" style="max-width: 100px;">
+                            {% else %}
+                                No image
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="ingredient-dropdown" onclick="toggleIngredients(this)">
+                                Ingredients <span class="arrow">→</span>
+                            </div>
+                            <ul class="ingredient-list">
+                                {% for dish_ingredient in submission_total.submission.dish.dish_ingredients.all %}
+                                    <li>{{ dish_ingredient.ingredient.name }} ({{ dish_ingredient.grams_used }}g)</li>
+                                {% endfor %}
+                            </ul>
+                        </td>
+                        <td>{{ submission_total.total_calories }}</td>
+                        <td>{{ submission_total.total_protein }}</td>
+                        <td>{{ submission_total.total_fats }}</td>
+                        <td>{{ submission_total.total_carbohydrates }}</td>
+                        <td>${{ submission_total.total_cost }}</td>
+                        <td>
+                            <form method="POST" action="{% url 'delete_submission' submission_total.submission.pk %}">
+                                {% csrf_token %}
+                                <button type="submit" onclick="return confirm('Are you sure you want to delete this submission?');">
+                                    Delete
+                                </button>
+                            </form>
+                        </td>
                     </tr>
-                </thead>
-                <tbody>
-                    {% for submission_total in submissions %}
-                        <tr>
-                            <td>{{ submission_total.submission.submission_date }}</td> <!-- Submission date -->
-                            <td>{{ submission_total.submission.dish.name }}</td> <!-- Dish name -->
-                            <td>
-                                {% if submission_total.submission.image %}
-                                    <img src="{{ submission_total.submission.image.url }}" alt="Food Image" style="max-width: 100px;">
-                                {% else %}
-                                    No image
-                                {% endif %}
-                            </td>
-                            <td>
-                                <div class="ingredient-dropdown" onclick="toggleIngredients(this)">
-                                    Ingredients <span class="arrow">→</span>
-                                </div>
-                                <ul class="ingredient-list">
-                                    {% for dish_ingredient in submission_total.submission.dish.dish_ingredients.all %}
-                                        <li>{{ dish_ingredient.ingredient.name }} ({{ dish_ingredient.grams_used }}g)</li>
-                                    {% endfor %}
-                                </ul>
-                            </td>
-                            <td>{{ submission_total.total_calories }}</td>  <!-- Total calories per submission -->
-                            <td>{{ submission_total.total_protein }}</td>  <!-- Total protein per submission -->
-                            <td>{{ submission_total.total_fats }}</td>  <!-- Total fats per submission -->
-                            <td>{{ submission_total.total_carbohydrates }}</td>  <!-- Total carbs per submission -->
-                            <td>${{ submission_total.total_cost }}</td>  <!-- Total cost per submission with dollar sign -->
-                            <td>
-                                <form method="POST" action="{% url 'delete_submission' submission_total.submission.pk %}">
-                                    {% csrf_token %}
-                                    <button type="submit" onclick="return confirm('Are you sure you want to delete this submission?');">
-                                        Delete
-                                    </button>
-                                </form>
-                            </td>
-                        </tr>
-                    {% endfor %}
-                </tbody>
-                
-            </table>
-        </div>
-    
-        <script>
-            // Function to toggle the ingredient list visibility and rotate the arrow
-            function toggleIngredients(element) {
-                const ingredientList = element.nextElementSibling;
-                const arrow = element.querySelector('.arrow');
-                if (ingredientList.style.display === "block") {
-                    ingredientList.style.display = "none";
-                    arrow.style.transform = "rotate(0deg)";
-                } else {
-                    ingredientList.style.display = "block";
-                    arrow.style.transform = "rotate(90deg)";
-                }
-            }
-        </script>
-    </body>
-    
-     <!-- Home Button -->
-     <a href="{% url 'home' %}" class="home-button">Home</a> <!-- Adjust the URL if needed -->
-</html>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Home Button -->
+    <a href="{% url 'home' %}" class="home-button">Home</a>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Function to toggle the ingredient list visibility and rotate the arrow
+    function toggleIngredients(element) {
+        const ingredientList = element.nextElementSibling;
+        const arrow = element.querySelector('.arrow');
+        if (ingredientList.style.display === "block") {
+            ingredientList.style.display = "none";
+            arrow.style.transform = "rotate(0deg)";
+        } else {
+            ingredientList.style.display = "block";
+            arrow.style.transform = "rotate(90deg)";
+        }
+    }
+</script>
+{% endblock %}

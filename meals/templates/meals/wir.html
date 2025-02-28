@@ -1,310 +1,279 @@
+{% extends 'meals/base.html' %}
 {% load static %}
 {% load time_filters %}
-{% load time_filters %}
-<!DOCTYPE html>
-<html>
-<head>
-    <title>WIR Page</title>
-    <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            margin: 20px;
-            background-color: #f9f9f9;
-            color: #333;
-        }
-        h1, h2 {
-            text-align: center;
-            color: #333;
-        }
-        form {
-            text-align: center;
-            background: #fff;
-            padding: 20px;
-            margin: 0 auto 20px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            border-radius: 8px;
-            max-width: 600px;
-        }
-        .timer {
-            font-size: 2.5em;
-            margin: 20px 0;
-            font-weight: bold;
-            color: #007bff;
-        }
-        .button {
-            padding: 10px 20px;
-            margin: 5px;
-            background: #007bff;
-            color: #fff;
-            border: none;
-            cursor: pointer;
-            border-radius: 5px;
-            transition: background-color 0.3s, transform 0.2s;
-        }
-        .button:hover {
-            background: #0056b3;
-            transform: translateY(-2px);
-        }
-        .button:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-            transform: none;
-        }
-        .task-container {
-            position: relative;
-            padding-bottom: 20px;
-        }
-        .task-title {
-            font-size: 1.2em;
-            font-weight: bold;
-            margin-bottom: 10px;
-        }
-        .subtask-container {
-            display: none;
-            background: #e9f5ff;
-            padding: 20px;
-            border-radius: 8px;
-            margin-top: 20px;
-            border-left: 4px solid #007bff;
-        }
-        .subtask-timer {
-            font-size: 2em;
-            margin: 15px 0;
-            color: #0056b3;
-            font-weight: bold;
-        }
-        .subtask-title {
-            font-size: 1.1em;
-            font-weight: bold;
-            color: #0056b3;
-        }
-        .subtask-list {
-            margin-top: 20px;
-            display: none;
-        }
-        .subtask-list h3 {
-            margin-bottom: 10px;
-            color: #007bff;
-            border-bottom: 1px solid #ccc;
-            padding-bottom: 5px;
-        }
-        .subtask-item {
-            background: #fff;
-            padding: 12px;
-            margin: 8px 0;
-            border-radius: 5px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            transition: transform 0.2s;
-        }
-        .subtask-item:hover {
-            transform: translateX(5px);
-        }
-        .subtask-item .subtask-name {
-            font-weight: 500;
-        }
-        .subtask-item .subtask-duration {
-            color: #007bff;
-            font-weight: bold;
-        }
-        .metrics, .task-list {
-            text-align: center;
-            margin-top: 20px;
-            background: #fff;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            max-width: 800px;
-            margin-left: auto;
-            margin-right: auto;
-        }
-        .task-list ul {
-            list-style: none;
-            padding: 0;
-            text-align: left;
-        }
-        .task-list li {
-            background: #f9f9f9;
-            margin: 10px auto;
-            padding: 15px;
-            border-radius: 5px;
-            border-left: 4px solid #007bff;
-            transition: transform 0.2s;
-        }
-        .task-list li:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-        }
-        .task-details {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .task-title-display {
-            font-weight: bold;
-            font-size: 1.1em;
-        }
-        .task-duration {
-            color: #007bff;
-            font-weight: bold;
-        }
-        .subtasks-section {
-            margin-top: 10px;
-            padding-top: 10px;
-            border-top: 1px dashed #ccc;
-            font-size: 0.9em;
-            display: none;
-        }
-        .subtasks-section.has-subtasks {
-            display: block;
-        }
-        .subtasks-section h4 {
-            margin: 5px 0;
-            color: #555;
-        }
-        .subtasks-section ul.subtasks-list {
-            display: none;
-            margin-top: 5px;
-        }
-        .subtasks-section li {
-            background: #f0f0f0;
-            border-left: 3px solid #0056b3;
-            margin: 5px 0;
-            padding: 8px;
-        }
-        .home-button {
-            display: block;
-            width: 200px;
-            margin: 20px auto;
-            padding: 10px;
-            background-color: #4CAF50;
-            color: white;
-            text-align: center;
-            text-decoration: none;
-            border-radius: 5px;
-            font-weight: bold;
-            transition: background-color 0.3s;
-        }
-        .home-button:hover {
-            background-color: #45a049;
-        }
-        .active-task-indicator {
-            position: absolute;
-            top: -10px;
-            right: -10px;
-            background: #28a745;
-            color: white;
-            border-radius: 50%;
-            width: 20px;
-            height: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 12px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-            display: none;
-        }
-        .active-task-indicator.active {
-            display: flex;
-        }
-        .toggle-subtasks-btn {
-            background: none;
-            border: none;
-            color: #007bff;
-            cursor: pointer;
-            font-size: 0.9em;
-            margin-left: 10px;
-            padding: 2px 5px;
-            border-radius: 3px;
-        }
-        .toggle-subtasks-btn:hover {
-            background-color: #e9f5ff;
-            text-decoration: underline;
-        }
-        .subtasks-visible {
-            display: block !important;
-        }
-        .nested-subtask {
-            margin-top: 0;
-            background: #e3f0ff;
-            border-left: 4px solid #0056b3;
-            display: none;
-        }
-        .task-hierarchy {
-            margin-left: 20px;
-        }
-        .parent-task {
-            font-weight: bold;
-        }
-        .nested-subtasks-list {
-            margin-top: 5px;
-            margin-left: 20px;
-            padding-left: 0;
-            list-style-type: none;
-        }
-        .nested-subtask-item {
-            background-color: #f0f8ff;
-            padding: 6px 8px;
-            margin: 4px 0;
-            border-left: 2px solid #4682b4;
-            border-radius: 3px;
-            font-size: 0.95em;
-        }
-        .nested-indicator {
-            color: #4682b4;
-            font-weight: bold;
-            margin-right: 5px;
-        }
-        .formatted-time {
-            font-weight: bold;
-            color: #007bff;
-            font-size: 1.2em;
-        }
-        .nested-subtask-item-deep {
-            background-color: #e6f2ff;
-            padding: 6px 8px 6px 15px;
-            margin: 4px 0;
-            border-left: 2px solid #6495ed;
-            border-radius: 3px;
-            font-size: 0.9em;
-        }
-        .nested-subtasks-list-deep {
-            margin-top: 5px;
-            margin-left: 15px;
-            padding-left: 0;
-            list-style-type: none;
-        }
-        .formatted-time {
-            font-weight: bold;
-            color: #007bff;
-        }
-        .subtasks-visible {
-            display: block !important;
-        }
-        .nested-subtasks-list {
-            margin-top: 5px;
-            margin-left: 20px;
-            padding-left: 0;
-            list-style-type: none;
-        }
-        .nested-subtask-item {
-            background-color: #f0f8ff;
-            padding: 6px 8px;
-            margin: 4px 0;
-            border-left: 2px solid #4682b4;
-            border-radius: 3px;
-            font-size: 0.95em;
-        }
-        .nested-indicator {
-            color: #4682b4;
-            font-weight: bold;
-            margin-right: 5px;
-        }
-    </style>
-</head>
-<body>
+
+{% block title %}WIR Page{% endblock %}
+
+{% block style %}
+<style>
+    h1, h2 {
+        text-align: center;
+        color: #333;
+    }
+    form {
+        text-align: center;
+        background: #fff;
+        padding: 20px;
+        margin: 0 auto 20px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        border-radius: 8px;
+        max-width: 600px;
+    }
+    .timer {
+        font-size: 2.5em;
+        margin: 20px 0;
+        font-weight: bold;
+        color: #007bff;
+    }
+    .button {
+        padding: 10px 20px;
+        margin: 5px;
+        background: #007bff;
+        color: #fff;
+        border: none;
+        cursor: pointer;
+        border-radius: 5px;
+        transition: background-color 0.3s, transform 0.2s;
+    }
+    .button:hover {
+        background: #0056b3;
+        transform: translateY(-2px);
+    }
+    .button:disabled {
+        background: #ccc;
+        cursor: not-allowed;
+        transform: none;
+    }
+    .task-container {
+        position: relative;
+        padding-bottom: 20px;
+    }
+    .task-title {
+        font-size: 1.2em;
+        font-weight: bold;
+        margin-bottom: 10px;
+    }
+    .subtask-container {
+        display: none;
+        background: #e9f5ff;
+        padding: 20px;
+        border-radius: 8px;
+        margin-top: 20px;
+        border-left: 4px solid #007bff;
+    }
+    .subtask-timer {
+        font-size: 2em;
+        margin: 15px 0;
+        color: #0056b3;
+        font-weight: bold;
+    }
+    .subtask-title {
+        font-size: 1.1em;
+        font-weight: bold;
+        color: #0056b3;
+    }
+    .subtask-list {
+        margin-top: 20px;
+        display: none;
+    }
+    .subtask-list h3 {
+        margin-bottom: 10px;
+        color: #007bff;
+        border-bottom: 1px solid #ccc;
+        padding-bottom: 5px;
+    }
+    .subtask-item {
+        background: #fff;
+        padding: 12px;
+        margin: 8px 0;
+        border-radius: 5px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        transition: transform 0.2s;
+    }
+    .subtask-item:hover {
+        transform: translateX(5px);
+    }
+    .subtask-item .subtask-name {
+        font-weight: 500;
+    }
+    .subtask-item .subtask-duration {
+        color: #007bff;
+        font-weight: bold;
+    }
+    .metrics, .task-list {
+        text-align: center;
+        margin-top: 20px;
+        background: #fff;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        max-width: 800px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    .task-list ul {
+        list-style: none;
+        padding: 0;
+        text-align: left;
+    }
+    .task-list li {
+        background: #f9f9f9;
+        margin: 10px auto;
+        padding: 15px;
+        border-radius: 5px;
+        border-left: 4px solid #007bff;
+        transition: transform 0.2s;
+    }
+    .task-list li:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    .task-details {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .task-title-display {
+        font-weight: bold;
+        font-size: 1.1em;
+    }
+    .task-duration {
+        color: #007bff;
+        font-weight: bold;
+    }
+    .subtasks-section {
+        margin-top: 10px;
+        padding-top: 10px;
+        border-top: 1px dashed #ccc;
+        font-size: 0.9em;
+        display: none;
+    }
+    .subtasks-section.has-subtasks {
+        display: block;
+    }
+    .subtasks-section h4 {
+        margin: 5px 0;
+        color: #555;
+    }
+    .subtasks-section ul.subtasks-list {
+        display: none;
+        margin-top: 5px;
+    }
+    .subtasks-section li {
+        background: #f0f0f0;
+        border-left: 3px solid #0056b3;
+        margin: 5px 0;
+        padding: 8px;
+    }
+    .home-button {
+        display: block;
+        width: 200px;
+        margin: 20px auto;
+        padding: 10px;
+        background-color: #4CAF50;
+        color: white;
+        text-align: center;
+        text-decoration: none;
+        border-radius: 5px;
+        font-weight: bold;
+        transition: background-color 0.3s;
+    }
+    .home-button:hover {
+        background-color: #45a049;
+    }
+    .active-task-indicator {
+        position: absolute;
+        top: -10px;
+        right: -10px;
+        background: #28a745;
+        color: white;
+        border-radius: 50%;
+        width: 20px;
+        height: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        display: none;
+    }
+    .active-task-indicator.active {
+        display: flex;
+    }
+    .toggle-subtasks-btn {
+        background: none;
+        border: none;
+        color: #007bff;
+        cursor: pointer;
+        font-size: 0.9em;
+        margin-left: 10px;
+        padding: 2px 5px;
+        border-radius: 3px;
+    }
+    .toggle-subtasks-btn:hover {
+        background-color: #e9f5ff;
+        text-decoration: underline;
+    }
+    .subtasks-visible {
+        display: block !important;
+    }
+    .nested-subtask {
+        margin-top: 0;
+        background: #e3f0ff;
+        border-left: 4px solid #0056b3;
+        display: none;
+    }
+    .task-hierarchy {
+        margin-left: 20px;
+    }
+    .parent-task {
+        font-weight: bold;
+    }
+    .nested-subtasks-list {
+        margin-top: 5px;
+        margin-left: 20px;
+        padding-left: 0;
+        list-style-type: none;
+    }
+    .nested-subtask-item {
+        background-color: #f0f8ff;
+        padding: 6px 8px;
+        margin: 4px 0;
+        border-left: 2px solid #4682b4;
+        border-radius: 3px;
+        font-size: 0.95em;
+    }
+    .nested-indicator {
+        color: #4682b4;
+        font-weight: bold;
+        margin-right: 5px;
+    }
+    .formatted-time {
+        font-weight: bold;
+        color: #007bff;
+        font-size: 1.2em;
+    }
+    .nested-subtask-item-deep {
+        background-color: #e6f2ff;
+        padding: 6px 8px 6px 15px;
+        margin: 4px 0;
+        border-left: 2px solid #6495ed;
+        border-radius: 3px;
+        font-size: 0.9em;
+    }
+    .nested-subtasks-list-deep {
+        margin-top: 5px;
+        margin-left: 15px;
+        padding-left: 0;
+        list-style-type: none;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
     <h1>WIR Page</h1>
     <!-- Task Form with Timer -->
     <form method="post" id="taskForm">
@@ -403,10 +372,9 @@
     </div>
 
     <a href="{% url 'home' %}" class="home-button">Home</a>
-</body>
-</html>
+{% endblock %}
 
-<!-- JavaScript at the end to ensure DOM is fully loaded -->
+{% block scripts %}
 <script>
 // Global variables and DOM references
 const timerDisplay = document.getElementById('timerDisplay');
@@ -1119,3 +1087,4 @@ window.addEventListener('beforeunload', function() {
     }
 });
 </script>
+{% endblock %}

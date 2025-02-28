@@ -1,117 +1,68 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Daily Submission</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-        }
-        .grid-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 20px;
-        }
-        .grid-item {
-            border: 1px solid #ccc;
-            padding: 10px;
-            border-radius: 5px;
-        }
-        form {
-            max-width: 600px;
-            margin: 0 auto;
-        }
-        label {
-            display: block;
-            margin-top: 10px;
-        }
-        input, select, textarea {
-            width: 100%;
-            padding: 8px;
-            margin-top: 5px;
-        }
-        button {
-            margin-top: 20px;
-            padding: 10px 20px;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            cursor: pointer;
-        }
-        button:hover {
-            background-color: #45a049;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-        th, td {
-            border: 1px solid #ddd;
-            padding: 8px;
-            text-align: left;
-        }
-        th {
-            background-color: #f2f2f2;
-        }
-        .graph-container {
-            margin-top: 20px;
-        }
-    </style>
-    <script>
-        function loadIngredients(dishId) {
-            fetch(`/get_ingredients/${dishId}/`)
-                .then(response => response.json())
-                .then(data => {
-                    const ingredientsContainer = document.getElementById('ingredients-container');
-                    ingredientsContainer.innerHTML = '';
-                    data.ingredients.forEach(ingredient => {
-                        const div = document.createElement('div');
-                        div.innerHTML = `
-                            <label for="ingredient_${ingredient.id}">${ingredient.name} (grams):</label>
-                            <input type="number" name="ingredient_${ingredient.id}" id="ingredient_${ingredient.id}" step="0.01" oninput="calculateTotals()">
-                        `;
-                        ingredientsContainer.appendChild(div);
-                    });
-                    calculateTotals();
-                });
-        }
+{% extends 'meals/base.html' %}
+{% load static %}
 
-        function calculateTotals() {
-            const ingredients = document.querySelectorAll('input[name^="ingredient_"]');
-            let totalCalories = 0;
-            let totalProtein = 0;
-            let totalCarbs = 0;
-            let totalFat = 0;
-            let totalCost = 0;
+{% block title %}Daily Submission{% endblock %}
 
-            ingredients.forEach(input => {
-                const ingredientId = input.id.replace('ingredient_', '');
-                const quantity = parseFloat(input.value) || 0;
-                const ingredientData = JSON.parse(document.getElementById(`ingredient_data_${ingredientId}`).value);
-                totalCalories += quantity * ingredientData.calories_per_gram;
-                totalProtein += quantity * ingredientData.protein_per_gram;
-                totalCarbs += quantity * ingredientData.carbs_per_gram;
-                totalFat += quantity * ingredientData.fat_per_gram;
-                totalCost += quantity * ingredientData.cost_per_gram;
-            });
+{% block style %}
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        margin: 20px;
+    }
+    .grid-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 20px;
+    }
+    .grid-item {
+        border: 1px solid #ccc;
+        padding: 10px;
+        border-radius: 5px;
+    }
+    form {
+        max-width: 600px;
+        margin: 0 auto;
+    }
+    label {
+        display: block;
+        margin-top: 10px;
+    }
+    input, select, textarea {
+        width: 100%;
+        padding: 8px;
+        margin-top: 5px;
+    }
+    button {
+        margin-top: 20px;
+        padding: 10px 20px;
+        background-color: #4CAF50;
+        color: white;
+        border: none;
+        cursor: pointer;
+    }
+    button:hover {
+        background-color: #45a049;
+    }
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+    }
+    th, td {
+        border: 1px solid #ddd;
+        padding: 8px;
+        text-align: left;
+    }
+    th {
+        background-color: #f2f2f2;
+    }
+    .graph-container {
+        margin-top: 20px;
+    }
+</style>
+{% endblock %}
 
-            document.getElementById('total_calories').textContent = totalCalories.toFixed(2);
-            document.getElementById('total_protein').textContent = totalProtein.toFixed(2);
-            document.getElementById('total_carbs').textContent = totalCarbs.toFixed(2);
-            document.getElementById('total_fat').textContent = totalFat.toFixed(2);
-            document.getElementById('total_cost').textContent = totalCost.toFixed(2);
-        }
-
-        document.addEventListener('DOMContentLoaded', function() {
-            const dishSelect = document.getElementById('id_dish');
-            dishSelect.addEventListener('change', function() {
-                loadIngredients(this.value);
-            });
-        });
-    </script>
-</head>
-<body>
+{% block content %}
     <h1>Daily Submission</h1>
     <div class="grid-container">
         <div class="grid-item">
@@ -146,8 +97,60 @@
             </form>
             <a href="{% url 'submissions_list' %}"><button>See All Submissions</button></a>
         </div>
-       
-       
     </div>
-</body>
-</html>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function loadIngredients(dishId) {
+        fetch(`/get_ingredients/${dishId}/`)
+            .then(response => response.json())
+            .then(data => {
+                const ingredientsContainer = document.getElementById('ingredients-container');
+                ingredientsContainer.innerHTML = '';
+                data.ingredients.forEach(ingredient => {
+                    const div = document.createElement('div');
+                    div.innerHTML = `
+                        <label for="ingredient_${ingredient.id}">${ingredient.name} (grams):</label>
+                        <input type="number" name="ingredient_${ingredient.id}" id="ingredient_${ingredient.id}" step="0.01" oninput="calculateTotals()">
+                    `;
+                    ingredientsContainer.appendChild(div);
+                });
+                calculateTotals();
+            });
+    }
+
+    function calculateTotals() {
+        const ingredients = document.querySelectorAll('input[name^="ingredient_"]');
+        let totalCalories = 0;
+        let totalProtein = 0;
+        let totalCarbs = 0;
+        let totalFat = 0;
+        let totalCost = 0;
+
+        ingredients.forEach(input => {
+            const ingredientId = input.id.replace('ingredient_', '');
+            const quantity = parseFloat(input.value) || 0;
+            const ingredientData = JSON.parse(document.getElementById(`ingredient_data_${ingredientId}`).value);
+            totalCalories += quantity * ingredientData.calories_per_gram;
+            totalProtein += quantity * ingredientData.protein_per_gram;
+            totalCarbs += quantity * ingredientData.carbs_per_gram;
+            totalFat += quantity * ingredientData.fat_per_gram;
+            totalCost += quantity * ingredientData.cost_per_gram;
+        });
+
+        document.getElementById('total_calories').textContent = totalCalories.toFixed(2);
+        document.getElementById('total_protein').textContent = totalProtein.toFixed(2);
+        document.getElementById('total_carbs').textContent = totalCarbs.toFixed(2);
+        document.getElementById('total_fat').textContent = totalFat.toFixed(2);
+        document.getElementById('total_cost').textContent = totalCost.toFixed(2);
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const dishSelect = document.getElementById('id_dish');
+        dishSelect.addEventListener('change', function() {
+            loadIngredients(this.value);
+        });
+    });
+</script>
+{% endblock %}
