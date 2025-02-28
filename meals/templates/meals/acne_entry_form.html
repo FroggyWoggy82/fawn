@@ -239,9 +239,9 @@
             // Update hidden input value
             document.getElementById('{{ form.severity.id_for_label }}').value = this.dataset.value;
         });
-    });
+    }); 
     
-    // Set default selected severity
+    // Set default selected severity gooning
     const defaultSeverity = '{{ form.severity.value|default:"3" }}';
     document.querySelector(`.severity-option[data-value="${defaultSeverity}"]`).classList.add('selected');
     document.getElementById('{{ form.severity.id_for_label }}').value = defaultSeverity;
