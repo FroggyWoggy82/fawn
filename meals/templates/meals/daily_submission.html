@@ -59,6 +59,26 @@
     .graph-container {
         margin-top: 20px;
     }
+    .profile-selector {
+        background-color: #f9f9f9;
+        padding: 15px;
+        border-radius: 5px;
+        margin-bottom: 20px;
+        border: 1px solid #ddd;
+    }
+    .profile-selector h3 {
+        margin-top: 0;
+        color: #333;
+    }
+    .profile-option {
+        display: flex;
+        align-items: center;
+        margin-bottom: 10px;
+    }
+    .profile-option input[type="radio"] {
+        margin-right: 10px;
+        width: auto;
+    }
 </style>
 {% endblock %}
 
@@ -68,6 +88,16 @@
         <div class="grid-item">
             <form method="post" enctype="multipart/form-data">
                 {% csrf_token %}
+                
+                <!-- Profile Selection -->
+                <div class="profile-selector">
+                    <h3>Select Profile</h3>
+                    <div>
+                        <label for="id_profile">Profile:</label>
+                        {{ form.profile }}
+                    </div>
+                </div>
+                
                 <div>
                     <label for="id_dish">Dish:</label>
                     {{ form.dish }}

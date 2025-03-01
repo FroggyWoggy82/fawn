@@ -1,10 +1,10 @@
 from django import forms
-from .models import DailySubmission, Dish, AcneEntry, SkinProduct, RecipeTemplate
+from .models import DailySubmission, Dish, AcneEntry, SkinProduct, RecipeTemplate, Profile, DailyCalorieGoal
 
 class DailySubmissionForm(forms.ModelForm):
     class Meta:
         model = DailySubmission
-        fields = ['dish', 'submission_date', 'notes', 'image']  # Add 'image' to the fields
+        fields = ['dish', 'submission_date', 'notes', 'image', 'profile']  # Add 'image' to the fields
 
 class DishForm(forms.ModelForm):
     class Meta:
@@ -16,6 +16,7 @@ class CalorieGoalRangeForm(forms.Form):
     start_date = forms.DateField(widget=forms.DateInput(attrs={'type': 'date'}))
     end_date = forms.DateField(widget=forms.DateInput(attrs={'type': 'date'}))
     calorie_goal = forms.IntegerField(min_value=0, initial=0)
+    profile = forms.ModelChoiceField(queryset=Profile.objects.all(), required=True)
 
 class SkinProductForm(forms.ModelForm):
     class Meta:
@@ -42,3 +43,7 @@ class RecipeTemplateForm(forms.ModelForm):
     class Meta:
         model = RecipeTemplate
         fields = ['name', 'base_calories', 'base_servings']
+
+class ProfileSelectForm(forms.Form):
+    profile = forms.ModelChoiceField(queryset=Profile.objects.all(), required=True, 
+                                    widget=forms.Select(attrs={'class': 'profile-select'}))

@@ -1,7 +1,7 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import JsonResponse
-from .forms import DailySubmissionForm, DishForm, CalorieGoalRangeForm, AcneEntryForm, SkinProductForm 
-from .models import DailySubmission, DishIngredient, DailySubmissionIngredient, Dish, Ingredient, DailyCalorieGoal, AcneEntry, SkinProduct, Task, SubTask
+from .forms import DailySubmissionForm, DishForm, CalorieGoalRangeForm, AcneEntryForm, SkinProductForm, ProfileSelectForm
+from .models import DailySubmission, DishIngredient, DailySubmissionIngredient, Dish, Ingredient, DailyCalorieGoal, AcneEntry, SkinProduct, Task, SubTask, Profile
 from .custom_calendar import CustomHTMLCalendar
 from django.core.cache import cache
 import calendar
@@ -377,6 +377,23 @@ def dashboard_view(request):
     now = datetime.now()
     year, month = now.year, now.month
 
+    selected_profile = Profile.objects.first()
+
+    if request.method == "POST" and 'select_profile' in request.POST:
+        profile_form = ProfileSelectForm(request.POST)
+        if profile_form.is_valid():
+            selected_profile = profile_form.cleaned_data['profile']
+    else:
+        # Check for profile in GET parameters
+        profile_id = request.GET.get('profile')
+        if profile_id:
+            try:
+                selected_profile = Profile.objects.get(id=profile_id)
+            except (Profile.DoesNotExist, ValueError):
+                pass
+        
+        profile_form = ProfileSelectForm(initial={'profile': selected_profile})
+
     # --- Process the Calorie Goal Range Form ---
     if request.method == 'POST' and 'set_goal' in request.POST:
         form = CalorieGoalRangeForm(request.POST)
@@ -384,6 +401,7 @@ def dashboard_view(request):
             start_date = form.cleaned_data['start_date']
             end_date = form.cleaned_data['end_date']
             calorie_goal = form.cleaned_data['calorie_goal']
+            profile = form.cleaned_data['profile']
 
             # Update or create a DailyCalorieGoal for each date in the range
             current = start_date
@@ -391,22 +409,24 @@ def dashboard_view(request):
                 # Latest assignment overrides any previous goal.
                 DailyCalorieGoal.objects.update_or_create(
                     date=current,
+                    profile=profile,
                     defaults={'calorie_goal': calorie_goal}
                 )
                 current += timedelta(days=1)
             return redirect('dashboard')
     else:
-        form = CalorieGoalRangeForm()
+        form = CalorieGoalRangeForm(initial={'profile': selected_profile})
 
     # --- Aggregate Calorie Data ---
     # Use caching for performance (cache key includes year and month)
-    cache_key = f"daily_totals_{year}_{month}"
+    cache_key = f"daily_totals_{year}_{month}_{selected_profile.id}"
     daily_totals = cache.get(cache_key)
     if daily_totals is None:
         daily_totals = {}
         # Iterate over submissions in the current month
         submissions = DailySubmission.objects.filter(
-            submission_date__year=year, submission_date__month=month
+            submission_date__year=year, submission_date__month=month,
+            profile=selected_profile
         )
         # Loop through submissions and add calories together.
         for submission in submissions:
@@ -422,7 +442,7 @@ def dashboard_view(request):
         cache.set(cache_key, daily_totals, timeout=3600)
 
     # --- Retrieve Calorie Goals for the Month ---
-    goals = DailyCalorieGoal.objects.filter(date__year=year, date__month=month)
+    goals = DailyCalorieGoal.objects.filter(date__year=year, date__month=month, profile=selected_profile)
     goal_map = {goal.date: goal.calorie_goal for goal in goals}
 
     # --- Build Day Data Dictionary ---
@@ -441,6 +461,9 @@ def dashboard_view(request):
     context = {
         'calendar': cal,
         'goal_form': form,
+        'profile_form': profile_form,
+        'profiles': Profile.objects.all(),
+        'selected_profile': selected_profile,
     }
     return render(request, 'meals/dashboard.html', context)
 
@@ -552,10 +575,14 @@ def daily_submission_view(request):
         form = DailySubmissionForm()
         dish_form = DishForm()
 
+    # Get all profiles for the form
+    profiles = Profile.objects.all()
+
     return render(request, 'meals/daily_submission.html', {
         'form': form,
         'dish_form': dish_form,
-        'submission_ingredients': submission_ingredients
+        'submission_ingredients': submission_ingredients,
+        'profiles': profiles
     })
 
 def submission_success(request):
@@ -570,7 +597,25 @@ def get_ingredients(request, dish_id):
 
 def submissions_list_view(request):
     """View for listing all meal submissions"""
-    submissions = DailySubmission.objects.all().order_by('-submission_date')
+    # Get filter by profile
+    profile_id = request.GET.get('profile')
+    selected_profile = None
+    
+    # Fetch all profiles for the filter dropdown
+    profiles = Profile.objects.all()
+    
+    # Create base queryset
+    submission_queryset = DailySubmission.objects.all()
+    
+    # Apply profile filter if specified
+    if profile_id:
+        try:
+            selected_profile = Profile.objects.get(id=profile_id)
+            submission_queryset = submission_queryset.filter(profile=selected_profile)
+        except (Profile.DoesNotExist, ValueError):
+            pass
+            
+    submissions = submission_queryset.order_by('-submission_date')
 
     # Initialize a list to store submission-specific totals
     submission_totals = []
@@ -585,12 +630,13 @@ def submissions_list_view(request):
         for submission_ingredient in submission.ingredients.all():
             ingredient = submission_ingredient.dish_ingredient.ingredient
             grams_used = submission_ingredient.grams_used
-            current_cost_per_gram = ingredient.cost_per_gram
+            current_cost_per_gram = ingredient.cost_per_gram or 0
             total_calories += ingredient.calories_per_gram * grams_used
             total_protein += ingredient.protein_per_gram * grams_used
             total_fats += ingredient.fats_per_gram * grams_used
             total_carbohydrates += ingredient.carbohydrates_per_gram * grams_used
-            total_cost += current_cost_per_gram * grams_used
+            ingredient_cost = current_cost_per_gram * grams_used
+            total_cost += ingredient_cost
         
         # Append the calculated totals for this submission to the list
         submission_totals.append({
@@ -599,11 +645,13 @@ def submissions_list_view(request):
             'total_protein': round(total_protein, 2),
             'total_fats': round(total_fats, 2),
             'total_carbohydrates': round(total_carbohydrates, 2),
-            'total_cost': round(total_cost, 2)
+            'total_cost_per_serving': round(total_cost, 2)
         })
     
     context = {
-        'submissions': submission_totals
+        'submissions': submission_totals,
+        'profiles': profiles,  # Make sure profiles are in the context
+        'selected_profile': selected_profile
     }
     
     return render(request, 'meals/list_submissions.html', context)

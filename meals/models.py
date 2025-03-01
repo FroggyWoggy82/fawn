@@ -158,7 +158,8 @@ class DailySubmission(models.Model):
     dish = models.ForeignKey(Dish, on_delete=models.CASCADE)
     submission_date = models.DateField()
     notes = models.TextField()
-    # Change from CharField to ManyToManyField:
+   
+    profile = models.ForeignKey('Profile', on_delete=models.CASCADE, null=True, blank=True, default=1)
     usage = models.ManyToManyField('Usage', blank=True)
     total_calories = models.IntegerField(default=0)
     total_protein = models.IntegerField(default=0)
@@ -167,7 +168,8 @@ class DailySubmission(models.Model):
     image = models.ImageField(upload_to='submissions/', blank=True, null=True)
 
     def __str__(self):
-        return f"Submission on {self.submission_date} - {self.dish.name}"
+        profile_name = self.profile.name if self.profile else "No Profile"
+        return f"Submission on {self.submission_date} - {self.dish.name} ({profile_name})"
 
 
 class DailySubmissionIngredient(models.Model):
@@ -183,13 +185,24 @@ class Usage(models.Model):
     dish_ingredient = models.ForeignKey(DishIngredient, on_delete=models.CASCADE)
     grams_used = models.FloatField()
 
-
+class Profile(models.Model):
+    name = models.CharField(max_length=100)
+    
+    def __str__(self):
+        return self.name
+    
 class DailyCalorieGoal(models.Model):
     date = models.DateField(unique=True)
     calorie_goal = models.PositiveIntegerField(default=0)
+    profile = models.ForeignKey('Profile', on_delete=models.CASCADE, null=True, blank=True, default=1)
+    
+    class Meta:
+        # Update unique constraint to include profile
+        unique_together = ('date', 'profile')
 
     def __str__(self):
-        return f"{self.date}: {self.calorie_goal}"
+        profile_name = self.profile.name if self.profile else "No Profile"
+        return f"{self.date}: {self.calorie_goal} ({profile_name})"
     
 class Task(models.Model):
     title = models.CharField(max_length=200)

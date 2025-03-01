@@ -83,31 +83,95 @@
     button:hover {
         background-color: #0056b3;
     }
+    .profile-selector {
+        background-color: #e9f7fe;
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        text-align: center;
+    }
+    .profile-selector h2 {
+        margin-top: 0;
+        color: #007bff;
+    }
+    .profile-tabs {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        margin-bottom: 15px;
+    }
+    .profile-tab {
+        padding: 10px 20px;
+        border: 2px solid #007bff;
+        border-radius: 20px;
+        cursor: pointer;
+        font-weight: bold;
+        transition: all 0.3s ease;
+    }
+    .profile-tab:hover {
+        background-color: #e3f2fd;
+    }
+    .profile-tab.active {
+        background-color: #007bff;
+        color: white;
+    }
+    .field-group {
+        margin-bottom: 10px;
+    }
+    label {
+        display: inline-block;
+        width: 120px;
+        text-align: right;
+        margin-right: 10px;
+    }
 </style>
 {% endblock %}
 
 {% block content %}
     <h1>Dashboard</h1>
 
+    <!-- Profile Selector -->
+    <div class="profile-selector">
+        <h2>Select Profile</h2>
+        
+        <div class="profile-tabs">
+            {% for profile in profiles %}
+                <a href="?profile={{ profile.id }}" class="profile-tab {% if selected_profile.id == profile.id %}active{% endif %}">
+                    {{ profile.name }}
+                </a>
+            {% endfor %}
+        </div>
+        
+        <p>Currently viewing data for: <strong>{{ selected_profile.name }}</strong></p>
+    </div>
+
     <!-- Calorie Goal Range Form -->
     <h2>Set Calorie Goal for a Date Range</h2>
     <form method="post">
         {% csrf_token %}
-        <label for="id_start_date">Start Date:</label>
-        {{ goal_form.start_date }}
-        <br>
-        <label for="id_end_date">End Date:</label>
-        {{ goal_form.end_date }}
-        <br>
-        <label for="id_calorie_goal">Calorie Goal:</label>
-        {{ goal_form.calorie_goal }}
-        <br>
+        <div class="field-group">
+            <label for="id_profile">Profile:</label>
+            {{ goal_form.profile }}
+        </div>
+        <div class="field-group">
+            <label for="id_start_date">Start Date:</label>
+            {{ goal_form.start_date }}
+        </div>
+        <div class="field-group">
+            <label for="id_end_date">End Date:</label>
+            {{ goal_form.end_date }}
+        </div>
+        <div class="field-group">
+            <label for="id_calorie_goal">Calorie Goal:</label>
+            {{ goal_form.calorie_goal }}
+        </div>
         <button type="submit" name="set_goal">Set Goal</button>
     </form>
 
     <a href="{% url 'home' %}" class="btn btn-secondary">Back to Home</a>
 
-    <h2>Current Month Calendar</h2>
+    <h2>Current Month Calendar for {{ selected_profile.name }}</h2>
     <div class="calendar-container">
         {{ calendar|safe }}
     </div>
