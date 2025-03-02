@@ -32,7 +32,7 @@ DEBUG = os.getenv('DJANGO_DEBUG', 'False').lower() in ['true', '1', 't']
 
 logger = logging.getLogger(__name__)
 
-DJANGO_ALLOWED_HOSTS = os.getenv('DJANGO_ALLOWED_HOSTS', '127.0.0.1,localhost', 'fawn-production.up.railway.app')
+DJANGO_ALLOWED_HOSTS = os.getenv('DJANGO_ALLOWED_HOSTS', '127.0.0.1,localhost, fawn-production.up.railway.app')
 logger.debug(f'DJANGO_ALLOWED_HOSTS: {DJANGO_ALLOWED_HOSTS}')
 ALLOWED_HOSTS = DJANGO_ALLOWED_HOSTS.split(',')
 
