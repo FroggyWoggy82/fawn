@@ -32,7 +32,7 @@ DEBUG = os.getenv('DJANGO_DEBUG', 'False').lower() in ['true', '1', 't']
 
 logger = logging.getLogger(__name__)
 
-DJANGO_ALLOWED_HOSTS = os.getenv('DJANGO_ALLOWED_HOSTS', '127.0.0.1,localhost')
+DJANGO_ALLOWED_HOSTS = os.getenv('DJANGO_ALLOWED_HOSTS', '127.0.0.1,localhost', 'fawn-production.up.railway.app')
 logger.debug(f'DJANGO_ALLOWED_HOSTS: {DJANGO_ALLOWED_HOSTS}')
 ALLOWED_HOSTS = DJANGO_ALLOWED_HOSTS.split(',')
 
@@ -47,7 +47,16 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'meals.apps.MealsConfig',
     'django_extensions',
+    'cloudinary_storage',
+    'cloudinary',
 ]
+
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': os.environ.get('CLOUDINARY_CLOUD_NAME'),
+    'API_KEY': os.environ.get('CLOUDINARY_API_KEY'),
+    'API_SECRET': os.environ.get('CLOUDINARY_API_SECRET')
+}
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
