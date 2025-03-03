@@ -38,5 +38,6 @@ urlpatterns = [
     path('exercise/<int:exercise_id>/progress/', views.exercise_progress, name='exercise_specific_progress'),
     path('api/weight/', views.weight_api, name='weight_api'),
     path('weights/', views.weight_list, name='weight_list'),
+    path('exercise/add/', views.add_exercise, name='add_exercise'),
     
 ]

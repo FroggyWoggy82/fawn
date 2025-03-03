@@ -121,10 +121,7 @@
     <div class="container">
         <div class="cta-section">
             <h2>Ready to crush your workout?</h2>
-            <form action="{% url 'start_workout' %}" method="post">
-                {% csrf_token %}
-                <button type="submit" class="btn btn-lg">Start Workout</button>
-            </form>
+            <a href="{% url 'start_workout' %}" class="btn btn-lg">Start Workout</a>
         </div>
         
         <div class="card">

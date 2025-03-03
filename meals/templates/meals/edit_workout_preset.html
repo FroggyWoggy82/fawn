@@ -148,6 +148,28 @@
                 <div class="form-group">
                     <label for="exercises">Select Exercises:</label>
                     
+                    <!-- New exercise form -->
+                    <div class="card" style="margin-bottom: 15px; padding: 15px; border: 1px dashed #ddd;">
+                        <h3 style="margin-top: 0; color: #e74c3c; font-size: 18px;">Add New Exercise</h3>
+                        <div class="form-group" style="margin-bottom: 10px;">
+                            <label for="new-exercise-name">Exercise Name:</label>
+                            <input type="text" id="new-exercise-name" placeholder="Enter new exercise name">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 10px;">
+                            <label for="new-exercise-category">Category:</label>
+                            <select id="new-exercise-category">
+                                <option value="back">Back</option>
+                                <option value="arms">Arms</option>
+                                <option value="chest">Chest</option>
+                                <option value="shoulders">Shoulders</option>
+                                <option value="core">Core</option>
+                                <option value="legs">Legs</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        <button type="button" id="add-exercise-btn" class="btn" style="width: 100%;">Add Exercise</button>
+                    </div>
+                    
                     <div class="exercise-filter">
                         <select id="category-filter" onchange="filterExercises()">
                             <option value="all">All Categories</option>
@@ -212,6 +234,71 @@
     document.addEventListener('DOMContentLoaded', function() {
         // Initialize filter
         filterExercises();
+        
+        // Add event listener for adding new exercises
+        document.getElementById('add-exercise-btn').addEventListener('click', function() {
+            const exerciseName = document.getElementById('new-exercise-name').value.trim();
+            const exerciseCategory = document.getElementById('new-exercise-category').value;
+            
+            if (!exerciseName) {
+                alert('Please enter an exercise name');
+                return;
+            }
+            
+            // Create a new exercise using AJAX
+            fetch('{% url "add_exercise" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: `name=${encodeURIComponent(exerciseName)}&category=${encodeURIComponent(exerciseCategory)}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    // Create a new exercise item in the list
+                    const exerciseList = document.querySelector('.exercise-list');
+                    
+                    const exerciseItem = document.createElement('div');
+                    exerciseItem.className = 'exercise-item';
+                    exerciseItem.dataset.category = exerciseCategory;
+                    
+                    // Get the category display name
+                    const categoryDisplayMap = {
+                        'back': 'Back',
+                        'arms': 'Arms',
+                        'chest': 'Chest',
+                        'shoulders': 'Shoulders',
+                        'core': 'Core',
+                        'legs': 'Legs',
+                        'other': 'Other'
+                    };
+                    
+                    exerciseItem.innerHTML = `
+                        <input type="checkbox" id="exercise-${data.exercise_id}" name="exercises" value="${data.exercise_id}" class="exercise-checkbox" checked>
+                        <label for="exercise-${data.exercise_id}">${exerciseName}</label>
+                        <span class="exercise-category category-${exerciseCategory}">
+                            ${categoryDisplayMap[exerciseCategory]}
+                        </span>
+                    `;
+                    
+                    exerciseList.appendChild(exerciseItem);
+                    
+                    // Clear the form
+                    document.getElementById('new-exercise-name').value = '';
+                    
+                    // Apply filter
+                    filterExercises();
+                } else {
+                    alert(data.message || 'Error adding exercise');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error adding exercise. Please try again.');
+            });
+        });
     });
 </script>
 {% endblock %}

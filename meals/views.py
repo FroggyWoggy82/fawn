@@ -914,6 +914,7 @@ if WORKOUT_MODELS_EXIST:
                 
             return redirect('active_workout', workout_id=workout.id)
         
+        # GET request - show the start workout page with preset selection
         return render(request, 'meals/start_workout.html', {'presets': presets})
 
     def active_workout(request, workout_id):
@@ -1244,3 +1245,27 @@ if WORKOUT_MODELS_EXIST:
             'previous_sets': previous_sets_data,
             'previous_date': previous_workout_exercise.created_at.strftime('%Y-%m-%d'),
         })
+        
+    def add_exercise(request):
+        """API view for adding a new exercise"""
+        if request.method == 'POST':
+            name = request.POST.get('name')
+            category = request.POST.get('category')
+            
+            if not name or not category:
+                return JsonResponse({'status': 'error', 'message': 'Name and category are required'})
+            
+            # Create the exercise
+            exercise = Exercise.objects.create(
+                name=name,
+                category=category
+            )
+            
+            return JsonResponse({
+                'status': 'success',
+                'exercise_id': exercise.id,
+                'name': exercise.name,
+                'category': exercise.category
+            })
+        
+        return JsonResponse({'status': 'error', 'message': 'Method not allowed'}, status=405)
