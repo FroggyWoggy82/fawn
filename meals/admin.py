@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Ingredient, Dish, DishIngredient, DailySubmission, DailySubmissionIngredient
+from .models import Ingredient, Dish, DishIngredient, DailySubmission, DailySubmissionIngredient, Profile
 
 class DishIngredientInline(admin.TabularInline):
     model = DishIngredient
@@ -30,3 +30,8 @@ class DailySubmissionAdmin(admin.ModelAdmin):
 class DailySubmissionIngredientAdmin(admin.ModelAdmin):
     list_display = ('submission', 'dish_ingredient', 'grams_used')
     search_fields = ('submission__dish__name', 'dish_ingredient__ingredient__name')
+
+@admin.register(Profile)
+class ProfileAdmin(admin.ModelAdmin):
+    list_display = ('name',)
+    search_fields = ('name',)
