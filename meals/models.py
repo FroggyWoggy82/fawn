@@ -1,6 +1,7 @@
 from django.db import models
 from django.utils import timezone
 
+
 class Exercise(models.Model):
     CATEGORY_CHOICES = [
         ('back', 'Back'),
@@ -170,6 +171,21 @@ class DailySubmission(models.Model):
     def __str__(self):
         profile_name = self.profile.name if self.profile else "No Profile"
         return f"Submission on {self.submission_date} - {self.dish.name} ({profile_name})"
+    
+class Profile(models.Model):
+    name = models.CharField(max_length=100)
+    
+    def __str__(self):
+        return self.name
+
+class WeightMeasurement(models.Model):
+    profile = models.ForeignKey(Profile, on_delete=models.CASCADE)
+    date = models.DateField()
+    weight = models.FloatField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        unique_together = ('profile', 'date')
 
 
 class DailySubmissionIngredient(models.Model):
@@ -185,11 +201,7 @@ class Usage(models.Model):
     dish_ingredient = models.ForeignKey(DishIngredient, on_delete=models.CASCADE)
     grams_used = models.FloatField()
 
-class Profile(models.Model):
-    name = models.CharField(max_length=100)
-    
-    def __str__(self):
-        return self.name
+
     
 class DailyCalorieGoal(models.Model):
     date = models.DateField(unique=True)

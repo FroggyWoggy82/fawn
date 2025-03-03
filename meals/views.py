@@ -2,7 +2,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.http import JsonResponse, HttpResponse
 from django.contrib import messages
 from .forms import DailySubmissionForm, DishForm, CalorieGoalRangeForm, AcneEntryForm, SkinProductForm, ProfileSelectForm
-from .models import DailySubmission, DishIngredient, DailySubmissionIngredient, Dish, Ingredient, DailyCalorieGoal, AcneEntry, SkinProduct, Task, SubTask, Profile
+from .models import DailySubmission, DishIngredient, DailySubmissionIngredient, Dish, Ingredient, DailyCalorieGoal, AcneEntry, SkinProduct, Task, SubTask, Profile, WeightMeasurement
 from .custom_calendar import CustomHTMLCalendar
 from django.core.cache import cache
 import calendar
@@ -10,6 +10,78 @@ from datetime import date, datetime, timedelta
 from django.utils import timezone
 import json
 import uuid
+from django.views.decorators.csrf import csrf_exempt
+
+@csrf_exempt
+def weight_api(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            weight = float(data.get('weight'))
+            date = data.get('date')
+            profile_id = data.get('profile_id', 1)  # Default to first profile
+            
+            profile = Profile.objects.get(id=profile_id)
+            
+            # Create or update weight measurement
+            measurement, created = WeightMeasurement.objects.update_or_create(
+                profile=profile,
+                date=date,
+                defaults={'weight': weight}
+            )
+            
+            return JsonResponse({
+                'status': 'success',
+                'created': created,
+                'weight': weight,
+                'date': date
+            })
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+    
+    return JsonResponse({'status': 'error', 'message': 'Method not allowed'}, status=405)
+
+
+def import_weight_data(request):
+    if request.method == 'POST' and request.FILES.get('health_export'):
+        health_file = request.FILES['health_export']
+        profile_id = request.POST.get('profile')
+        profile = get_object_or_404(Profile, id=profile_id)
+        
+        # Parse XML file
+        import xml.etree.ElementTree as ET
+        try:
+            tree = ET.parse(health_file)
+            root = tree.getroot()
+            
+            # Find weight records in the export
+            records = root.findall(".//Record[@type='HKQuantityTypeIdentifierBodyMass']")
+            
+            count = 0
+            for record in records:
+                date_str = record.get('startDate').split()[0]
+                weight_val = float(record.get('value'))
+                
+                # Convert pounds to kg if needed
+                if record.get('unit') == 'lb':
+                    weight_val *= 0.45359237
+                    
+                # Create or update weight record
+                WeightMeasurement.objects.update_or_create(
+                    profile=profile,
+                    date=date_str,
+                    defaults={'weight': weight_val}
+                )
+                count += 1
+                
+            messages.success(request, f"Successfully imported {count} weight measurements")
+        except Exception as e:
+            messages.error(request, f"Error parsing health data: {str(e)}")
+            
+    return render(request, 'meals/import_weight.html', {
+        'profiles': Profile.objects.all()
+    })
+
 
 
 # Try to import Workout models if they exist
