@@ -452,6 +452,9 @@ def dashboard_view(request):
     now = datetime.now()
     year, month = now.year, now.month
 
+    if not Profile.objects.exists():
+        Profile.objects.create(name="Default Profile")
+
     selected_profile = Profile.objects.first()
 
     if request.method == "POST" and 'select_profile' in request.POST:
