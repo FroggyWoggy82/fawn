@@ -1,6 +1,7 @@
 from __future__ import absolute_import, unicode_literals
 import os
 from celery.schedules import crontab
+from celery import Celery
 
 # Set the default Django settings module for the 'celery' program.
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'mealplanner.settings')
@@ -24,7 +25,7 @@ app.conf.beat_schedule = {
     },
 }
 
-from celery import Celery
+
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'mealplanner.settings')
 
