@@ -51,6 +51,14 @@ INSTALLED_APPS = [
     'cloudinary',
 ]
 
+CSRF_TRUSTED_ORIGINS = [
+    'https://fawn-production.up.railway.app',
+    'http://fawn-production.up.railway.app',
+    'http://localhost:8000',
+    'http://127.0.0.1:8000',
+]
+
+
 CLOUDINARY_STORAGE = {
     'CLOUD_NAME': os.environ.get('CLOUDINARY_CLOUD_NAME'),
     'API_KEY': os.environ.get('CLOUDINARY_API_KEY'),
