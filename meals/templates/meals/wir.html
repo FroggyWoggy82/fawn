@@ -764,10 +764,6 @@ stopButton.addEventListener('click', function() {
         }
         // Stop the subtask timer
         clearInterval(subtaskTimerInterval);
-        localStorage.removeItem(SUBTASK_START_KEY);
-        localStorage.removeItem(SUBTASK_ELAPSED_KEY);
-        localStorage.removeItem(SUBTASK_STATE_KEY);
-        localStorage.removeItem(CURRENT_SUBTASK_KEY);
     }
     
     // Stop the main task timer
@@ -802,34 +798,34 @@ stopButton.addEventListener('click', function() {
     
     // Update the form data with all subtasks
     subtasksDataInput.value = JSON.stringify(allSubtasks);
-
-    
-    const csrftoken = getCookie('csrftoken');
-
-    const csrfInput = document.querySelector('input[name="csrfmiddlewaretoken"]');
-    if (csrfInput) {
-        csrfInput.value = csrftoken;
-    } else {
-        // Create a new input for CSRF token if it doesn't exist
-        const input = document.createElement('input');
-        input.type = 'hidden';
-        input.name = 'csrfmiddlewaretoken';
-        input.value = csrftoken;
-        document.getElementById('taskForm').appendChild(input);
-    }
     
     // Save the ID counter to localStorage
     localStorage.setItem(SUBTASK_ID_COUNTER_KEY, subtaskIdCounter.toString());
     
-    // Clear timer state from localStorage
-    localStorage.removeItem(TIMER_START_KEY);
-    localStorage.removeItem(TIMER_ELAPSED_KEY);
-    localStorage.removeItem(TIMER_STATE_KEY);
-    localStorage.removeItem(TASK_TITLE_KEY);
-    localStorage.removeItem(SUBTASK_DATA_KEY);
-    
-    // Submit the form
-    document.getElementById('taskForm').submit();
+    try {
+        // Store a backup of the current state before submitting
+        const stateBackup = {
+            elapsed: elapsed,
+            subtasks: subtasks,
+            subtaskIdCounter: subtaskIdCounter
+        };
+        localStorage.setItem('wir_state_backup', JSON.stringify(stateBackup));
+        
+        // Submit the form
+        document.getElementById('taskForm').submit();
+        
+        // Only clear localStorage after successful form submission
+        setTimeout(function() {
+            localStorage.removeItem(TIMER_START_KEY);
+            localStorage.removeItem(TIMER_ELAPSED_KEY);
+            localStorage.removeItem(TIMER_STATE_KEY);
+            localStorage.removeItem(TASK_TITLE_KEY);
+            localStorage.removeItem(SUBTASK_DATA_KEY);
+        }, 500);
+    } catch (error) {
+        console.error('Error submitting form:', error);
+        alert('There was a problem submitting your task. Please try again.');
+    }
 });
 
 // Subtask Button Event Listeners
