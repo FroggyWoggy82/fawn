@@ -276,7 +276,7 @@
 {% block content %}
     <h1>WIR Page</h1>
     <!-- Task Form with Timer -->
-    <form method="post" id="taskForm">
+    <form method="post" id="taskForm" action="{% url 'wir_view' %}">
         {% csrf_token %}
         <div class="task-container">
             <div class="active-task-indicator" id="mainTaskActive">●</div>
@@ -788,6 +788,21 @@ stopButton.addEventListener('click', function() {
     
     // Update the form data with all subtasks
     subtasksDataInput.value = JSON.stringify(allSubtasks);
+
+    
+    const csrftoken = getCookie('csrftoken');
+
+    const csrfInput = document.querySelector('input[name="csrfmiddlewaretoken"]');
+    if (csrfInput) {
+        csrfInput.value = csrftoken;
+    } else {
+        // Create a new input for CSRF token if it doesn't exist
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'csrfmiddlewaretoken';
+        input.value = csrftoken;
+        document.getElementById('taskForm').appendChild(input);
+    }
     
     // Save the ID counter to localStorage
     localStorage.setItem(SUBTASK_ID_COUNTER_KEY, subtaskIdCounter.toString());

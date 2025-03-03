@@ -89,18 +89,17 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'mealplanner.wsgi.application'
 
-# Database
-# https://docs.djangoproject.com/en/5.1/ref/settings/#databases
-
-# Detect environment
+# Keep the environment detection
 ENVIRONMENT = os.getenv("DJANGO_ENV", "local")  # Default to "local" if no env var is set
 
 if ENVIRONMENT == "production":
-    # Production Database (Render PostgreSQL)
-    DATABASE_URL = os.getenv("DATABASE_URL")  # Render's PostgreSQL URL
+    # Production Database (Railway PostgreSQL)
+    DATABASE_URL = os.getenv("DATABASE_URL")  # Railway provides this automatically
     DATABASES = {
         "default": dj_database_url.config(default=DATABASE_URL)
     }
+    # Add logging to verify the database connection
+    logger.info(f"Connecting to Railway database: {DATABASE_URL[:20]}..." if DATABASE_URL else "DATABASE_URL not set!")
 else:
     # Local Database (SQLite)
     DATABASES = {
@@ -109,10 +108,9 @@ else:
             "NAME": BASE_DIR / "db.sqlite3",
         }
     }
-    # Debug log to confirm which database is being used
-import logging
-logger = logging.getLogger(__name__)
-logger.debug(f"Using {ENVIRONMENT} database: {DATABASES['default']}")
+
+# Debug log to confirm which database is being used
+logger.debug(f"Using {ENVIRONMENT} database: {DATABASES['default'].get('ENGINE', 'unknown')}")
 
 
 # Password validation
