@@ -457,6 +457,10 @@ def dashboard_view(request):
 
     selected_profile = Profile.objects.first()
 
+    recent_weights = WeightMeasurement.objects.filter(
+    profile=selected_profile
+    ).order_by('-date')[:10] 
+
     if request.method == "POST" and 'select_profile' in request.POST:
         profile_form = ProfileSelectForm(request.POST)
         if profile_form.is_valid():
@@ -542,6 +546,7 @@ def dashboard_view(request):
         'profile_form': profile_form,
         'profiles': Profile.objects.all(),
         'selected_profile': selected_profile,
+        'recent_weights': recent_weights,
     }
     return render(request, 'meals/dashboard.html', context)
 
