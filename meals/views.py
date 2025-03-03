@@ -104,7 +104,7 @@ def import_weight_data(request):
 
 # Try to import Workout models if they exist
 try:
-    from .models import Workout, Exercise, WorkoutExercise, ExerciseSet
+    from .models import Workout, Exercise, WorkoutExercise, ExerciseSet, WorkoutPreset, PresetExercise
     WORKOUT_MODELS_EXIST = True
 except ImportError:
     WORKOUT_MODELS_EXIST = False
@@ -880,21 +880,41 @@ if WORKOUT_MODELS_EXIST:
         """View for the workout home page"""
         workouts = Workout.objects.all().order_by('-start_time')
         exercises = Exercise.objects.all().order_by('name')
+        presets = WorkoutPreset.objects.all().order_by('name')
         
         context = {
             'workouts': workouts,
             'exercises': exercises,
+            'presets': presets,
         }
         
         return render(request, 'meals/workout_home.html', context)
 
     def start_workout(request):
         """View for starting a new workout"""
+        presets = WorkoutPreset.objects.all().order_by('name')
+        
         if request.method == 'POST':
-            workout = Workout.objects.create()
+            preset_id = request.POST.get('preset_id')
+            
+            if preset_id:
+                preset = get_object_or_404(WorkoutPreset, id=preset_id)
+                workout = Workout.objects.create(preset=preset)
+                
+                # Add preset exercises to workout
+                preset_exercises = PresetExercise.objects.filter(preset=preset).order_by('order')
+                for i, preset_exercise in enumerate(preset_exercises):
+                    WorkoutExercise.objects.create(
+                        workout=workout,
+                        exercise=preset_exercise.exercise,
+                        order=i+1
+                    )
+            else:
+                workout = Workout.objects.create()
+                
             return redirect('active_workout', workout_id=workout.id)
         
-        return render(request, 'meals/start_workout.html')
+        return render(request, 'meals/start_workout.html', {'presets': presets})
 
     def active_workout(request, workout_id):
         """View for an active workout"""
@@ -921,6 +941,12 @@ if WORKOUT_MODELS_EXIST:
         if request.method == 'POST':
             workout.end_time = timezone.now()
             workout.duration = workout.calculate_duration()
+            
+            # Round the duration to seconds (remove microseconds)
+            if workout.duration:
+                seconds = workout.duration.total_seconds()
+                workout.duration = timedelta(seconds=int(seconds))
+                
             workout.save()
             
             return redirect('workout_detail', workout_id=workout.id)
@@ -936,6 +962,162 @@ if WORKOUT_MODELS_EXIST:
         }
         
         return render(request, 'meals/workout_detail.html', context)
+        
+    def delete_workout(request, workout_id):
+        """View for deleting a workout"""
+        workout = get_object_or_404(Workout, id=workout_id)
+        
+        if request.method == 'POST':
+            workout.delete()
+            messages.success(request, "Workout deleted successfully")
+            return redirect('workout_home')
+        
+        return render(request, 'meals/delete_workout.html', {'workout': workout})
+        
+    def workout_presets(request):
+        """View for managing workout presets"""
+        presets = WorkoutPreset.objects.all().order_by('name')
+        exercises = Exercise.objects.all().order_by('name')
+        
+        context = {
+            'presets': presets,
+            'exercises': exercises,
+        }
+        
+        return render(request, 'meals/workout_presets.html', context)
+    
+    def create_workout_preset(request):
+        """View for creating a new workout preset"""
+        exercises = Exercise.objects.all().order_by('name')
+        
+        if request.method == 'POST':
+            name = request.POST.get('preset_name')
+            exercise_ids = request.POST.getlist('exercises')
+            
+            if not name:
+                messages.error(request, "Preset name is required")
+                return redirect('workout_presets')
+                
+            preset = WorkoutPreset.objects.create(name=name)
+            
+            # Add selected exercises to the preset
+            for i, exercise_id in enumerate(exercise_ids):
+                try:
+                    exercise = Exercise.objects.get(id=exercise_id)
+                    PresetExercise.objects.create(
+                        preset=preset,
+                        exercise=exercise,
+                        order=i+1
+                    )
+                except Exercise.DoesNotExist:
+                    pass
+            
+            messages.success(request, f"Workout preset '{name}' created successfully")
+            return redirect('workout_presets')
+        
+        return render(request, 'meals/create_workout_preset.html', {'exercises': exercises})
+    
+    def edit_workout_preset(request, preset_id):
+        """View for editing a workout preset"""
+        preset = get_object_or_404(WorkoutPreset, id=preset_id)
+        all_exercises = Exercise.objects.all().order_by('name')
+        preset_exercises = PresetExercise.objects.filter(preset=preset).order_by('order')
+        
+        if request.method == 'POST':
+            name = request.POST.get('preset_name')
+            exercise_ids = request.POST.getlist('exercises')
+            
+            if not name:
+                messages.error(request, "Preset name is required")
+                return redirect('edit_workout_preset', preset_id=preset_id)
+                
+            preset.name = name
+            preset.save()
+            
+            # Remove existing preset exercises
+            PresetExercise.objects.filter(preset=preset).delete()
+            
+            # Add selected exercises to the preset
+            for i, exercise_id in enumerate(exercise_ids):
+                try:
+                    exercise = Exercise.objects.get(id=exercise_id)
+                    PresetExercise.objects.create(
+                        preset=preset,
+                        exercise=exercise,
+                        order=i+1
+                    )
+                except Exercise.DoesNotExist:
+                    pass
+            
+            messages.success(request, f"Workout preset '{name}' updated successfully")
+            return redirect('workout_presets')
+        
+        context = {
+            'preset': preset,
+            'all_exercises': all_exercises,
+            'preset_exercises': preset_exercises,
+        }
+        
+        return render(request, 'meals/edit_workout_preset.html', context)
+    
+    def delete_workout_preset(request, preset_id):
+        """View for deleting a workout preset"""
+        preset = get_object_or_404(WorkoutPreset, id=preset_id)
+        
+        if request.method == 'POST':
+            preset_name = preset.name
+            preset.delete()
+            messages.success(request, f"Workout preset '{preset_name}' deleted successfully")
+            return redirect('workout_presets')
+        
+        return render(request, 'meals/delete_workout_preset.html', {'preset': preset})
+        
+    def exercise_progress(request, exercise_id=None):
+        """View for seeing progress on exercises"""
+        exercises = Exercise.objects.all().order_by('name')
+        
+        selected_exercise = None
+        exercise_data = []
+        
+        if exercise_id:
+            selected_exercise = get_object_or_404(Exercise, id=exercise_id)
+            
+            # Get all workout exercises for this exercise
+            workout_exercises = WorkoutExercise.objects.filter(
+                exercise=selected_exercise
+            ).order_by('created_at')
+            
+            # Collect data for each workout
+            for we in workout_exercises:
+                sets = ExerciseSet.objects.filter(workout_exercise=we)
+                
+                if sets.exists():
+                    for set_obj in sets:
+                        # Convert all weights to kg for consistency
+                        weight_kg = set_obj.weight
+                        if set_obj.weight_unit == 'lb':
+                            weight_kg = float(weight_kg) * 0.453592  # Convert lbs to kg
+                            
+                        # Calculate volume (weight x reps)
+                        volume = weight_kg * set_obj.reps
+                        
+                        exercise_data.append({
+                            'date': we.created_at.strftime('%Y-%m-%d'),
+                            'set': set_obj.set_number,
+                            'weight': float(weight_kg),
+                            'reps': set_obj.reps,
+                            'volume': float(volume),
+                            'original_weight': float(set_obj.weight),
+                            'weight_unit': set_obj.weight_unit
+                        })
+        
+        context = {
+            'exercises': exercises,
+            'selected_exercise': selected_exercise,
+            'exercise_data': json.dumps(exercise_data),
+        }
+        
+        return render(request, 'meals/exercise_progress.html', context)
 
     def add_exercise_to_workout(request, workout_id):
         """API view for adding an exercise to a workout"""

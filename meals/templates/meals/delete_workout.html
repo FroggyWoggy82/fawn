@@ -1,0 +1,135 @@
+{% extends 'meals/base.html' %}
+{% load static %}
+
+{% block title %}Delete Workout{% endblock %}
+
+{% block style %}
+<style>
+    body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        margin: 0;
+        padding: 0;
+        background-color: #f5f5f5;
+        color: #333;
+    }
+    header {
+        background-color: #e74c3c;
+        color: white;
+        padding: 15px 0;
+        text-align: center;
+        margin-bottom: 30px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    header h1 {
+        margin: 0;
+    }
+    .container {
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+    .card {
+        background-color: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        padding: 20px;
+        margin-bottom: 20px;
+        text-align: center;
+    }
+    .card-title {
+        color: #e74c3c;
+        margin-top: 0;
+        margin-bottom: 20px;
+    }
+    .btn {
+        display: inline-block;
+        padding: 12px 24px;
+        background-color: #e74c3c;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        text-decoration: none;
+        font-size: 16px;
+        font-weight: 500;
+        text-align: center;
+        transition: background-color 0.3s;
+        margin: 0 10px;
+    }
+    .btn:hover {
+        background-color: #c0392b;
+    }
+    .btn-outline {
+        background-color: transparent;
+        border: 2px solid #e74c3c;
+        color: #e74c3c;
+    }
+    .btn-outline:hover {
+        background-color: #e74c3c;
+        color: white;
+    }
+    .warning-icon {
+        font-size: 48px;
+        color: #e74c3c;
+        margin-bottom: 20px;
+    }
+    .action-buttons {
+        margin-top: 30px;
+    }
+    .workout-meta {
+        margin-bottom: 20px;
+    }
+    .workout-meta-item {
+        margin-bottom: 10px;
+    }
+    .workout-meta-label {
+        font-weight: 600;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+    <header>
+        <h1>Delete Workout</h1>
+    </header>
+    
+    <div class="container">
+        <div class="card">
+            <div class="warning-icon">⚠️</div>
+            <h2 class="card-title">Are you sure?</h2>
+            
+            <p>You're about to delete the workout from: <strong>{{ workout.start_time|date:"F j, Y" }}</strong></p>
+            
+            <div class="workout-meta">
+                <div class="workout-meta-item">
+                    <span class="workout-meta-label">Time:</span>
+                    <span>{{ workout.start_time|date:"g:i A" }}</span>
+                </div>
+                <div class="workout-meta-item">
+                    <span class="workout-meta-label">Duration:</span>
+                    <span>{{ workout.duration }}</span>
+                </div>
+                <div class="workout-meta-item">
+                    <span class="workout-meta-label">Exercises:</span>
+                    <span>{{ workout.exercises.count }}</span>
+                </div>
+                {% if workout.preset %}
+                <div class="workout-meta-item">
+                    <span class="workout-meta-label">Preset:</span>
+                    <span>{{ workout.preset.name }}</span>
+                </div>
+                {% endif %}
+            </div>
+            
+            <p>This action cannot be undone.</p>
+            
+            <div class="action-buttons">
+                <a href="{% url 'workout_detail' workout.id %}" class="btn btn-outline">Cancel</a>
+                <form action="{% url 'delete_workout' workout.id %}" method="post" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn">Delete Workout</button>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock %}

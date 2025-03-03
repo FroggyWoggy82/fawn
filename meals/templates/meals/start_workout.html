@@ -118,10 +118,27 @@
                 <div class="feature-icon">✓</div>
                 <div>Create and save custom exercises</div>
             </div>
+            <div class="feature-item">
+                <div class="feature-icon">✓</div>
+                <div>Use workout presets for quick starts</div>
+            </div>
         </div>
         
-        <form action="{% url 'start_workout' %}" method="post">
+        <form action="{% url 'start_workout' %}" method="post" style="max-width: 400px; margin: 0 auto;">
             {% csrf_token %}
+            
+            {% if presets %}
+            <div style="margin-bottom: 20px; text-align: left;">
+                <label style="display: block; margin-bottom: 8px; font-weight: 600;">Choose a Workout Preset (Optional):</label>
+                <select name="preset_id" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; margin-bottom: 15px;">
+                    <option value="">-- Start Empty Workout --</option>
+                    {% for preset in presets %}
+                        <option value="{{ preset.id }}">{{ preset.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% endif %}
+            
             <button type="submit" class="btn">Start Workout</button>
         </form>
         

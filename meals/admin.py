@@ -1,5 +1,7 @@
 from django.contrib import admin
-from .models import Ingredient, Dish, DishIngredient, DailySubmission, DailySubmissionIngredient, Profile
+from .models import (Ingredient, Dish, DishIngredient, DailySubmission,
+                    DailySubmissionIngredient, Profile, Exercise, Workout,
+                    WorkoutExercise, ExerciseSet, WorkoutPreset, PresetExercise)
 
 class DishIngredientInline(admin.TabularInline):
     model = DishIngredient
@@ -35,3 +37,48 @@ class DailySubmissionIngredientAdmin(admin.ModelAdmin):
 class ProfileAdmin(admin.ModelAdmin):
     list_display = ('name',)
     search_fields = ('name',)
+
+# Workout-related admin classes
+@admin.register(Exercise)
+class ExerciseAdmin(admin.ModelAdmin):
+    list_display = ('name', 'category')
+    search_fields = ('name',)
+    list_filter = ('category',)
+
+class ExerciseSetInline(admin.TabularInline):
+    model = ExerciseSet
+    extra = 1
+
+@admin.register(WorkoutExercise)
+class WorkoutExerciseAdmin(admin.ModelAdmin):
+    list_display = ('workout', 'exercise', 'order')
+    search_fields = ('exercise__name',)
+    inlines = [ExerciseSetInline]
+
+@admin.register(Workout)
+class WorkoutAdmin(admin.ModelAdmin):
+    list_display = ('start_time', 'end_time', 'duration', 'preset', 'is_active')
+    list_filter = ('start_time', 'preset')
+    date_hierarchy = 'start_time'
+
+@admin.register(ExerciseSet)
+class ExerciseSetAdmin(admin.ModelAdmin):
+    list_display = ('workout_exercise', 'set_number', 'weight', 'weight_unit', 'reps')
+    list_filter = ('weight_unit',)
+    search_fields = ('workout_exercise__exercise__name',)
+
+class PresetExerciseInline(admin.TabularInline):
+    model = PresetExercise
+    extra = 1
+
+@admin.register(WorkoutPreset)
+class WorkoutPresetAdmin(admin.ModelAdmin):
+    list_display = ('name', 'created_at')
+    search_fields = ('name',)
+    inlines = [PresetExerciseInline]
+
+@admin.register(PresetExercise)
+class PresetExerciseAdmin(admin.ModelAdmin):
+    list_display = ('preset', 'exercise', 'order')
+    search_fields = ('preset__name', 'exercise__name')
+    list_filter = ('preset',)

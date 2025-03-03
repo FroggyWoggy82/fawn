@@ -149,6 +149,11 @@
                                     {% endif %}
                                 </span>
                             </div>
+                            {% if workout.preset %}
+                            <div style="margin-top: 8px; font-size: 12px; background-color: #f8f9fa; border-radius: 4px; padding: 3px 6px; display: inline-block;">
+                                Preset: {{ workout.preset.name }}
+                            </div>
+                            {% endif %}
                         </a>
                     {% endfor %}
                 </div>
@@ -160,6 +165,46 @@
             {% else %}
                 <p>No workouts yet. Start your first workout!</p>
             {% endif %}
+        </div>
+        
+        <div class="card">
+            <h3 class="card-title">Workout Presets</h3>
+            {% if presets %}
+                <p>You have {{ presets.count }} saved workout presets to help you quickly start your workout.</p>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 15px;">
+                    {% for preset in presets %}
+                    <div style="background: #f8f9fa; border-radius: 8px; padding: 12px; flex: 1; min-width: 200px;">
+                        <h4 style="margin-top: 0; color: #e74c3c;">{{ preset.name }}</h4>
+                        <p style="font-size: 14px; margin-bottom: 10px;">
+                            {{ preset.exercises.count }} exercises
+                        </p>
+                        <div style="display: flex; gap: 5px;">
+                            <a href="{% url 'edit_workout_preset' preset.id %}" class="btn btn-outline" style="font-size: 12px; padding: 5px 10px;">Edit</a>
+                            <form action="{% url 'delete_workout_preset' preset.id %}" method="post" style="display: inline;">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-outline" style="font-size: 12px; padding: 5px 10px; background: #ff6b6b; color: white; border: none;" onclick="return confirm('Are you sure you want to delete this preset?');">Delete</button>
+                            </form>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                <p style="text-align: center; margin-top: 15px;">
+                    <a href="{% url 'workout_presets' %}" class="btn btn-outline">Manage Presets</a>
+                </p>
+            {% else %}
+                <p>No workout presets yet. Create a preset to quickly start your workouts.</p>
+                <p style="text-align: center; margin-top: 15px;">
+                    <a href="{% url 'create_workout_preset' %}" class="btn btn-outline">Create Preset</a>
+                </p>
+            {% endif %}
+        </div>
+        
+        <div class="card">
+            <h3 class="card-title">Exercise Progress</h3>
+            <p>Track your improvement over time with visual charts and graphs.</p>
+            <p style="text-align: center; margin-top: 15px;">
+                <a href="{% url 'exercise_progress' %}" class="btn btn-outline">View Progress</a>
+            </p>
         </div>
         
         <div class="card">

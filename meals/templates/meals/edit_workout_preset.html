@@ -1,0 +1,217 @@
+{% extends 'meals/base.html' %}
+{% load static %}
+
+{% block title %}Edit Workout Preset{% endblock %}
+
+{% block style %}
+<style>
+    body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        margin: 0;
+        padding: 0;
+        background-color: #f5f5f5;
+        color: #333;
+    }
+    header {
+        background-color: #e74c3c;
+        color: white;
+        padding: 15px 0;
+        text-align: center;
+        margin-bottom: 30px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    header h1 {
+        margin: 0;
+    }
+    .container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+    .card {
+        background-color: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+    .card-title {
+        color: #e74c3c;
+        margin-top: 0;
+        border-bottom: 1px solid #eee;
+        padding-bottom: 10px;
+    }
+    .form-group {
+        margin-bottom: 20px;
+    }
+    label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: 500;
+    }
+    input[type="text"],
+    select {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 16px;
+    }
+    .btn {
+        display: inline-block;
+        padding: 12px 24px;
+        background-color: #e74c3c;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        text-decoration: none;
+        font-size: 16px;
+        font-weight: 500;
+        text-align: center;
+        transition: background-color 0.3s;
+    }
+    .btn:hover {
+        background-color: #c0392b;
+    }
+    .btn-outline {
+        background-color: transparent;
+        border: 2px solid #e74c3c;
+        color: #e74c3c;
+    }
+    .btn-outline:hover {
+        background-color: #e74c3c;
+        color: white;
+    }
+    .exercise-list {
+        max-height: 400px;
+        overflow-y: auto;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        margin-bottom: 20px;
+    }
+    .exercise-item {
+        display: flex;
+        align-items: center;
+        padding: 10px;
+        border-bottom: 1px solid #eee;
+    }
+    .exercise-item:last-child {
+        border-bottom: none;
+    }
+    .exercise-checkbox {
+        margin-right: 10px;
+    }
+    .exercise-category {
+        font-size: 12px;
+        padding: 2px 6px;
+        border-radius: 10px;
+        background-color: #e1e1e1;
+        margin-left: auto;
+    }
+    .category-back { background-color: #3498db; color: white; }
+    .category-arms { background-color: #e67e22; color: white; }
+    .category-chest { background-color: #9b59b6; color: white; }
+    .category-shoulders { background-color: #f1c40f; color: #333; }
+    .category-core { background-color: #1abc9c; color: white; }
+    .category-legs { background-color: #e74c3c; color: white; }
+    .category-other { background-color: #95a5a6; color: white; }
+    
+    .action-buttons {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 20px;
+    }
+    .exercise-filter {
+        margin-bottom: 15px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+    <header>
+        <h1>Edit Workout Preset</h1>
+    </header>
+    
+    <div class="container">
+        <div class="card">
+            <h2 class="card-title">Edit "{{ preset.name }}"</h2>
+            
+            <form action="{% url 'edit_workout_preset' preset.id %}" method="post">
+                {% csrf_token %}
+                
+                <div class="form-group">
+                    <label for="preset-name">Preset Name:</label>
+                    <input type="text" id="preset-name" name="preset_name" value="{{ preset.name }}" placeholder="e.g., Pull Day, Full Body, etc." required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="exercises">Select Exercises:</label>
+                    
+                    <div class="exercise-filter">
+                        <select id="category-filter" onchange="filterExercises()">
+                            <option value="all">All Categories</option>
+                            <option value="back">Back</option>
+                            <option value="arms">Arms</option>
+                            <option value="chest">Chest</option>
+                            <option value="shoulders">Shoulders</option>
+                            <option value="core">Core</option>
+                            <option value="legs">Legs</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    
+                    <div class="exercise-list">
+                        {% for exercise in all_exercises %}
+                            <div class="exercise-item" data-category="{{ exercise.category }}">
+                                <input
+                                    type="checkbox"
+                                    id="exercise-{{ exercise.id }}"
+                                    name="exercises"
+                                    value="{{ exercise.id }}"
+                                    class="exercise-checkbox"
+                                    {% for preset_exercise in preset_exercises %}
+                                        {% if preset_exercise.exercise.id == exercise.id %}
+                                            checked
+                                        {% endif %}
+                                    {% endfor %}
+                                >
+                                <label for="exercise-{{ exercise.id }}">{{ exercise.name }}</label>
+                                <span class="exercise-category category-{{ exercise.category }}">
+                                    {{ exercise.get_category_display }}
+                                </span>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <div class="action-buttons">
+                    <a href="{% url 'workout_presets' %}" class="btn btn-outline">Cancel</a>
+                    <button type="submit" class="btn">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function filterExercises() {
+        const category = document.getElementById('category-filter').value;
+        const exerciseItems = document.querySelectorAll('.exercise-item');
+        
+        exerciseItems.forEach(item => {
+            if (category === 'all' || item.dataset.category === category) {
+                item.style.display = 'flex';
+            } else {
+                item.style.display = 'none';
+            }
+        });
+    }
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize filter
+        filterExercises();
+    });
+</script>
+{% endblock %}

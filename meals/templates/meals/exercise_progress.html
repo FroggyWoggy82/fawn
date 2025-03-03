@@ -1,0 +1,405 @@
+{% extends 'meals/base.html' %}
+{% load static %}
+
+{% block title %}Exercise Progress{% endblock %}
+
+{% block style %}
+<style>
+    body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        margin: 0;
+        padding: 0;
+        background-color: #f5f5f5;
+        color: #333;
+    }
+    header {
+        background-color: #e74c3c;
+        color: white;
+        padding: 15px 0;
+        text-align: center;
+        margin-bottom: 15px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    header h1 {
+        margin: 0;
+    }
+    .container {
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 15px;
+    }
+    .card {
+        background-color: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+    .card-title {
+        color: #e74c3c;
+        margin-top: 0;
+        border-bottom: 1px solid #eee;
+        padding-bottom: 10px;
+    }
+    .btn {
+        display: inline-block;
+        padding: 10px 20px;
+        background-color: #e74c3c;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        text-decoration: none;
+        font-size: 16px;
+        font-weight: 500;
+        text-align: center;
+        transition: background-color 0.3s;
+    }
+    .btn:hover {
+        background-color: #c0392b;
+    }
+    .btn-outline {
+        background-color: transparent;
+        border: 2px solid #e74c3c;
+        color: #e74c3c;
+    }
+    .btn-outline:hover {
+        background-color: #e74c3c;
+        color: white;
+    }
+    .exercise-select {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 16px;
+        margin-bottom: 20px;
+    }
+    .chart-container {
+        width: 100%;
+        height: 400px;
+    }
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: #7f8c8d;
+    }
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 15px;
+        margin-bottom: 20px;
+    }
+    .stat-card {
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        padding: 15px;
+        text-align: center;
+    }
+    .stat-value {
+        font-size: 24px;
+        font-weight: 600;
+        color: #e74c3c;
+        margin-bottom: 5px;
+    }
+    .stat-label {
+        color: #7f8c8d;
+        font-size: 14px;
+    }
+    .data-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+    }
+    .data-table th,
+    .data-table td {
+        padding: 8px;
+        text-align: center;
+        border-bottom: 1px solid #eee;
+    }
+    .data-table th {
+        background-color: #f8f8f8;
+        font-weight: 500;
+    }
+    .chart-tabs {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 15px;
+    }
+    .chart-tab {
+        padding: 8px 15px;
+        background-color: #f8f9fa;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+    .chart-tab.active {
+        background-color: #e74c3c;
+        color: white;
+        border-color: #e74c3c;
+    }
+    
+    /* Mobile-friendly adjustments */
+    @media (max-width: 768px) {
+        .container {
+            padding: 10px;
+        }
+        .chart-container {
+            height: 300px;
+        }
+        .stats-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+        .data-table {
+            font-size: 14px;
+        }
+        .btn {
+            font-size: 14px;
+            padding: 8px 16px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+    <header>
+        <h1>Exercise Progress</h1>
+    </header>
+    
+    <div class="container">
+        <div class="card">
+            <h2 class="card-title">Track Your Progress</h2>
+            
+            <select id="exercise-select" class="exercise-select" onchange="window.location.href = '/exercise/' + this.value + '/progress/';">
+                <option value="">Select an Exercise</option>
+                {% for exercise in exercises %}
+                    <option value="{{ exercise.id }}" {% if selected_exercise and selected_exercise.id == exercise.id %}selected{% endif %}>
+                        {{ exercise.name }} ({{ exercise.get_category_display }})
+                    </option>
+                {% endfor %}
+            </select>
+            
+            {% if selected_exercise %}
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value" id="total-workouts">...</div>
+                        <div class="stat-label">Total Workouts</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="max-weight">...</div>
+                        <div class="stat-label">Max Weight</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="max-volume">...</div>
+                        <div class="stat-label">Max Volume</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="max-reps">...</div>
+                        <div class="stat-label">Max Reps</div>
+                    </div>
+                </div>
+                
+                <div class="chart-tabs">
+                    <div class="chart-tab active" id="tab-weight" onclick="switchChart('weight')">Weight</div>
+                    <div class="chart-tab" id="tab-volume" onclick="switchChart('volume')">Volume</div>
+                    <div class="chart-tab" id="tab-reps" onclick="switchChart('reps')">Reps</div>
+                </div>
+                
+                <div class="chart-container">
+                    <canvas id="progress-chart"></canvas>
+                </div>
+                
+                <h3 style="margin-top: 30px;">Exercise History</h3>
+                <div style="overflow-x: auto;">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Set</th>
+                                <th>Weight</th>
+                                <th>Reps</th>
+                                <th>Volume</th>
+                            </tr>
+                        </thead>
+                        <tbody id="history-table-body">
+                            <!-- Filled dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    <h3>Select an Exercise to View Progress</h3>
+                    <p>Track your improvement over time with visual charts and detailed statistics.</p>
+                </div>
+            {% endif %}
+        </div>
+        
+        <a href="{% url 'workout_home' %}" class="btn btn-outline" style="margin-bottom: 20px;">Back to Workouts</a>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Define global variables for exercise data to avoid issues with template tags in JavaScript
+    var exerciseData = [];
+    
+    // Initialize exercise data from Django context if available
+    {% if selected_exercise and exercise_data %}
+    exerciseData = JSON.parse('{{ exercise_data|safe }}');
+    {% endif %}
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        if (exerciseData.length > 0) {
+            // Process data
+            const workoutDates = [...new Set(exerciseData.map(item => item.date))];
+            const totalWorkouts = workoutDates.length;
+            
+            // Calculate max values
+            let maxWeight = 0;
+            let maxReps = 0;
+            let maxVolume = 0;
+            
+            exerciseData.forEach(set => {
+                maxWeight = Math.max(maxWeight, set.original_weight);
+                maxReps = Math.max(maxReps, set.reps);
+                maxVolume = Math.max(maxVolume, set.volume);
+            });
+            
+            // Update stats
+            document.getElementById('total-workouts').textContent = totalWorkouts;
+            document.getElementById('max-weight').textContent = maxWeight + ' ' + (exerciseData[0]?.weight_unit || 'kg');
+            document.getElementById('max-volume').textContent = Math.round(maxVolume);
+            document.getElementById('max-reps').textContent = maxReps;
+            
+            // Process data for charts
+            const chartData = processDataForChart(exerciseData, 'weight');
+            
+            // Create chart
+            const ctx = document.getElementById('progress-chart').getContext('2d');
+            window.progressChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: chartData.labels,
+                    datasets: [{
+                        label: 'Weight',
+                        data: chartData.values,
+                        borderColor: '#e74c3c',
+                        backgroundColor: 'rgba(231, 76, 60, 0.1)',
+                        tension: 0.1,
+                        fill: true,
+                        pointRadius: 5,
+                        pointHoverRadius: 7
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            title: {
+                                display: true,
+                                text: 'Weight (kg)'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Date'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.dataset.label}: ${context.raw}`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Populate history table
+            const tableBody = document.getElementById('history-table-body');
+            
+            // Sort data by date (newest first)
+            const sortedData = [...exerciseData].sort((a, b) => {
+                return new Date(b.date) - new Date(a.date);
+            });
+            
+            sortedData.forEach(set => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${set.date}</td>
+                    <td>${set.set}</td>
+                    <td>${set.original_weight} ${set.weight_unit}</td>
+                    <td>${set.reps}</td>
+                    <td>${Math.round(set.volume * 100) / 100}</td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+    });
+    
+    function processDataForChart(data, metric) {
+        // Group by date and get max value for the metric
+        const dateMap = new Map();
+        
+        data.forEach(set => {
+            const date = set.date;
+            const value = set[metric];
+            
+            if (!dateMap.has(date) || value > dateMap.get(date)) {
+                dateMap.set(date, value);
+            }
+        });
+        
+        // Sort dates
+        const sortedDates = Array.from(dateMap.keys()).sort((a, b) => new Date(a) - new Date(b));
+        
+        return {
+            labels: sortedDates,
+            values: sortedDates.map(date => dateMap.get(date))
+        };
+    }
+    
+    function switchChart(metric) {
+        // Update active tab
+        document.querySelectorAll('.chart-tab').forEach(tab => {
+            tab.classList.remove('active');
+        });
+        document.getElementById(`tab-${metric}`).classList.add('active');
+        
+        if (exerciseData.length > 0) {
+            // Process data for the selected metric
+            const newChartData = processDataForChart(exerciseData, metric);
+            
+            // Update chart
+            window.progressChart.data.datasets[0].label = capitalizeFirstLetter(metric);
+            window.progressChart.data.labels = newChartData.labels;
+            window.progressChart.data.datasets[0].data = newChartData.values;
+            
+            // Update y-axis title
+            let yAxisTitle = 'Weight (kg)';
+            if (metric === 'volume') {
+                yAxisTitle = 'Volume (weight × reps)';
+            } else if (metric === 'reps') {
+                yAxisTitle = 'Repetitions';
+            }
+            
+            window.progressChart.options.scales.y.title.text = yAxisTitle;
+            window.progressChart.update();
+        }
+    }
+    
+    function capitalizeFirstLetter(string) {
+        return string.charAt(0).toUpperCase() + string.slice(1);
+    }
+</script>
+{% endblock %}
