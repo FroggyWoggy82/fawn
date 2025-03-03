@@ -777,6 +777,17 @@ stopButton.addEventListener('click', function() {
     // Update form input
     subtasksDataInput.value = JSON.stringify(allSubtasks);
     
+    // Clear ALL localStorage items
+    localStorage.removeItem(TIMER_START_KEY);
+    localStorage.removeItem(TIMER_ELAPSED_KEY);
+    localStorage.removeItem(TIMER_STATE_KEY);
+    localStorage.removeItem(TASK_TITLE_KEY);
+    localStorage.removeItem(SUBTASK_DATA_KEY);
+    localStorage.removeItem(SUBTASK_START_KEY);
+    localStorage.removeItem(SUBTASK_ELAPSED_KEY);
+    localStorage.removeItem(SUBTASK_STATE_KEY);
+    localStorage.removeItem(CURRENT_SUBTASK_KEY);
+    
     // Submit form
     try {
         document.getElementById('taskForm').submit();
