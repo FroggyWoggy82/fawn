@@ -10,7 +10,7 @@
         margin: 20px;
         background-color: #f9f9f9;
     }
-    h1, h2 {
+    h1, h2, h3 {
         color: #333;
         text-align: center;
     }
@@ -125,6 +125,44 @@
         text-align: right;
         margin-right: 10px;
     }
+    .card {
+        background-color: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        padding: 20px;
+        margin: 20px auto;
+        max-width: 1000px;
+    }
+    .card-title {
+        color: #007bff;
+        margin-top: 0;
+        border-bottom: 1px solid #eee;
+        padding-bottom: 10px;
+    }
+    .table {
+        width: 100%;
+        margin-bottom: 20px;
+    }
+    .chart-container {
+        height: 300px;
+        margin-top: 20px;
+    }
+    .btn-secondary {
+        display: block;
+        width: fit-content;
+        margin: 20px auto;
+        padding: 10px 20px;
+        background-color: #6c757d;
+        color: white;
+        text-decoration: none;
+        border-radius: 5px;
+        transition: background-color 0.3s;
+    }
+    .btn-secondary:hover {
+        background-color: #5a6268;
+        text-decoration: none;
+        color: white;
+    }
 </style>
 {% endblock %}
 
@@ -169,31 +207,124 @@
         <button type="submit" name="set_goal">Set Goal</button>
     </form>
 
-    <a href="{% url 'home' %}" class="btn btn-secondary">Back to Home</a>
+    <!-- Weight History Section -->
+    {% if recent_weights %}
+    <div class="card">
+        <h3 class="card-title">Weight History</h3>
+        
+        <!-- Weight Table -->
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Weight (kg)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for weight in recent_weights %}
+                <tr>
+                    <td>{{ weight.date }}</td>
+                    <td>{{ weight.weight }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        
+        <!-- Weight Chart -->
+        <div class="chart-container">
+            <canvas id="weightChart"></canvas>
+        </div>
+    </div>
+    {% endif %}
 
     <h2>Current Month Calendar for {{ selected_profile.name }}</h2>
     <div class="calendar-container">
         {{ calendar|safe }}
     </div>
-    {% if recent_weights %}
-<div class="card">
-    <h3 class="card-title">Weight History</h3>
-    <table class="table">
-        <thead>
-            <tr>
-                <th>Date</th>
-                <th>Weight (kg)</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for weight in recent_weights %}
-            <tr>
-                <td>{{ weight.date }}</td>
-                <td>{{ weight.weight }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</div>
+
+    <a href="{% url 'home' %}" class="btn-secondary">Back to Home</a>
+{% endblock %}
+
+{% block scripts %}
+{% if recent_weights %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Prepare weight data
+    var weightData = [
+    {% for weight in recent_weights %}
+        {
+            date: "{{ weight.date|date:'Y-m-d' }}",
+            weight: {{ weight.weight|floatformat:1 }}
+        }{% if not forloop.last %},{% endif %}
+    {% endfor %}
+    ];
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        // Sort by date
+        weightData.sort(function(a, b) {
+            return new Date(a.date) - new Date(b.date);
+        });
+        
+        // Extract labels and data
+        var labels = [];
+        var values = [];
+        
+        for (var i = 0; i < weightData.length; i++) {
+            labels.push(weightData[i].date);
+            values.push(weightData[i].weight);
+        }
+        
+        // Create chart
+        var ctx = document.getElementById('weightChart').getContext('2d');
+        var chart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Weight (kg)',
+                    data: values,
+                    backgroundColor: 'rgba(0, 123, 255, 0.2)',
+                    borderColor: 'rgba(0, 123, 255, 1)',
+                    borderWidth: 2,
+                    pointBackgroundColor: 'rgba(0, 123, 255, 1)',
+                    pointRadius: 4,
+                    tension: 0.2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: false,
+                        title: {
+                            display: true,
+                            text: 'Weight (kg)'
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Date'
+                        }
+                    }
+                },
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Weight Trend',
+                        font: {
+                            size: 16
+                        }
+                    },
+                    legend: {
+                        display: true,
+                        position: 'top'
+                    }
+                }
+            }
+        });
+    });
+</script>
 {% endif %}
 {% endblock %}

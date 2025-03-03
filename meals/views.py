@@ -16,14 +16,30 @@ from django.views.decorators.csrf import csrf_exempt
 def weight_api(request):
     if request.method == 'POST':
         try:
+            print(f"Request body: {request.body}")  # Debug logging
+            
             data = json.loads(request.body)
-            weight = float(data.get('weight'))
+            print(f"Parsed data: {data}")  # Debug logging
+            
+            # Get weight value
+            weight_val = data.get('weight')
+            # Handle if weight comes as string with unit
+            if isinstance(weight_val, str) and ' ' in weight_val:
+                parts = weight_val.split()
+                weight = float(parts[0])
+            else:
+                weight = float(weight_val)
+                
             date = data.get('date')
-            profile_id = data.get('profile_id', 1)  # Default to first profile
+            profile_id = data.get('profile_id', 1)
             
-            profile = Profile.objects.get(id=profile_id)
+            # Create profile if doesn't exist
+            profile, created = Profile.objects.get_or_create(
+                id=profile_id, 
+                defaults={'name': f'Profile {profile_id}'}
+            )
             
-            # Create or update weight measurement
+            # Create weight entry
             measurement, created = WeightMeasurement.objects.update_or_create(
                 profile=profile,
                 date=date,
@@ -32,11 +48,13 @@ def weight_api(request):
             
             return JsonResponse({
                 'status': 'success',
-                'created': created,
                 'weight': weight,
                 'date': date
             })
         except Exception as e:
+            import traceback
+            print(f"Error in weight_api: {str(e)}")
+            print(traceback.format_exc())
             return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
     
     return JsonResponse({'status': 'error', 'message': 'Method not allowed'}, status=405)
@@ -451,14 +469,17 @@ def dashboard_view(request):
     """Dashboard view for monitoring nutrition data"""
     now = datetime.now()
     year, month = now.year, now.month
-
+    
+    # Initialize context at the beginning
+    context = {}
+    
     if not Profile.objects.exists():
         Profile.objects.create(name="Default Profile")
 
     selected_profile = Profile.objects.first()
 
     recent_weights = WeightMeasurement.objects.filter(
-    profile=selected_profile
+        profile=selected_profile
     ).order_by('-date')[:10] 
 
     if request.method == "POST" and 'select_profile' in request.POST:
@@ -540,14 +561,28 @@ def dashboard_view(request):
     # --- Generate the Calendar HTML ---
     cal = CustomHTMLCalendar(year, month, day_data).formatmonth(withyear=True)
 
-    context = {
+    # Process weight data
+    weight_data = []
+    weights = WeightMeasurement.objects.filter(profile=selected_profile).order_by('date')
+    for weight in weights:
+        weight_data.append({
+            'date': weight.date.strftime('%Y-%m-%d'),
+            'weight': weight.weight
+        })
+    
+    # Add weight data to context
+    context['weight_data'] = json.dumps(weight_data)
+
+    # Update the main context dictionary
+    context.update({
         'calendar': cal,
         'goal_form': form,
         'profile_form': profile_form,
         'profiles': Profile.objects.all(),
         'selected_profile': selected_profile,
         'recent_weights': recent_weights,
-    }
+    })
+    
     return render(request, 'meals/dashboard.html', context)
 
 def weight_list(request):
