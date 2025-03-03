@@ -756,75 +756,32 @@ resumeButton.addEventListener('click', function() {
 });
 
 stopButton.addEventListener('click', function() {
-    // First check if there are any ongoing subtasks
-    if (localStorage.getItem(SUBTASK_STATE_KEY) === TIMER_STATES.RUNNING ||
-        localStorage.getItem(SUBTASK_STATE_KEY) === TIMER_STATES.PAUSED) {
-        if (!confirm("You have an active subtask. Stopping the main task will also stop the subtask. Continue?")) {
-            return;
-        }
-        // Stop the subtask timer
-        clearInterval(subtaskTimerInterval);
-    }
-    
-    // Stop the main task timer
+    // Stop timers
     clearInterval(timerInterval);
-    updateTimer(); // Update one last time
+    clearInterval(subtaskTimerInterval);
+    updateTimer();
     
-    taskDurationInput.value = elapsed;
+    // Set duration value
+    taskDurationInput.value = Math.floor(elapsed);
     
-    // Prepare a flattened list of all subtasks including nested ones for easier processing on server
+    // Create simpler subtasks data structure
     const allSubtasks = [];
-    
-    // Recursively process subtasks to ensure all levels of nesting are captured
-    function processSubtasks(subtasks, parentId = null) {
-        subtasks.forEach(subtask => {
-            // Add the current subtask
-            allSubtasks.push({
-                id: subtask.id,
-                title: subtask.title,
-                duration: subtask.duration,
-                parentId: parentId
-            });
-            
-            // Process any nested subtasks (recursive)
-            if (subtask.nestedSubtasks && subtask.nestedSubtasks.length > 0) {
-                processSubtasks(subtask.nestedSubtasks, subtask.id);
-            }
+    subtasks.forEach(subtask => {
+        allSubtasks.push({
+            title: subtask.title,
+            duration: Math.floor(subtask.duration || 0),
+            parentId: null
         });
-    }
+    });
     
-    // Process all subtasks recursively
-    processSubtasks(subtasks);
-    
-    // Update the form data with all subtasks
+    // Update form input
     subtasksDataInput.value = JSON.stringify(allSubtasks);
     
-    // Save the ID counter to localStorage
-    localStorage.setItem(SUBTASK_ID_COUNTER_KEY, subtaskIdCounter.toString());
-    
+    // Submit form
     try {
-        // Store a backup of the current state before submitting
-        const stateBackup = {
-            elapsed: elapsed,
-            subtasks: subtasks,
-            subtaskIdCounter: subtaskIdCounter
-        };
-        localStorage.setItem('wir_state_backup', JSON.stringify(stateBackup));
-        
-        // Submit the form
         document.getElementById('taskForm').submit();
-        
-        // Only clear localStorage after successful form submission
-        setTimeout(function() {
-            localStorage.removeItem(TIMER_START_KEY);
-            localStorage.removeItem(TIMER_ELAPSED_KEY);
-            localStorage.removeItem(TIMER_STATE_KEY);
-            localStorage.removeItem(TASK_TITLE_KEY);
-            localStorage.removeItem(SUBTASK_DATA_KEY);
-        }, 500);
     } catch (error) {
-        console.error('Error submitting form:', error);
-        alert('There was a problem submitting your task. Please try again.');
+        console.error('Error:', error);
     }
 });
 

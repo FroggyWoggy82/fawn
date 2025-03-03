@@ -1,5 +1,6 @@
 from django.shortcuts import render, get_object_or_404, redirect
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
+from django.contrib import messages
 from .forms import DailySubmissionForm, DishForm, CalorieGoalRangeForm, AcneEntryForm, SkinProductForm, ProfileSelectForm
 from .models import DailySubmission, DishIngredient, DailySubmissionIngredient, Dish, Ingredient, DailyCalorieGoal, AcneEntry, SkinProduct, Task, SubTask, Profile
 from .custom_calendar import CustomHTMLCalendar
@@ -8,6 +9,8 @@ import calendar
 from datetime import date, datetime, timedelta
 from django.utils import timezone
 import json
+import uuid
+
 
 # Try to import Workout models if they exist
 try:
@@ -470,80 +473,118 @@ def dashboard_view(request):
 def wir_view(request):
     """View for the Work In Progress (WIR) tracking page"""
     if request.method == "POST":
-        # Retrieve task information from the form submission
-        task_title = request.POST.get("task_title")
-        # The timer is running on the client, and when stopped the duration (in seconds) is submitted
-        duration_seconds = float(request.POST.get("task_duration", 0))
-        duration = timedelta(seconds=duration_seconds)
-
-        # For simplicity, we store start_time and end_time as the time of submission.
-        now = timezone.now()
-        task = Task.objects.create(
-            title=task_title,
-            start_time=now,
-            end_time=now,
-            duration=duration,
-            date=now.date()
-        )
-        
-        # Process subtasks data
-        subtasks_data = request.POST.get("subtasks_data")
-        if subtasks_data:
+        try:
+            # Retrieve task information from the form submission
+            task_title = request.POST.get("task_title", "Untitled Task")  # Default if missing
+            
             try:
-                subtasks = json.loads(subtasks_data)
+                duration_seconds = float(request.POST.get("task_duration", 0))
+            except (ValueError, TypeError):
+                duration_seconds = 0
                 
-                # Create a map to track created subtasks for parent-child relationships
-                subtask_map = {}
-                
-                # First pass: Create all subtasks
-                for subtask_info in subtasks:
-                    subtask_duration = timedelta(seconds=float(subtask_info.get("duration", 0)))
-                    
-                    subtask = SubTask.objects.create(
-                        task=task,
-                        title=subtask_info["title"],
-                        start_time=now,
-                        end_time=now,
-                        duration=subtask_duration,
-                        # Parent will be set in the second pass
-                    )
-                    
-                    # Store in map using the JavaScript ID
-                    subtask_map[subtask_info["id"]] = subtask
-                
-                # Second pass: Set parent-child relationships
-                for subtask_info in subtasks:
-                    # If this subtask has a parent
-                    if subtask_info.get("parentId") is not None:
-                        child = subtask_map.get(subtask_info["id"])
-                        parent = subtask_map.get(subtask_info["parentId"])
-                        
-                        if child and parent:
-                            child.parent = parent
-                            child.save()
-                            
-            except (json.JSONDecodeError, KeyError, ValueError) as e:
-                # Log the error but continue
-                print(f"Error processing subtasks: {e}")
-        
-        return redirect("wir_view")
-    
-    tasks = Task.objects.all().order_by("-id")
-    today = timezone.now().date()
-    start_of_week = today - timedelta(days=today.weekday())
-    
-    # Sum durations (in seconds) for today and this week
-    daily_total = sum((t.duration.total_seconds() for t in tasks if t.date == today), 0)
-    weekly_total = sum((t.duration.total_seconds() for t in tasks if t.date >= start_of_week), 0)
-    total_tasks = tasks.count()
+            duration = timedelta(seconds=duration_seconds)
 
-    context = {
-        "tasks": tasks,
-        "daily_total": daily_total,
-        "weekly_total": weekly_total,
-        "total_tasks": total_tasks,
-    }
-    return render(request, "meals/wir.html", context)
+            # For simplicity, we store start_time and end_time as the time of submission.
+            now = timezone.now()
+            task = Task.objects.create(
+                title=task_title,
+                start_time=now,
+                end_time=now,
+                duration=duration,
+                date=now.date()
+            )
+            
+            # Process subtasks data
+            subtasks_data = request.POST.get("subtasks_data")
+            if subtasks_data:
+                try:
+                    subtasks = json.loads(subtasks_data)
+                    
+                    # Create a map to track created subtasks for parent-child relationships
+                    subtask_map = {}
+                    
+                    # First pass: Create all subtasks
+                    for subtask_info in subtasks:
+                        try:
+                            # Get duration with fallback to 0 if there's an error
+                            try:
+                                subtask_duration = timedelta(seconds=float(subtask_info.get("duration", 0)))
+                            except (ValueError, TypeError):
+                                subtask_duration = timedelta(seconds=0)
+                                
+                            # Get title with fallback
+                            subtask_title = subtask_info.get("title", "Unnamed Subtask")
+                            
+                            # Get ID with fallback
+                            subtask_id = subtask_info.get("id", f"temp-{uuid.uuid4()}")
+                            
+                            subtask = SubTask.objects.create(
+                                task=task,
+                                title=subtask_title,
+                                start_time=now,
+                                end_time=now,
+                                duration=subtask_duration,
+                            )
+                            
+                            # Store in map using the JavaScript ID
+                            subtask_map[subtask_id] = subtask
+                            
+                        except Exception as e:
+                            # Log error but continue with other subtasks
+                            print(f"Error creating subtask: {e}")
+                    
+                    # Second pass: Set parent-child relationships
+                    for subtask_info in subtasks:
+                        try:
+                            # If this subtask has a parent
+                            parent_id = subtask_info.get("parentId")
+                            subtask_id = subtask_info.get("id")
+                            
+                            if parent_id is not None and subtask_id in subtask_map:
+                                child = subtask_map.get(subtask_id)
+                                parent = subtask_map.get(parent_id)
+                                
+                                if child and parent:
+                                    child.parent = parent
+                                    child.save()
+                        except Exception as e:
+                            # Log error but continue with other relationships
+                            print(f"Error setting parent-child relationship: {e}")
+                                
+                except json.JSONDecodeError as e:
+                    print(f"Error parsing subtasks JSON: {e}")
+                except Exception as e:
+                    print(f"Error processing subtasks data: {e}")
+            
+            return redirect("wir_view")
+            
+        except Exception as e:
+            # Catch all errors in POST handling
+            print(f"Error processing WIR form: {e}")
+            messages.error(request, "There was an error processing your task. Please try again.")
+            # Return to the form page instead of crashing
+            
+    # Normal GET request handling
+    try:
+        tasks = Task.objects.all().order_by("-id")
+        today = timezone.now().date()
+        start_of_week = today - timedelta(days=today.weekday())
+        
+        # Sum durations (in seconds) for today and this week
+        daily_total = sum((t.duration.total_seconds() for t in tasks if t.date == today), 0)
+        weekly_total = sum((t.duration.total_seconds() for t in tasks if t.date >= start_of_week), 0)
+        total_tasks = tasks.count()
+
+        context = {
+            "tasks": tasks,
+            "daily_total": daily_total,
+            "weekly_total": weekly_total,
+            "total_tasks": total_tasks,
+        }
+        return render(request, "meals/wir.html", context)
+    except Exception as e:
+        print(f"Error rendering WIR page: {e}")
+        return HttpResponse("An error occurred loading the WIR page. Please try again.")
 
 def daily_submission_view(request):
     """View for submitting daily meals"""
