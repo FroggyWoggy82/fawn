@@ -7,6 +7,7 @@ from .models import DailySubmission
 from django.utils import timezone
 import logging
 from meals.models import DailySubmission, Dish
+from django.core.management import call_command
 
 logger = logging.getLogger(__name__)
 
@@ -55,3 +56,8 @@ submission = DailySubmission.objects.create(
 
 # Verify that the submission was created
 print(DailySubmission.objects.filter(submission_date=timezone.now().date()).count())
+
+
+@shared_task
+def check_service_schedule():
+    call_command('schedule_service')
