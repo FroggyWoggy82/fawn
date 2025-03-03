@@ -30,5 +30,6 @@ urlpatterns = [
     path('workout-exercise/<int:workout_exercise_id>/add-set/', views.add_set_to_exercise, name='add_set_to_exercise'),
     path('exercise/<int:exercise_id>/previous-data/', views.get_previous_exercise_data, name='get_previous_exercise_data'),
     path('api/weight/', views.weight_api, name='weight_api'),
+    path('weights/', views.weight_list, name='weight_list'),
     
 ]

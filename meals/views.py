@@ -550,6 +550,11 @@ def dashboard_view(request):
     }
     return render(request, 'meals/dashboard.html', context)
 
+def weight_list(request):
+    weights = WeightMeasurement.objects.all().order_by('-date')
+    return render(request, 'meals/weight_list.html', {'weights': weights})
+
+
 def wir_view(request):
     """View for the Work In Progress (WIR) tracking page"""
     if request.method == "POST":
