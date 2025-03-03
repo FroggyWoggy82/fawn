@@ -11,83 +11,125 @@
         color: #333;
     }
     
+    /* Page layout */
+    body {
+        margin: 0;
+        padding: 0;
+    }
+    
     /* Main container layout */
     .wir-container {
         display: flex;
-        gap: 20px;
-        margin-bottom: 20px;
-        
+        justify-content: center;
+        gap: 30px;
+        margin: 20px auto;
+        max-width: 1000px;
     }
     
-    .priority-column {
+    /* Task priorities section */
+    .task-priorities-container {
+        width: 250px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 10px;
+        background-color: white;
+        margin-right: 30px;
+        align-self: flex-start;
+    }
+    
+    /* Task creation row */
+    .task-creation {
+        display: flex;
+        margin-bottom: 15px;
+        width: 100%;
+        box-sizing: border-box;
+    }
+    
+    /* Input field */
+    #new-task-title {
         flex: 1;
-        min-width: 300px;
-        max-width: 400px;
+        margin-right: 5px;
     }
     
+    /* Priority dropdown */
+    #task-priority {
+        margin-right: 5px;
+        width: auto;
+    }
+    
+    /* Add button */
+    #add-task-btn {
+        min-width: 45px;
+    }
+    
+    /* Center column for timer and content */
     .timer-column {
-        flex: 2;
+        width: 600px;
     }
     
-    @media (max-width: 768px) {
+    @media (max-width: 900px) {
         .wir-container {
             flex-direction: column;
+            align-items: center;
         }
         
-        .priority-column, .timer-column {
-            max-width: 100%;
+        .task-priorities-container {
+            width: 100%;
+            max-width: 600px;
+            margin-right: 0;
+            margin-bottom: 20px;
+        }
+        
+        .timer-column {
+            width: 100%;
+            max-width: 600px;
         }
     }
     
     /* Task priority management styles */
     .priority-management {
-        padding: 15px;
-        background-color: #f8f9fa;
-        border-radius: 8px;
-        margin-bottom: 20px;
-        border: 1px solid #ddd;
-    }
-    
-    .task-creation {
-        margin-bottom: 15px;
-        display: flex;
-        gap: 10px;
+        width: 100%;
+        box-sizing: border-box;
     }
     
     .task-creation input {
-        flex-grow: 1;
         padding: 8px;
         border: 1px solid #ddd;
         border-radius: 4px;
+        box-sizing: border-box;
     }
     
     .task-creation select {
         padding: 8px;
         border: 1px solid #ddd;
         border-radius: 4px;
+        box-sizing: border-box;
     }
     
     .priority-section {
         margin-bottom: 15px;
-        padding: 10px;
-        border-radius: 5px;
+        padding: 12px;
+        border-radius: 6px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        width: 100%;
+        box-sizing: border-box;
     }
     
     .high-priority {
-        background-color: #ffe6e6;
-        border-left: 4px solid #dc3545;
+        background-color: #ffebee;
+        border-left: 4px solid #f44336;
     }
     
     .medium-priority {
-        background-color: #fff3cd;
+        background-color: #fff8e1;
         border-left: 4px solid #ffc107;
     }
     
     .low-priority {
-        background-color: #e6f7ff;
-        border-left: 4px solid #17a2b8;
+        background-color: #e1f5fe;
+        border-left: 4px solid #03a9f4;
     }
-    
+
     .priority-section h4 {
         margin-top: 0;
         color: #333;
@@ -96,19 +138,31 @@
     }
     
     .task-item {
-        background: white;
+        background-color: white;
         padding: 8px 12px;
-        margin: 5px 0;
+        margin: 6px 0;
         border-radius: 4px;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        transition: all 0.2s ease;
         cursor: pointer;
-        transition: transform 0.2s;
-        list-style-type: none;
+        position: relative;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .task-item.selected-task {
+        background-color: #e3f2fd;
+        border-left: 3px solid #2196f3;
+        padding-left: 9px; /* Account for the border */
+        font-weight: 500;
     }
     
     .task-item:hover {
         transform: translateY(-2px);
-        box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     }
     
     /* Comparison modal styles */
@@ -178,7 +232,9 @@
         margin: 0 auto 20px;
         box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         border-radius: 8px;
+        width: 100%;
         max-width: 600px;
+        box-sizing: border-box;
     }
     .timer {
         font-size: 2.5em;
@@ -208,6 +264,7 @@
     .task-container {
         position: relative;
         padding-bottom: 20px;
+        width: 100%;
     }
     .task-title {
         font-size: 1.2em;
@@ -221,6 +278,8 @@
         border-radius: 8px;
         margin-top: 20px;
         border-left: 4px solid #007bff;
+        width: 100%;
+        box-sizing: border-box;
     }
     .subtask-timer {
         font-size: 2em;
@@ -236,6 +295,7 @@
     .subtask-list {
         margin-top: 20px;
         display: none;
+        width: 100%;
     }
     .subtask-list h3 {
         margin-bottom: 10px;
@@ -253,6 +313,8 @@
         align-items: center;
         box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         transition: transform 0.2s;
+        width: 100%;
+        box-sizing: border-box;
     }
     .subtask-item:hover {
         transform: translateX(5px);
@@ -266,19 +328,20 @@
     }
     .metrics, .task-list {
         text-align: center;
-        margin-top: 20px;
+        margin: 20px auto;
         background: #fff;
         padding: 20px;
         border-radius: 8px;
         box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        max-width: 800px;
-        margin-left: auto;
-        margin-right: auto;
+        max-width: 600px;
+        width: 100%;
+        box-sizing: border-box;
     }
     .task-list ul {
         list-style: none;
         padding: 0;
         text-align: left;
+        width: 100%;
     }
     .task-list li {
         background: #f9f9f9;
@@ -287,6 +350,8 @@
         border-radius: 5px;
         border-left: 4px solid #007bff;
         transition: transform 0.2s;
+        width: 100%;
+        box-sizing: border-box;
     }
     .task-list li:hover {
         transform: translateY(-2px);
@@ -296,6 +361,7 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
+        width: 100%;
     }
     .task-title-display {
         font-weight: bold;
@@ -311,6 +377,8 @@
         border-top: 1px dashed #ccc;
         font-size: 0.9em;
         display: none;
+        width: 100%;
+        box-sizing: border-box;
     }
     .subtasks-section.has-subtasks {
         display: block;
@@ -322,12 +390,16 @@
     .subtasks-section ul.subtasks-list {
         display: none;
         margin-top: 5px;
+        width: 100%;
+        padding-left: 0;
     }
     .subtasks-section li {
         background: #f0f0f0;
         border-left: 3px solid #0056b3;
         margin: 5px 0;
         padding: 8px;
+        width: 100%;
+        box-sizing: border-box;
     }
     .home-button {
         display: block;
@@ -386,6 +458,8 @@
         background: #e3f0ff;
         border-left: 4px solid #0056b3;
         display: none;
+        width: 100%;
+        box-sizing: border-box;
     }
     .task-hierarchy {
         margin-left: 20px;
@@ -398,6 +472,8 @@
         margin-left: 20px;
         padding-left: 0;
         list-style-type: none;
+        width: 100%;
+        box-sizing: border-box;
     }
     .nested-subtask-item {
         background-color: #f0f8ff;
@@ -406,6 +482,8 @@
         border-left: 2px solid #4682b4;
         border-radius: 3px;
         font-size: 0.95em;
+        width: 100%;
+        box-sizing: border-box;
     }
     .nested-indicator {
         color: #4682b4;
@@ -424,28 +502,88 @@
         border-left: 2px solid #6495ed;
         border-radius: 3px;
         font-size: 0.9em;
+        width: 100%;
+        box-sizing: border-box;
     }
     .nested-subtasks-list-deep {
         margin-top: 5px;
         margin-left: 15px;
         padding-left: 0;
         list-style-type: none;
+        width: 100%;
+        box-sizing: border-box;
     }
     
     /* Styling for priority lists */
     #high-priority-tasks, #medium-priority-tasks, #low-priority-tasks {
         padding-left: 0;
         margin-top: 10px;
+        width: 100%;
+        box-sizing: border-box;
     }
     
     .priority-title {
+        font-size: 14px;
+        font-weight: 600;
         margin-bottom: 10px;
         color: #333;
-        font-weight: bold;
+    }
+
+    .delete-task {
+        color: #e57373 !important;
+        cursor: pointer;
+        padding: 4px;
+        border-radius: 50%;
+        height: 16px;
+        width: 16px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        margin-left: 8px;
+        opacity: 0.7;
+        transition: opacity 0.2s;
+    }
+
+    .delete-task:hover {
+        opacity: 1;
+        background-color: #ffebee;
+    }
+
+    #new-task-title {
+        padding: 8px 12px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 14px;
+        box-sizing: border-box;
+    }
+
+    #task-priority {
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 14px;
+        box-sizing: border-box;
+    }
+
+    #add-task-btn {
+        padding: 8px 12px;
+        background-color: #2196f3;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+        transition: background-color 0.2s;
+        white-space: nowrap;
+        box-sizing: border-box;
+    }
+
+    #add-task-btn:hover {
+        background-color: #1976d2;
     }
 </style>
 {% endblock %}
-
 {% block content %}
     <h1>WIR Page</h1>
     
@@ -606,8 +744,8 @@
 
 {% block scripts %}
 <script>
-// Original WIR JavaScript (preserved)
 // Global variables and DOM references
+let selectedTask = null; // Added for task selection functionality
 const timerDisplay = document.getElementById('timerDisplay');
 const taskDurationInput = document.getElementById('task_duration');
 const startButton = document.getElementById('startButton');
@@ -985,30 +1123,72 @@ resumeButton.addEventListener('click', function() {
     timerInterval = setInterval(updateTimer, 1000);
     updateMainTaskState(TIMER_STATES.RUNNING);
 });
-
-stopButton.addEventListener('click', function() {
-    // Stop timers
-    clearInterval(timerInterval);
-    clearInterval(subtaskTimerInterval);
-    updateTimer();
+// Function to add a completed task to the list
+function addCompletedTask(title, duration, subtasks = []) {
+    // Create completed task object
+    const completedTask = {
+        id: Date.now(),
+        title: title,
+        duration: duration,
+        timestamp: new Date().toISOString(),
+        subtasks: subtasks
+    };
     
-    // Set duration value
-    taskDurationInput.value = Math.floor(elapsed);
-    
-    // Create simpler subtasks data structure
-    const allSubtasks = [];
-    subtasks.forEach(subtask => {
-        allSubtasks.push({
-            title: subtask.title,
-            duration: Math.floor(subtask.duration || 0),
-            parentId: null
-        });
+    // Send task data to server via AJAX
+    const csrfToken = getCookie('csrftoken');
+    fetch('{% url "wir_view" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken
+        },
+        body: JSON.stringify({
+            task_title: completedTask.title,
+            task_duration: completedTask.duration,
+            subtasks_data: JSON.stringify(completedTask.subtasks)
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log('Task saved:', data);
+        
+        // Add the task to the UI immediately
+        addTaskToCompletedList(completedTask);
+        
+        // Update metrics
+        updateMetricsDisplay(data.daily_total, data.weekly_total, data.total_tasks);
+    })
+    .catch(error => {
+        console.error('Error saving task:', error);
+        // Still add to UI even if server fails
+        addTaskToCompletedList(completedTask);
     });
+}
+
+// Reset the task UI after completion
+function resetTaskUI() {
+    // Clear task title
+    document.getElementById('task_title').value = '';
     
-    // Update form input
-    subtasksDataInput.value = JSON.stringify(allSubtasks);
+    // Reset timer display
+    elapsed = 0;
+    updateTimerDisplay();
     
-    // Clear ALL localStorage items
+    // Clear subtasks UI
+    subtasks = [];
+    updateSubtasksList();
+    
+    // Hide subtask containers
+    subtaskContainer.style.display = 'none';
+    nestedSubtaskContainer.style.display = 'none';
+    currentSubtasksList.style.display = 'none';
+    
+    // Reset button states
+    updateMainTaskState(TIMER_STATES.STOPPED);
+}
+
+// Clear localStorage timer data
+function clearTimerLocalStorage() {
     localStorage.removeItem(TIMER_START_KEY);
     localStorage.removeItem(TIMER_ELAPSED_KEY);
     localStorage.removeItem(TIMER_STATE_KEY);
@@ -1018,13 +1198,94 @@ stopButton.addEventListener('click', function() {
     localStorage.removeItem(SUBTASK_ELAPSED_KEY);
     localStorage.removeItem(SUBTASK_STATE_KEY);
     localStorage.removeItem(CURRENT_SUBTASK_KEY);
+    localStorage.removeItem(NESTED_SUBTASK_START_KEY);
+    localStorage.removeItem(NESTED_SUBTASK_ELAPSED_KEY);
+    localStorage.removeItem(NESTED_SUBTASK_STATE_KEY);
+    localStorage.removeItem(CURRENT_NESTED_SUBTASK_KEY);
+}
+
+// Replace the stop button event handler
+stopButton.addEventListener('click', function() {
+    // First get reference to PRIORITY_TASKS_KEY to ensure it's defined in this scope
+    const PRIORITY_TASKS_KEY = 'wir_priority_tasks';
     
-    // Submit form
-    try {
-        document.getElementById('taskForm').submit();
-    } catch (error) {
-        console.error('Error:', error);
+    // Process selected task if exists
+    if (selectedTask) {
+        const priority = selectedTask.priority;
+        const taskId = parseInt(selectedTask.id);
+        
+        // Find and remove from priority lists in localStorage
+        const savedTasks = localStorage.getItem(PRIORITY_TASKS_KEY);
+        if (savedTasks) {
+            try {
+                const allTasks = JSON.parse(savedTasks);
+                if (allTasks[priority]) {
+                    allTasks[priority] = allTasks[priority].filter(t => t.id !== taskId);
+                    localStorage.setItem(PRIORITY_TASKS_KEY, JSON.stringify(allTasks));
+                    
+                    // Update the global priorityTasks variable used for task comparisons
+                    // This ensures deleted tasks aren't used in future comparisons
+                    // We need to use window object to access the variable from the DOMContentLoaded scope
+                    if (window.priorityTasks && window.priorityTasks[priority]) {
+                        window.priorityTasks[priority] = window.priorityTasks[priority].filter(t => t.id !== taskId);
+                    }
+                    
+                    // Update UI immediately
+                    const taskList = document.getElementById(`${priority}-priority-tasks`);
+                    if (taskList) {
+                        const taskElement = taskList.querySelector(`li[data-task-id="${taskId}"]`);
+                        if (taskElement) {
+                            taskElement.remove();
+                        }
+                    }
+                }
+            } catch (e) {
+                console.error('Error updating tasks:', e);
+            }
+        }
+        
+        // Reset selected task
+        selectedTask = null;
+        
+        // Remove selected-task class from any task items
+        document.querySelectorAll('.task-item').forEach(item => {
+            item.classList.remove('selected-task');
+        });
     }
+    
+    // Stop timers
+    clearInterval(timerInterval);
+    clearInterval(subtaskTimerInterval);
+    updateTimer();
+    
+    // Get task data
+    const taskTitle = document.getElementById('task_title').value || 'Unnamed Task';
+    const taskDuration = Math.floor(elapsed);
+    
+    // Process subtasks
+    const allSubtasks = [];
+    subtasks.forEach(subtask => {
+        allSubtasks.push({
+            title: subtask.title,
+            duration: Math.floor(subtask.duration || 0),
+            parentId: null
+        });
+    });
+    
+    // Update form input for form submission
+    subtasksDataInput.value = JSON.stringify(allSubtasks);
+    
+    // Add to completed tasks
+    addCompletedTask(taskTitle, taskDuration, allSubtasks);
+    
+    // Reset UI and timer
+    resetTaskUI();
+    
+    // Clear localStorage items
+    clearTimerLocalStorage();
+    
+    // Return false to prevent form submission
+    return false;
 });
 
 // Subtask Button Event Listeners
@@ -1108,7 +1369,6 @@ resumeSubtaskButton.addEventListener('click', function() {
     updateSubtaskState(TIMER_STATES.RUNNING);
 });
 
-// Find completeSubtaskButton event listener and change it
 completeSubtaskButton.addEventListener('click', function() {
     // Stop the subtask timer
     clearInterval(subtaskTimerInterval);
@@ -1316,20 +1576,23 @@ window.addEventListener('beforeunload', function() {
 // =================================================================
 
 // Priority task management
+// Define priorityTasks in the global scope first
+window.priorityTasks = {
+    high: [],
+    medium: [],
+    low: []
+};
+
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize task priorities from localStorage if available
     const PRIORITY_TASKS_KEY = 'wir_priority_tasks';
-    let priorityTasks = {
-        high: [],
-        medium: [],
-        low: []
-    };
 
-    // Load saved priority tasks
+    // Load saved priority tasks into our global window.priorityTasks object
     const savedTasks = localStorage.getItem(PRIORITY_TASKS_KEY);
     if (savedTasks) {
         try {
-            priorityTasks = JSON.parse(savedTasks);
+            const parsedTasks = JSON.parse(savedTasks);
+            window.priorityTasks = parsedTasks;
         } catch (e) {
             console.error('Error loading saved priority tasks:', e);
         }
@@ -1369,12 +1632,12 @@ document.addEventListener('DOMContentLoaded', function() {
         };
         
         // Add the task to its priority list
-        priorityTasks[priority].push(newTask);
+        window.priorityTasks[priority].push(newTask);
         
         // If there are other tasks in this priority level, start comparison
-        if (priorityTasks[priority].length > 1) {
+        if (window.priorityTasks[priority].length > 1) {
             // Get up to 4 existing tasks to compare with
-            const existingTasks = priorityTasks[priority].slice(0, -1).slice(-4);
+            const existingTasks = window.priorityTasks[priority].slice(0, -1).slice(-4);
             if (existingTasks.length > 0) {
                 startComparisons(newTask, existingTasks);
             }
@@ -1402,7 +1665,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (isNewTaskMoreImportant) {
                         // If new task is more important, swap positions
                         const priority = newTask.priority;
-                        const tasks = priorityTasks[priority];
+                        const tasks = window.priorityTasks[priority];
                         
                         // Find indices
                         const newTaskIndex = tasks.findIndex(t => t.id === newTask.id);
@@ -1415,7 +1678,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             // Insert it before the comparison task
                             tasks.splice(compareTaskIndex, 0, newTask);
                             // Update in the main object
-                            priorityTasks[priority] = tasks;
+                            window.priorityTasks[priority] = tasks;
                             // Save changes
                             saveTasksToLocalStorage();
                             // Update UI
@@ -1467,12 +1730,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Render all task lists
     function renderAllTaskLists() {
-        renderTaskList(highPriorityList, priorityTasks.high);
-        renderTaskList(mediumPriorityList, priorityTasks.medium);
-        renderTaskList(lowPriorityList, priorityTasks.low);
+        renderTaskList(highPriorityList, window.priorityTasks.high);
+        renderTaskList(mediumPriorityList, window.priorityTasks.medium);
+        renderTaskList(lowPriorityList, window.priorityTasks.low);
     }
 
-    // Render a single task list
+    // Render a single task list - MODIFIED to add data attributes and make tasks selectable
     function renderTaskList(listElement, tasks) {
         // Clear the list
         listElement.innerHTML = '';
@@ -1483,6 +1746,7 @@ document.addEventListener('DOMContentLoaded', function() {
             li.className = 'task-item';
             li.textContent = task.title;
             li.dataset.taskId = task.id;
+            li.dataset.priority = task.priority || listElement.id.split('-')[0]; // Extract priority from list ID
             
             // Add delete button
             const deleteBtn = document.createElement('span');
@@ -1492,7 +1756,7 @@ document.addEventListener('DOMContentLoaded', function() {
             deleteBtn.style.cursor = 'pointer';
             deleteBtn.style.color = '#dc3545';
             deleteBtn.dataset.taskId = task.id;
-            deleteBtn.dataset.priority = task.priority;
+            deleteBtn.dataset.priority = task.priority || listElement.id.split('-')[0];
             
             li.appendChild(deleteBtn);
             listElement.appendChild(li);
@@ -1502,11 +1766,11 @@ document.addEventListener('DOMContentLoaded', function() {
     // Delete a task
     function deleteTask(taskId, priority) {
         // Find the task index
-        const taskIndex = priorityTasks[priority].findIndex(t => t.id === parseInt(taskId));
+        const taskIndex = window.priorityTasks[priority].findIndex(t => t.id === parseInt(taskId));
         
         if (taskIndex !== -1) {
             // Remove the task
-            priorityTasks[priority].splice(taskIndex, 1);
+            window.priorityTasks[priority].splice(taskIndex, 1);
             // Save changes
             saveTasksToLocalStorage();
             // Update UI
@@ -1516,8 +1780,29 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Save all tasks to localStorage
     function saveTasksToLocalStorage() {
-        localStorage.setItem(PRIORITY_TASKS_KEY, JSON.stringify(priorityTasks));
+        localStorage.setItem(PRIORITY_TASKS_KEY, JSON.stringify(window.priorityTasks));
     }
+
+    // Make task items selectable and update the main task field
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('task-item') && !e.target.classList.contains('delete-task')) {
+            // Set visual selected state
+            document.querySelectorAll('.task-item').forEach(item => {
+                item.classList.remove('selected-task');
+            });
+            e.target.classList.add('selected-task');
+            
+            // Update the main task input
+            const taskTitle = e.target.textContent.replace('✕', '').trim();
+            document.getElementById('task_title').value = taskTitle;
+            
+            // Store the selected task ID for deletion later
+            selectedTask = {
+                id: e.target.dataset.taskId,
+                priority: e.target.dataset.priority
+            };
+        }
+    });
 
     // Add event listeners
     addTaskBtn.addEventListener('click', addTask);
@@ -1539,4 +1824,6 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 </script>
+
+
 {% endblock %}

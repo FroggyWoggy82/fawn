@@ -11,6 +11,5 @@ app = Celery('mealplanner')
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'mealplanner.settings')
 
-
 app.config_from_object('django.conf:settings', namespace='CELERY')
 app.autodiscover_tasks()
