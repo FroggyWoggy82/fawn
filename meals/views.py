@@ -712,10 +712,15 @@ def daily_submission_view(request):
     
     if request.method == "POST":
         form = DailySubmissionForm(request.POST, request.FILES)  # Include request.FILES for file uploads
-        dish_form = DishForm(request.POST)
-        if form.is_valid() and dish_form.is_valid():
-            submission = form.save()
-            dish = dish_form.save()
+        if form.is_valid():
+            submission = form.save(commit=False)
+            
+            # Process feeling rating
+            feeling_rating = request.POST.get('feeling_rating', 3)  # Default to 3 if not provided
+            submission.feeling_rating = feeling_rating
+            
+            submission.save()
+            
             for dish_ingredient in DishIngredient.objects.filter(dish=submission.dish):
                 grams_used = request.POST.get(f'ingredient_{dish_ingredient.ingredient.id}')
                 if grams_used:
@@ -734,14 +739,12 @@ def daily_submission_view(request):
             return redirect('submissions_list')
     else:
         form = DailySubmissionForm()
-        dish_form = DishForm()
 
     # Get all profiles for the form
     profiles = Profile.objects.all()
 
     return render(request, 'meals/daily_submission.html', {
         'form': form,
-        'dish_form': dish_form,
         'submission_ingredients': submission_ingredients,
         'profiles': profiles
     })

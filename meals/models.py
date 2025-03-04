@@ -195,6 +195,9 @@ class DailySubmission(models.Model):
     total_fats = models.IntegerField(default=0)
     total_carbohydrates = models.IntegerField(default=0)
     image = models.ImageField(upload_to='submissions/', blank=True, null=True)
+    feeling_rating = models.IntegerField(choices=[(1, "Terrible"), (2, "Poor"), 
+                                                 (3, "Okay"), (4, "Good"), 
+                                                 (5, "Excellent")], default=3)
 
     def __str__(self):
         profile_name = self.profile.name if self.profile else "No Profile"

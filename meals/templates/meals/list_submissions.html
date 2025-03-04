@@ -133,6 +133,35 @@
         border-radius: 4px;
         cursor: pointer;
     }
+    
+    /* Feeling rating indicators */
+    .feeling-rating {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 20px;
+        font-weight: bold;
+        color: white;
+    }
+    
+    .feeling-1 {
+        background-color: #dc3545; /* Red */
+    }
+    
+    .feeling-2 {
+        background-color: #fd7e14; /* Orange */
+    }
+    
+    .feeling-3 {
+        background-color: #ffc107; /* Yellow */
+    }
+    
+    .feeling-4 {
+        background-color: #28a745; /* Green */
+    }
+    
+    .feeling-5 {
+        background-color: #20c997; /* Teal */
+    }
 </style>
 {% endblock %}
 
@@ -164,6 +193,7 @@
                     <th>Dish</th>
                     <th>Image</th>
                     <th>Ingredients</th>
+                    <th>How You Felt</th>
                     <th>Total Calories</th>
                     <th>Total Protein</th>
                     <th>Total Fats</th>
@@ -199,6 +229,15 @@
                                 {% endfor %}
                             </ul>
                         </td>
+                        <td>
+                            {% if submission_total.submission.feeling_rating %}
+                                <span class="feeling-rating feeling-{{ submission_total.submission.feeling_rating }}">
+                                    {{ submission_total.submission.feeling_rating }}/5
+                                </span>
+                            {% else %}
+                                <span>Not rated</span>
+                            {% endif %}
+                        </td>
                         <td>{{ submission_total.total_calories }}</td>
                         <td>{{ submission_total.total_protein }}g</td>
                         <td>{{ submission_total.total_fats }}g</td>
@@ -215,7 +254,7 @@
                     </tr>
                 {% empty %}
                     <tr>
-                        <td colspan="11">No submissions found</td>
+                        <td colspan="12">No submissions found</td>
                     </tr>
                 {% endfor %}
             </tbody>

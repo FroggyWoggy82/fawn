@@ -79,6 +79,25 @@
         margin-right: 10px;
         width: auto;
     }
+    .feeling-rating {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 10px;
+        margin-bottom: 15px;
+    }
+    .feeling-option {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        cursor: pointer;
+    }
+    .feeling-option input[type="radio"] {
+        margin-bottom: 5px;
+    }
+    .feeling-label {
+        text-align: center;
+        font-size: 14px;
+    }
 </style>
 {% endblock %}
 
@@ -110,18 +129,34 @@
                     <label for="id_image">Upload Image:</label>
                     {{ form.image }}
                 </div>
+                
+                <!-- How do you feel after this meal rating -->
                 <div>
-                    <label for="id_notes">Notes:</label>
-                    {{ form.notes }}
+                    <label>How do you feel after this meal?</label>
+                    <div class="feeling-rating">
+                        <div class="feeling-option">
+                            <input type="radio" id="feeling_1" name="feeling_rating" value="1">
+                            <label for="feeling_1" class="feeling-label">1<br>Terrible</label>
+                        </div>
+                        <div class="feeling-option">
+                            <input type="radio" id="feeling_2" name="feeling_rating" value="2">
+                            <label for="feeling_2" class="feeling-label">2<br>Poor</label>
+                        </div>
+                        <div class="feeling-option">
+                            <input type="radio" id="feeling_3" name="feeling_rating" value="3" checked>
+                            <label for="feeling_3" class="feeling-label">3<br>Okay</label>
+                        </div>
+                        <div class="feeling-option">
+                            <input type="radio" id="feeling_4" name="feeling_rating" value="4">
+                            <label for="feeling_4" class="feeling-label">4<br>Good</label>
+                        </div>
+                        <div class="feeling-option">
+                            <input type="radio" id="feeling_5" name="feeling_rating" value="5">
+                            <label for="feeling_5" class="feeling-label">5<br>Excellent</label>
+                        </div>
+                    </div>
                 </div>
-                <div>
-                    <label for="id_cook_time">Cook Time:</label>
-                    {{ dish_form.cook_time }}
-                </div>
-                <div>
-                    <label for="id_instructions">Instructions:</label>
-                    {{ dish_form.instructions }}
-                </div>
+                
                 <div id="ingredients-container"></div>
                 <button type="submit">Submit</button>
             </form>

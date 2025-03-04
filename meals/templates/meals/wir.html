@@ -582,8 +582,89 @@
     #add-task-btn:hover {
         background-color: #1976d2;
     }
+    
+    /* Weekly View Styles */
+    .weekly-view {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 20px;
+        margin: 30px auto;
+        max-width: 100%;
+        width: 100%;
+        box-sizing: border-box;
+        overflow-x: auto;
+    }
+    
+    .day-container {
+        background-color: white;
+        border-radius: 8px;
+        padding: 20px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        min-width: 0; /* Prevents overflow */
+    }
+    
+    .day-container h4 {
+        color: #007bff;
+        border-bottom: 1px solid #eee;
+        padding-bottom: 8px;
+        margin-top: 0;
+        margin-bottom: 15px;
+        text-align: center;
+        font-size: 1.1em;
+    }
+    
+    .task-count {
+        display: block;
+        text-align: center;
+        font-weight: bold;
+        color: #28a745;
+        margin-bottom: 10px;
+        font-size: 0.9em;
+    }
+    
+    .task-count.zero {
+        color: #6c757d;
+    }
+    
+    .day-tasks {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+    
+    .day-tasks li {
+        padding: 8px;
+        margin: 5px 0;
+        background-color: #f8f9fa;
+        border-radius: 4px;
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.9em;
+        flex-wrap: wrap;
+        width: 100%;
+        box-sizing: border-box;
+    }
+    
+    .day-tasks li.no-tasks {
+        color: #999;
+        font-style: italic;
+        text-align: center;
+    }
+    
+    @media (max-width: 768px) {
+        .weekly-view {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+    
+    @media (max-width: 480px) {
+        .weekly-view {
+            grid-template-columns: 1fr;
+        }
+    }
 </style>
 {% endblock %}
+
 {% block content %}
     <h1>WIR Page</h1>
     
@@ -656,6 +737,10 @@
                             <button type="button" class="button" id="pauseSubtaskButton" disabled>Pause</button>
                             <button type="button" class="button" id="resumeSubtaskButton" disabled>Resume</button>
                             <button type="button" class="button" id="completeSubtaskButton" disabled>Complete</button>
+                            <button type="button" class="button" id="startSubtaskButton">Start</button>
+                            <button type="button" class="button" id="pauseSubtaskButton" disabled>Pause</button>
+                            <button type="button" class="button" id="resumeSubtaskButton" disabled>Resume</button>
+                            <button type="button" class="button" id="completeSubtaskButton" disabled>Complete</button>
                             <button type="button" class="button" id="nestedSubtaskButton" disabled>Start Nested Subtask</button>
                         </div>
                     </div>
@@ -708,6 +793,150 @@
         <p>Total time this week: 
             <span class="formatted-time">({{ weekly_total|default:0|floatformat:0|time_format }})</span>
         </p>
+        
+        <!-- Weekly View -->
+        <h3>This Week's Tasks</h3>
+        <div class="weekly-view">
+            <!-- Sunday -->
+            <div class="day-container">
+                <h4>Sunday</h4>
+                {% with sunday_tasks=tasks|dictsortreversed:"date"|filter_by_day:"Sunday" %}
+                <span class="task-count {% if sunday_tasks|length == 0 %}zero{% endif %}">
+                    {{ sunday_tasks|length }} task{% if sunday_tasks|length != 1 %}s{% endif %}
+                </span>
+                <ul class="day-tasks">
+                    {% for task in sunday_tasks %}
+                        <li>
+                            <span class="task-title-display">{{ task.title }}</span>
+                            <span class="task-duration">{{ task.duration.total_seconds|floatformat:0|time_format }}</span>
+                        </li>
+                    {% empty %}
+                        <li class="no-tasks">No tasks</li>
+                    {% endfor %}
+                </ul>
+                {% endwith %}
+            </div>
+            
+            <!-- Monday -->
+            <div class="day-container">
+                <h4>Monday</h4>
+                {% with monday_tasks=tasks|dictsortreversed:"date"|filter_by_day:"Monday" %}
+                <span class="task-count {% if monday_tasks|length == 0 %}zero{% endif %}">
+                    {{ monday_tasks|length }} task{% if monday_tasks|length != 1 %}s{% endif %}
+                </span>
+                <ul class="day-tasks">
+                    {% for task in monday_tasks %}
+                        <li>
+                            <span class="task-title-display">{{ task.title }}</span>
+                            <span class="task-duration">{{ task.duration.total_seconds|floatformat:0|time_format }}</span>
+                        </li>
+                    {% empty %}
+                        <li class="no-tasks">No tasks</li>
+                    {% endfor %}
+                </ul>
+                {% endwith %}
+            </div>
+            
+            <!-- Tuesday -->
+            <div class="day-container">
+                <h4>Tuesday</h4>
+                {% with tuesday_tasks=tasks|dictsortreversed:"date"|filter_by_day:"Tuesday" %}
+                <span class="task-count {% if tuesday_tasks|length == 0 %}zero{% endif %}">
+                    {{ tuesday_tasks|length }} task{% if tuesday_tasks|length != 1 %}s{% endif %}
+                </span>
+                <ul class="day-tasks">
+                    {% for task in tuesday_tasks %}
+                        <li>
+                            <span class="task-title-display">{{ task.title }}</span>
+                            <span class="task-duration">{{ task.duration.total_seconds|floatformat:0|time_format }}</span>
+                        </li>
+                    {% empty %}
+                        <li class="no-tasks">No tasks</li>
+                    {% endfor %}
+                </ul>
+                {% endwith %}
+            </div>
+            
+            <!-- Wednesday -->
+            <div class="day-container">
+                <h4>Wednesday</h4>
+                {% with wednesday_tasks=tasks|dictsortreversed:"date"|filter_by_day:"Wednesday" %}
+                <span class="task-count {% if wednesday_tasks|length == 0 %}zero{% endif %}">
+                    {{ wednesday_tasks|length }} task{% if wednesday_tasks|length != 1 %}s{% endif %}
+                </span>
+                <ul class="day-tasks">
+                    {% for task in wednesday_tasks %}
+                        <li>
+                            <span class="task-title-display">{{ task.title }}</span>
+                            <span class="task-duration">{{ task.duration.total_seconds|floatformat:0|time_format }}</span>
+                        </li>
+                    {% empty %}
+                        <li class="no-tasks">No tasks</li>
+                    {% endfor %}
+                </ul>
+                {% endwith %}
+            </div>
+            
+            <!-- Thursday (Center Day) -->
+            <div class="day-container">
+                <h4>Thursday</h4>
+                {% with thursday_tasks=tasks|dictsortreversed:"date"|filter_by_day:"Thursday" %}
+                <span class="task-count {% if thursday_tasks|length == 0 %}zero{% endif %}">
+                    {{ thursday_tasks|length }} task{% if thursday_tasks|length != 1 %}s{% endif %}
+                </span>
+                <ul class="day-tasks">
+                    {% for task in thursday_tasks %}
+                        <li>
+                            <span class="task-title-display">{{ task.title }}</span>
+                            <span class="task-duration">{{ task.duration.total_seconds|floatformat:0|time_format }}</span>
+                        </li>
+                    {% empty %}
+                        <li class="no-tasks">No tasks</li>
+                    {% endfor %}
+                </ul>
+                {% endwith %}
+            </div>
+            
+            <!-- Friday -->
+            <div class="day-container">
+                <h4>Friday</h4>
+                {% with friday_tasks=tasks|dictsortreversed:"date"|filter_by_day:"Friday" %}
+                <span class="task-count {% if friday_tasks|length == 0 %}zero{% endif %}">
+                    {{ friday_tasks|length }} task{% if friday_tasks|length != 1 %}s{% endif %}
+                </span>
+                <ul class="day-tasks">
+                    {% for task in friday_tasks %}
+                        <li>
+                            <span class="task-title-display">{{ task.title }}</span>
+                            <span class="task-duration">{{ task.duration.total_seconds|floatformat:0|time_format }}</span>
+                        </li>
+                    {% empty %}
+                        <li class="no-tasks">No tasks</li>
+                    {% endfor %}
+                </ul>
+                {% endwith %}
+            </div>
+            
+            <!-- Saturday -->
+            <div class="day-container">
+                <h4>Saturday</h4>
+                {% with saturday_tasks=tasks|dictsortreversed:"date"|filter_by_day:"Saturday" %}
+                <span class="task-count {% if saturday_tasks|length == 0 %}zero{% endif %}">
+                    {{ saturday_tasks|length }} task{% if saturday_tasks|length != 1 %}s{% endif %}
+                </span>
+                <ul class="day-tasks">
+                    {% for task in saturday_tasks %}
+                        <li>
+                            <span class="task-title-display">{{ task.title }}</span>
+                            <span class="task-duration">{{ task.duration.total_seconds|floatformat:0|time_format }}</span>
+                        </li>
+                    {% empty %}
+                        <li class="no-tasks">No tasks</li>
+                    {% endfor %}
+                </ul>
+                {% endwith %}
+            </div>
+        </div>
     </div>
 
     <!-- Completed Tasks -->
@@ -718,7 +947,7 @@
                 <li id="task-{{ task.id }}">
                     <div class="task-details">
                         <span class="task-title-display">{{ task.title }}</span>
-                        <span class="task-duration">{{ task.duration.total_seconds|floatformat:0 }} seconds</span>
+                        <span class="task-duration">{{ task.duration.total_seconds|floatformat:0|time_format }}</span>
                     </div>
                     
                     <!-- Subtasks section (if any) -->
@@ -727,7 +956,10 @@
                         <h4>Subtasks: <button type="button" class="toggle-subtasks-btn" data-task-id="{{ task.id }}">Show/Hide</button></h4>
                         <ul class="subtasks-list" id="subtasks-list-{{ task.id }}">
                             {% for subtask in task.subtasks.all %}
-                                <li>{{ subtask.title }} - {{ subtask.duration.total_seconds|floatformat:0 }} seconds</li>
+                                <li>
+                                    <span class="subtask-name">{{ subtask.title }}</span>
+                                    <span class="task-duration">{{ subtask.duration.total_seconds|floatformat:0|time_format }}</span>
+                                </li>
                             {% endfor %}
                         </ul>
                     </div>
@@ -788,6 +1020,7 @@ const NESTED_SUBTASK_ELAPSED_KEY = 'wir_nested_subtask_elapsed';
 const NESTED_SUBTASK_STATE_KEY = 'wir_nested_subtask_state';
 const CURRENT_NESTED_SUBTASK_KEY = 'wir_current_nested_subtask';
 const SUBTASK_ID_COUNTER_KEY = 'wir_subtask_id_counter';
+const PRIORITY_TASKS_KEY = 'wir_priority_tasks';
 
 // Timer states
 const TIMER_STATES = {
@@ -805,6 +1038,13 @@ let subtaskElapsed = 0;
 let nestedSubtaskElapsed = 0;
 let subtasks = [];
 let subtaskIdCounter = parseInt(localStorage.getItem(SUBTASK_ID_COUNTER_KEY) || '0');
+
+// Initialize global priorityTasks
+window.priorityTasks = {
+    high: [],
+    medium: [],
+    low: []
+};
 
 // Function to toggle subtasks visibility for a task
 function toggleTaskSubtasks(taskId) {
@@ -1048,6 +1288,8 @@ function updateNestedSubtaskState(state) {
 // Update the subtasks list in the UI
 function updateSubtasksList() {
     const container = document.getElementById('subtasksContainer');
+    if (!container) return;
+    
     container.innerHTML = '';
     
     subtasks.forEach(subtask => {
@@ -1078,6 +1320,8 @@ function updateSubtasksList() {
     subtasksDataInput.value = JSON.stringify(subtasks);
     localStorage.setItem(SUBTASK_DATA_KEY, JSON.stringify(subtasks));
 }
+
+// CSRF token helper function
 function getCookie(name) {
     let cookieValue = null;
     if (document.cookie && document.cookie !== '') {
@@ -1093,36 +1337,6 @@ function getCookie(name) {
     return cookieValue;
 }
 
-// Main Task Button Event Listeners
-startButton.addEventListener('click', function() {
-    const taskTitle = document.getElementById('task_title').value;
-    localStorage.setItem(TASK_TITLE_KEY, taskTitle);
-    
-    elapsed = 0;
-    const now = Date.now();
-    localStorage.setItem(TIMER_START_KEY, now.toString());
-    localStorage.setItem(TIMER_ELAPSED_KEY, '0');
-    localStorage.setItem(TIMER_STATE_KEY, TIMER_STATES.RUNNING);
-    
-    timerInterval = setInterval(updateTimer, 1000);
-    updateMainTaskState(TIMER_STATES.RUNNING);
-});
-
-pauseButton.addEventListener('click', function() {
-    clearInterval(timerInterval);
-    updateTimer(); // Update one last time
-    localStorage.setItem(TIMER_STATE_KEY, TIMER_STATES.PAUSED);
-    updateMainTaskState(TIMER_STATES.PAUSED);
-});
-
-resumeButton.addEventListener('click', function() {
-    const now = Date.now();
-    localStorage.setItem(TIMER_START_KEY, now.toString());
-    localStorage.setItem(TIMER_STATE_KEY, TIMER_STATES.RUNNING);
-    
-    timerInterval = setInterval(updateTimer, 1000);
-    updateMainTaskState(TIMER_STATES.RUNNING);
-});
 // Function to add a completed task to the list
 function addCompletedTask(title, duration, subtasks = []) {
     // Create completed task object
@@ -1134,35 +1348,13 @@ function addCompletedTask(title, duration, subtasks = []) {
         subtasks: subtasks
     };
     
-    // Send task data to server via AJAX
-    const csrfToken = getCookie('csrftoken');
-    fetch('{% url "wir_view" %}', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': csrfToken
-        },
-        body: JSON.stringify({
-            task_title: completedTask.title,
-            task_duration: completedTask.duration,
-            subtasks_data: JSON.stringify(completedTask.subtasks)
-        })
-    })
-    .then(response => response.json())
-    .then(data => {
-        console.log('Task saved:', data);
-        
-        // Add the task to the UI immediately
-        addTaskToCompletedList(completedTask);
-        
-        // Update metrics
-        updateMetricsDisplay(data.daily_total, data.weekly_total, data.total_tasks);
-    })
-    .catch(error => {
-        console.error('Error saving task:', error);
-        // Still add to UI even if server fails
-        addTaskToCompletedList(completedTask);
-    });
+    // Set form values for submission
+    document.getElementById('task_title').value = title;
+    document.getElementById('task_duration').value = duration;
+    document.getElementById('subtasks_data').value = JSON.stringify(subtasks);
+    
+    // Submit the form
+    document.getElementById('taskForm').submit();
 }
 
 // Reset the task UI after completion
@@ -1204,11 +1396,39 @@ function clearTimerLocalStorage() {
     localStorage.removeItem(CURRENT_NESTED_SUBTASK_KEY);
 }
 
-// Replace the stop button event handler
-stopButton.addEventListener('click', function() {
-    // First get reference to PRIORITY_TASKS_KEY to ensure it's defined in this scope
-    const PRIORITY_TASKS_KEY = 'wir_priority_tasks';
+// Main Task Button Event Listeners
+startButton.addEventListener('click', function() {
+    const taskTitle = document.getElementById('task_title').value;
+    localStorage.setItem(TASK_TITLE_KEY, taskTitle);
     
+    elapsed = 0;
+    const now = Date.now();
+    localStorage.setItem(TIMER_START_KEY, now.toString());
+    localStorage.setItem(TIMER_ELAPSED_KEY, '0');
+    localStorage.setItem(TIMER_STATE_KEY, TIMER_STATES.RUNNING);
+    
+    timerInterval = setInterval(updateTimer, 1000);
+    updateMainTaskState(TIMER_STATES.RUNNING);
+});
+
+pauseButton.addEventListener('click', function() {
+    clearInterval(timerInterval);
+    updateTimer(); // Update one last time
+    localStorage.setItem(TIMER_STATE_KEY, TIMER_STATES.PAUSED);
+    updateMainTaskState(TIMER_STATES.PAUSED);
+});
+
+resumeButton.addEventListener('click', function() {
+    const now = Date.now();
+    localStorage.setItem(TIMER_START_KEY, now.toString());
+    localStorage.setItem(TIMER_STATE_KEY, TIMER_STATES.RUNNING);
+    
+    timerInterval = setInterval(updateTimer, 1000);
+    updateMainTaskState(TIMER_STATES.RUNNING);
+});
+
+// Stop button event handler
+stopButton.addEventListener('click', function() {
     // Process selected task if exists
     if (selectedTask) {
         const priority = selectedTask.priority;
@@ -1224,8 +1444,6 @@ stopButton.addEventListener('click', function() {
                     localStorage.setItem(PRIORITY_TASKS_KEY, JSON.stringify(allTasks));
                     
                     // Update the global priorityTasks variable used for task comparisons
-                    // This ensures deleted tasks aren't used in future comparisons
-                    // We need to use window object to access the variable from the DOMContentLoaded scope
                     if (window.priorityTasks && window.priorityTasks[priority]) {
                         window.priorityTasks[priority] = window.priorityTasks[priority].filter(t => t.id !== taskId);
                     }
@@ -1299,7 +1517,7 @@ subtaskButton.addEventListener('click', function() {
     // Show the subtask container
     subtaskContainer.style.display = 'block';
     
-    // IMPORTANT FIX: Reset subtask button states
+    // Reset subtask button states
     startSubtaskButton.disabled = false;
     pauseSubtaskButton.disabled = true;
     resumeSubtaskButton.disabled = true;
@@ -1419,7 +1637,7 @@ completeSubtaskButton.addEventListener('click', function() {
     timerInterval = setInterval(updateTimer, 1000);
     updateMainTaskState(TIMER_STATES.RUNNING);
     
-    // IMPORTANT ADDITION: Make subtask button enabled again
+    // Make subtask button enabled again
     subtaskButton.disabled = false;
 });
 
@@ -1550,43 +1768,8 @@ document.addEventListener('click', function(e) {
     }
 });
 
-// Initialize timers on page load
-initializeTimers();
-
-// Handle page unload
-window.addEventListener('beforeunload', function() {
-    // Update the main task timer
-    if (localStorage.getItem(TIMER_STATE_KEY) === TIMER_STATES.RUNNING) {
-        updateTimer();
-    }
-    
-    // Update the subtask timer
-    if (localStorage.getItem(SUBTASK_STATE_KEY) === TIMER_STATES.RUNNING) {
-        updateSubtaskTimer();
-    }
-    
-    // Update the nested subtask timer
-    if (localStorage.getItem(NESTED_SUBTASK_STATE_KEY) === TIMER_STATES.RUNNING) {
-        updateNestedSubtaskTimer();
-    }
-});
-
-// =================================================================
-// NEW PRIORITY TASK MANAGEMENT SYSTEM
-// =================================================================
-
 // Priority task management
-// Define priorityTasks in the global scope first
-window.priorityTasks = {
-    high: [],
-    medium: [],
-    low: []
-};
-
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialize task priorities from localStorage if available
-    const PRIORITY_TASKS_KEY = 'wir_priority_tasks';
-
     // Load saved priority tasks into our global window.priorityTasks object
     const savedTasks = localStorage.getItem(PRIORITY_TASKS_KEY);
     if (savedTasks) {
@@ -1822,8 +2005,44 @@ document.addEventListener('DOMContentLoaded', function() {
             deleteTask(taskId, priority);
         }
     });
+    
+    // Check if day containers have any tasks
+    const dayContainers = document.querySelectorAll('.day-container');
+    dayContainers.forEach(container => {
+        const dayTasks = container.querySelector('.day-tasks');
+        // Find all li elements that are not the "no-tasks" class
+        const actualTaskItems = dayTasks.querySelectorAll('li:not(.no-tasks)');
+        
+        // If we have a "no-tasks" placeholder but also have actual tasks, remove the placeholder
+        if (actualTaskItems.length > 0) {
+            const noTasksElement = dayTasks.querySelector('.no-tasks');
+            if (noTasksElement) {
+                noTasksElement.remove();
+            }
+        }
+    });
+});
+
+// Initialize timers on page load
+initializeTimers();
+
+// Handle page unload
+window.addEventListener('beforeunload', function() {
+    // Update the main task timer
+    if (localStorage.getItem(TIMER_STATE_KEY) === TIMER_STATES.RUNNING) {
+        updateTimer();
+    }
+    
+    // Update the subtask timer
+    if (localStorage.getItem(SUBTASK_STATE_KEY) === TIMER_STATES.RUNNING) {
+        updateSubtaskTimer();
+    }
+    
+    // Update the nested subtask timer
+    if (localStorage.getItem(NESTED_SUBTASK_STATE_KEY) === TIMER_STATES.RUNNING) {
+        updateNestedSubtaskTimer();
+    }
 });
 </script>
-
-
 {% endblock %}
+   

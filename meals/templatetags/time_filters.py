@@ -15,3 +15,12 @@ def time_format(seconds):
         return f"{hours:02d}:{minutes:02d}:{seconds:02d}"
     except (ValueError, TypeError):
         return "00:00:00"
+
+@register.filter
+def filter_by_day(tasks, day_name):
+    """Filter tasks by day of the week"""
+    filtered_tasks = []
+    for task in tasks:
+        if hasattr(task, 'date') and task.date and task.date.strftime('%A') == day_name:
+            filtered_tasks.append(task)
+    return filtered_tasks
