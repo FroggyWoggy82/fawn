@@ -1,0 +1,128 @@
+{% extends 'meals/base.html' %}
+{% load static %}
+
+{% block title %}Edit Habit{% endblock %}
+
+{% block style %}
+<style>
+    body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background-color: #f5f5f5;
+        margin: 0;
+        padding: 0;
+    }
+    .container {
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+    h1 {
+        color: #333;
+        text-align: center;
+        margin-bottom: 30px;
+    }
+    .edit-habit-card {
+        background-color: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        padding: 20px;
+        margin-bottom: 15px;
+    }
+    .edit-habit-form {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    }
+    .form-group label {
+        font-weight: bold;
+        font-size: 14px;
+    }
+    .form-group input, .form-group textarea, .form-group select {
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 16px;
+    }
+    .form-group textarea {
+        min-height: 80px;
+        resize: vertical;
+    }
+    .action-buttons {
+        display: flex;
+        gap: 10px;
+        justify-content: space-between;
+        margin-top: 10px;
+    }
+    .submit-btn {
+        background-color: #3498db;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        padding: 10px 15px;
+        font-size: 16px;
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+        flex: 1;
+    }
+    .submit-btn:hover {
+        background-color: #2980b9;
+    }
+    .cancel-btn {
+        background-color: #95a5a6;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        padding: 10px 15px;
+        font-size: 16px;
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+        text-decoration: none;
+        text-align: center;
+        flex: 1;
+    }
+    .cancel-btn:hover {
+        background-color: #7f8c8d;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <h1>Edit Habit</h1>
+        
+        <div class="edit-habit-card">
+            <form method="post" action="{% url 'edit_habit' habit.id %}" class="edit-habit-form">
+                {% csrf_token %}
+                
+                <div class="form-group">
+                    <label for="habit-name">Habit Name:</label>
+                    <input type="text" id="habit-name" name="habit_name" required value="{{ habit.name }}">
+                </div>
+                
+                <div class="form-group">
+                    <label for="habit-description">Description (Optional):</label>
+                    <textarea id="habit-description" name="habit_description">{{ habit.description }}</textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="habit-frequency">Frequency:</label>
+                    <select id="habit-frequency" name="habit_frequency">
+                        <option value="daily" {% if habit.frequency == 'daily' %}selected{% endif %}>Daily</option>
+                        <option value="weekly" {% if habit.frequency == 'weekly' %}selected{% endif %}>Weekly</option>
+                        <option value="monthly" {% if habit.frequency == 'monthly' %}selected{% endif %}>Monthly</option>
+                    </select>
+                </div>
+                
+                <div class="action-buttons">
+                    <a href="{% url 'habit_home' %}" class="cancel-btn">Cancel</a>
+                    <button type="submit" class="submit-btn">Update Habit</button>
+                </div>
+            </form>
+        </div>
+    </div>
+{% endblock %}

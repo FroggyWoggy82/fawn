@@ -39,5 +39,10 @@ urlpatterns = [
     path('api/weight/', views.weight_api, name='weight_api'),
     path('weights/', views.weight_list, name='weight_list'),
     path('exercise/add/', views.add_exercise, name='add_exercise'),
+    path('habits/', views.habit_home, name='habit_home'),
+    path('habits/toggle/<int:habit_id>/', views.toggle_habit_completion, name='toggle_habit'),
+    path('habits/delete/<int:habit_id>/', views.delete_habit, name='delete_habit'),
+    path('habits/edit/<int:habit_id>/', views.edit_habit, name='edit_habit'),
+
     
 ]

@@ -1,7 +1,7 @@
 from django.contrib import admin
 from .models import (Ingredient, Dish, DishIngredient, DailySubmission,
                     DailySubmissionIngredient, Profile, Exercise, Workout,
-                    WorkoutExercise, ExerciseSet, WorkoutPreset, PresetExercise)
+                    WorkoutExercise, ExerciseSet, WorkoutPreset, PresetExercise, HabitCompletion, Habit)
 
 class DishIngredientInline(admin.TabularInline):
     model = DishIngredient
@@ -82,3 +82,16 @@ class PresetExerciseAdmin(admin.ModelAdmin):
     list_display = ('preset', 'exercise', 'order')
     search_fields = ('preset__name', 'exercise__name')
     list_filter = ('preset',)
+
+@admin.register(Habit)
+class HabitAdmin(admin.ModelAdmin):
+    list_display = ('name', 'frequency', 'profile', 'created_at')
+    list_filter = ('frequency', 'profile')
+    search_fields = ('name', 'description')
+
+@admin.register(HabitCompletion)
+class HabitCompletionAdmin(admin.ModelAdmin):
+    list_display = ('habit', 'completion_date', 'completed_at')
+    list_filter = ('habit', 'completion_date')
+    date_hierarchy = 'completion_date'
+

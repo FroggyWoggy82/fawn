@@ -278,3 +278,31 @@ class RecipeIngredient(models.Model):
     recipe = models.ForeignKey(RecipeTemplate, on_delete=models.CASCADE)
     ingredient = models.ForeignKey(Ingredient, on_delete=models.CASCADE)
     base_quantity = models.FloatField()
+
+class Habit(models.Model):
+    FREQUENCY_CHOICES = [
+        ('daily', 'Daily'),
+        ('weekly', 'Weekly'),
+        ('monthly', 'Monthly'),
+    ]
+    
+    name = models.CharField(max_length=100)
+    description = models.TextField(blank=True)
+    frequency = models.CharField(max_length=10, choices=FREQUENCY_CHOICES, default='daily')
+    profile = models.ForeignKey('Profile', on_delete=models.CASCADE, null=True, blank=True, default=1)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        return self.name
+
+class HabitCompletion(models.Model):
+    habit = models.ForeignKey(Habit, on_delete=models.CASCADE, related_name='completions')
+    completed_at = models.DateTimeField(auto_now_add=True)
+    completion_date = models.DateField()
+    
+    class Meta:
+        # Ensure a habit can only be completed once per day
+        unique_together = ('habit', 'completion_date')
+        
+    def __str__(self):
+        return f"{self.habit.name} completed on {self.completion_date}"
