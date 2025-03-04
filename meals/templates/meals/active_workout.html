@@ -266,11 +266,51 @@
                 {% for workout_exercise in workout_exercises %}
                     <div class="exercise-card" id="exercise-{{ workout_exercise.id }}">
                         <div class="exercise-header">
-                            <h3 class="exercise-title">{{ workout_exercise.exercise.name }}</h3>
+                            <h3 class="exercise-title">
+                                {% if workout_exercise.notes %}
+                                    {% with notes=workout_exercise.notes|safe|stringformat:'s' %}
+                                        {% with parsed_notes=notes|slice:"1:-1"|safe %}
+                                            {% with json_data=parsed_notes|striptags %}
+                                                <script>
+                                                    try {
+                                                        const presetData = JSON.parse('{{ json_data|escapejs }}');
+                                                        if (presetData && presetData.custom_name) {
+                                                            document.write(presetData.custom_name);
+                                                        } else {
+                                                            document.write('{{ workout_exercise.exercise.name }}');
+                                                        }
+                                                    } catch (e) {
+                                                        document.write('{{ workout_exercise.exercise.name }}');
+                                                        console.error('Error parsing notes JSON:', e);
+                                                    }
+                                                </script>
+                                                <noscript>{{ workout_exercise.exercise.name }}</noscript>
+                                            {% endwith %}
+                                        {% endwith %}
+                                    {% endwith %}
+                                {% else %}
+                                    {{ workout_exercise.exercise.name }}
+                                {% endif %}
+                            </h3>
                             <span class="exercise-category category-{{ workout_exercise.exercise.category }}">
                                 {{ workout_exercise.exercise.get_category_display }}
                             </span>
                         </div>
+                        
+                        {% if workout_exercise.notes %}
+                            <div class="exercise-recommendation" style="margin-bottom: 10px; padding: 5px; background-color: #f8f8f8; border-radius: 4px; font-size: 14px; color: #666;">
+                                <script>
+                                    try {
+                                        const presetData = JSON.parse('{{ workout_exercise.notes|escapejs }}');
+                                        if (presetData) {
+                                            document.write(`<strong>Recommended:</strong> ${presetData.default_sets} sets × ${presetData.min_reps}-${presetData.max_reps} reps`);
+                                        }
+                                    } catch (e) {
+                                        console.error('Error parsing recommendation data:', e);
+                                    }
+                                </script>
+                            </div>
+                        {% endif %}
                         
                         <table class="sets-table" id="sets-table-{{ workout_exercise.id }}">
                             <thead>
@@ -311,6 +351,19 @@
                             </div>
                             <div class="form-group">
                                 <input type="number" id="reps-{{ workout_exercise.id }}" class="form-input" placeholder="Reps" min="1">
+                                {% if workout_exercise.notes %}
+                                <script>
+                                    try {
+                                        const exerciseData = JSON.parse('{{ workout_exercise.notes|escapejs }}');
+                                        if (exerciseData && exerciseData.min_reps) {
+                                            document.getElementById('reps-{{ workout_exercise.id }}').placeholder =
+                                                `Reps (${exerciseData.min_reps}-${exerciseData.max_reps})`;
+                                        }
+                                    } catch (e) {
+                                        console.error('Error setting reps placeholder:', e);
+                                    }
+                                </script>
+                                {% endif %}
                             </div>
                             <button type="button" class="btn" id="add-set-btn-{{ workout_exercise.id }}">Add Set</button>
                         </div>

@@ -904,10 +904,19 @@ if WORKOUT_MODELS_EXIST:
                 # Add preset exercises to workout
                 preset_exercises = PresetExercise.objects.filter(preset=preset).order_by('order')
                 for i, preset_exercise in enumerate(preset_exercises):
+                    # Include default sets and rep ranges in the notes field as JSON
+                    notes = json.dumps({
+                        'default_sets': preset_exercise.default_sets,
+                        'min_reps': preset_exercise.min_reps,
+                        'max_reps': preset_exercise.max_reps,
+                        'custom_name': preset_exercise.custom_name
+                    })
+                    
                     WorkoutExercise.objects.create(
                         workout=workout,
                         exercise=preset_exercise.exercise,
-                        order=i+1
+                        order=i+1,
+                        notes=notes
                     )
             else:
                 workout = Workout.objects.create()
@@ -1001,14 +1010,26 @@ if WORKOUT_MODELS_EXIST:
                 
             preset = WorkoutPreset.objects.create(name=name)
             
-            # Add selected exercises to the preset
+            # Add selected exercises to the preset with custom settings
             for i, exercise_id in enumerate(exercise_ids):
                 try:
                     exercise = Exercise.objects.get(id=exercise_id)
+                    
+                    # Get custom settings for this exercise
+                    default_sets = request.POST.get(f'sets_{exercise_id}', 3)
+                    min_reps = request.POST.get(f'min_reps_{exercise_id}', 8)
+                    max_reps = request.POST.get(f'max_reps_{exercise_id}', 12)
+                    custom_name = request.POST.get(f'custom_name_{exercise_id}', '')
+                    
+                    # Create preset exercise with settings
                     PresetExercise.objects.create(
                         preset=preset,
                         exercise=exercise,
-                        order=i+1
+                        order=i+1,
+                        default_sets=default_sets,
+                        min_reps=min_reps,
+                        max_reps=max_reps,
+                        custom_name=custom_name
                     )
                 except Exercise.DoesNotExist:
                     pass
@@ -1038,14 +1059,26 @@ if WORKOUT_MODELS_EXIST:
             # Remove existing preset exercises
             PresetExercise.objects.filter(preset=preset).delete()
             
-            # Add selected exercises to the preset
+            # Add selected exercises to the preset with custom settings
             for i, exercise_id in enumerate(exercise_ids):
                 try:
                     exercise = Exercise.objects.get(id=exercise_id)
+                    
+                    # Get custom settings for this exercise
+                    default_sets = request.POST.get(f'sets_{exercise_id}', 3)
+                    min_reps = request.POST.get(f'min_reps_{exercise_id}', 8)
+                    max_reps = request.POST.get(f'max_reps_{exercise_id}', 12)
+                    custom_name = request.POST.get(f'custom_name_{exercise_id}', '')
+                    
+                    # Create preset exercise with settings
                     PresetExercise.objects.create(
                         preset=preset,
                         exercise=exercise,
-                        order=i+1
+                        order=i+1,
+                        default_sets=default_sets,
+                        min_reps=min_reps,
+                        max_reps=max_reps,
+                        custom_name=custom_name
                     )
                 except Exercise.DoesNotExist:
                     pass

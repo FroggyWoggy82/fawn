@@ -13,12 +13,21 @@ class PresetExercise(models.Model):
     preset = models.ForeignKey(WorkoutPreset, on_delete=models.CASCADE, related_name='exercises')
     exercise = models.ForeignKey('Exercise', on_delete=models.CASCADE)
     order = models.PositiveIntegerField(default=0)
+    default_sets = models.PositiveIntegerField(default=3)
+    min_reps = models.PositiveIntegerField(default=8)
+    max_reps = models.PositiveIntegerField(default=12)
+    custom_name = models.CharField(max_length=200, blank=True)
     
     class Meta:
         ordering = ['order']
     
     def __str__(self):
+        if self.custom_name:
+            return f"{self.custom_name} in {self.preset.name}"
         return f"{self.exercise.name} in {self.preset.name}"
+    
+    def get_display_name(self):
+        return self.custom_name if self.custom_name else self.exercise.name
 
 class Exercise(models.Model):
     CATEGORY_CHOICES = [

@@ -195,13 +195,42 @@
                                     {% for preset_exercise in preset_exercises %}
                                         {% if preset_exercise.exercise.id == exercise.id %}
                                             checked
+                                            data-preset-exercise-id="{{ preset_exercise.id }}"
+                                            data-default-sets="{{ preset_exercise.default_sets }}"
+                                            data-min-reps="{{ preset_exercise.min_reps }}"
+                                            data-max-reps="{{ preset_exercise.max_reps }}"
+                                            data-custom-name="{{ preset_exercise.custom_name }}"
                                         {% endif %}
                                     {% endfor %}
                                 >
-                                <label for="exercise-{{ exercise.id }}">{{ exercise.name }}</label>
-                                <span class="exercise-category category-{{ exercise.category }}">
-                                    {{ exercise.get_category_display }}
-                                </span>
+                                <div style="display: flex; flex-direction: column; flex: 1;">
+                                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                                        <label for="exercise-{{ exercise.id }}">{{ exercise.name }}</label>
+                                        <span class="exercise-category category-{{ exercise.category }}">
+                                            {{ exercise.get_category_display }}
+                                        </span>
+                                    </div>
+                                    <div class="exercise-settings" style="display: none; margin-top: 8px; padding: 8px; border-top: 1px dotted #eee;">
+                                        <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+                                            <div style="flex: 1; min-width: 150px;">
+                                                <label for="custom-name-{{ exercise.id }}" style="font-size: 12px;">Custom Name:</label>
+                                                <input type="text" id="custom-name-{{ exercise.id }}" name="custom_name_{{ exercise.id }}" placeholder="Optional custom name" class="custom-name-input" style="font-size: 14px; padding: 5px;">
+                                            </div>
+                                            <div style="width: 80px;">
+                                                <label for="sets-{{ exercise.id }}" style="font-size: 12px;">Sets:</label>
+                                                <input type="number" id="sets-{{ exercise.id }}" name="sets_{{ exercise.id }}" min="1" value="3" class="sets-input" style="font-size: 14px; padding: 5px; width: 100%;">
+                                            </div>
+                                            <div style="width: 80px;">
+                                                <label for="min-reps-{{ exercise.id }}" style="font-size: 12px;">Min Reps:</label>
+                                                <input type="number" id="min-reps-{{ exercise.id }}" name="min_reps_{{ exercise.id }}" min="1" value="8" class="min-reps-input" style="font-size: 14px; padding: 5px; width: 100%;">
+                                            </div>
+                                            <div style="width: 80px;">
+                                                <label for="max-reps-{{ exercise.id }}" style="font-size: 12px;">Max Reps:</label>
+                                                <input type="number" id="max-reps-{{ exercise.id }}" name="max_reps_{{ exercise.id }}" min="1" value="12" class="max-reps-input" style="font-size: 14px; padding: 5px; width: 100%;">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         {% endfor %}
                     </div>
@@ -231,9 +260,49 @@
         });
     }
     
+    // Toggle exercise settings visibility
+    function toggleExerciseSettings(checkbox) {
+        const settingsDiv = checkbox.closest('.exercise-item').querySelector('.exercise-settings');
+        settingsDiv.style.display = checkbox.checked ? 'block' : 'none';
+    }
+    
+    // Initialize all exercise checkboxes
+    function initializeCheckboxes() {
+        const checkboxes = document.querySelectorAll('.exercise-checkbox');
+        checkboxes.forEach(checkbox => {
+            // Set up initial visibility
+            toggleExerciseSettings(checkbox);
+            
+            // Add change event listener
+            checkbox.addEventListener('change', function() {
+                toggleExerciseSettings(this);
+            });
+            
+            // For checked checkboxes, populate default values from data attributes
+            if (checkbox.checked && checkbox.hasAttribute('data-preset-exercise-id')) {
+                const exerciseId = checkbox.value;
+                const defaultSets = checkbox.getAttribute('data-default-sets');
+                const minReps = checkbox.getAttribute('data-min-reps');
+                const maxReps = checkbox.getAttribute('data-max-reps');
+                const customName = checkbox.getAttribute('data-custom-name');
+                
+                const setsInput = document.getElementById(`sets-${exerciseId}`);
+                const minRepsInput = document.getElementById(`min-reps-${exerciseId}`);
+                const maxRepsInput = document.getElementById(`max-reps-${exerciseId}`);
+                const customNameInput = document.getElementById(`custom-name-${exerciseId}`);
+                
+                if (setsInput) setsInput.value = defaultSets;
+                if (minRepsInput) minRepsInput.value = minReps;
+                if (maxRepsInput) maxRepsInput.value = maxReps;
+                if (customNameInput) customNameInput.value = customName || '';
+            }
+        });
+    }
+    
     document.addEventListener('DOMContentLoaded', function() {
-        // Initialize filter
+        // Initialize filter and checkboxes
         filterExercises();
+        initializeCheckboxes();
         
         // Add event listener for adding new exercises
         document.getElementById('add-exercise-btn').addEventListener('click', function() {
@@ -277,13 +346,43 @@
                     
                     exerciseItem.innerHTML = `
                         <input type="checkbox" id="exercise-${data.exercise_id}" name="exercises" value="${data.exercise_id}" class="exercise-checkbox" checked>
-                        <label for="exercise-${data.exercise_id}">${exerciseName}</label>
-                        <span class="exercise-category category-${exerciseCategory}">
-                            ${categoryDisplayMap[exerciseCategory]}
-                        </span>
+                        <div style="display: flex; flex-direction: column; flex: 1;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <label for="exercise-${data.exercise_id}">${exerciseName}</label>
+                                <span class="exercise-category category-${exerciseCategory}">
+                                    ${categoryDisplayMap[exerciseCategory]}
+                                </span>
+                            </div>
+                            <div class="exercise-settings" style="display: block; margin-top: 8px; padding: 8px; border-top: 1px dotted #eee;">
+                                <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+                                    <div style="flex: 1; min-width: 150px;">
+                                        <label for="custom-name-${data.exercise_id}" style="font-size: 12px;">Custom Name:</label>
+                                        <input type="text" id="custom-name-${data.exercise_id}" name="custom_name_${data.exercise_id}" placeholder="Optional custom name" class="custom-name-input" style="font-size: 14px; padding: 5px;">
+                                    </div>
+                                    <div style="width: 80px;">
+                                        <label for="sets-${data.exercise_id}" style="font-size: 12px;">Sets:</label>
+                                        <input type="number" id="sets-${data.exercise_id}" name="sets_${data.exercise_id}" min="1" value="3" class="sets-input" style="font-size: 14px; padding: 5px; width: 100%;">
+                                    </div>
+                                    <div style="width: 80px;">
+                                        <label for="min-reps-${data.exercise_id}" style="font-size: 12px;">Min Reps:</label>
+                                        <input type="number" id="min-reps-${data.exercise_id}" name="min_reps_${data.exercise_id}" min="1" value="8" class="min-reps-input" style="font-size: 14px; padding: 5px; width: 100%;">
+                                    </div>
+                                    <div style="width: 80px;">
+                                        <label for="max-reps-${data.exercise_id}" style="font-size: 12px;">Max Reps:</label>
+                                        <input type="number" id="max-reps-${data.exercise_id}" name="max_reps_${data.exercise_id}" min="1" value="12" class="max-reps-input" style="font-size: 14px; padding: 5px; width: 100%;">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     `;
                     
                     exerciseList.appendChild(exerciseItem);
+                    
+                    // Add event listener to the new checkbox
+                    const newCheckbox = exerciseItem.querySelector('.exercise-checkbox');
+                    newCheckbox.addEventListener('change', function() {
+                        toggleExerciseSettings(this);
+                    });
                     
                     // Clear the form
                     document.getElementById('new-exercise-name').value = '';
