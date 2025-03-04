@@ -43,6 +43,6 @@ urlpatterns = [
     path('habits/toggle/<int:habit_id>/', views.toggle_habit_completion, name='toggle_habit'),
     path('habits/delete/<int:habit_id>/', views.delete_habit, name='delete_habit'),
     path('habits/edit/<int:habit_id>/', views.edit_habit, name='edit_habit'),
-
+    path('api/notifications/subscribe/', views.subscribe_to_push, name='subscribe_to_push'),
     
 ]

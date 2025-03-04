@@ -81,3 +81,48 @@ self.addEventListener('fetch', event => {
       })
   );
 });
+
+// Push notification event listener
+self.addEventListener('push', event => {
+  const data = event.data.json();
+  const options = {
+    body: data.body,
+    icon: '/static/icons/128.png',
+    badge: '/static/icons/32.png',
+    data: {
+      url: data.url || '/'
+    },
+    actions: data.actions || []
+  };
+
+  event.waitUntil(
+    self.registration.showNotification(data.title, options)
+  );
+});
+
+// Notification click event - open the app and navigate to the right page
+self.addEventListener('notificationclick', event => {
+  event.notification.close();
+  
+  if (event.action) {
+    // Handle custom actions if defined
+    console.log('Action clicked:', event.action);
+    // You can add specific behavior for different actions here
+  }
+  
+  // Default behavior - open or focus app window and navigate
+  event.waitUntil(
+    clients.matchAll({ type: 'window' }).then(windowClients => {
+      // Check if there is already a window/tab open with the target URL
+      for (let client of windowClients) {
+        if (client.url === event.notification.data.url && 'focus' in client) {
+          return client.focus();
+        }
+      }
+      // If no window/tab is open, open one
+      if (clients.openWindow) {
+        return clients.openWindow(event.notification.data.url);
+      }
+    })
+  );
+});

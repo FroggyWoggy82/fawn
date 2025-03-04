@@ -1,0 +1,7 @@
+{
+  "public_key": "BFG2wzDHtc37z4Wt5_3JTGNmVpnSpDonKPUTjoa_p7UFMI0lIcm7QxkMCZn9HCvdaGJF_SAx1snwdu-mNPGR7hk",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgfHbKZ+wRrhNz4Myo\npVioTxK9aPFq7Czn+9g1JAQFsiehRANCAARRtsMwx7XN+8+Fref9yUxjZlaZ0qQ6\nJyj1E46Gv6e1BTCNJSHJu0MZDAmZ/Rwr3WhiRf0gMdbJ8HbvpjTxke4Z\n-----END PRIVATE KEY-----\n",
+  "claims": {
+    "sub": "mailto:kevinguyen022@gmail.com"
+  }
+}

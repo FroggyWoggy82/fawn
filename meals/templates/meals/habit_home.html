@@ -244,6 +244,37 @@
     .close-modal:hover {
         color: #e74c3c;
     }
+
+    .notification-card {
+    background-color: #f0f8ff;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    margin-bottom: 20px;
+    text-align: center;
+    border-left: 4px solid #3498db;
+    }
+
+.notification-btn {
+    background-color: #3498db;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 10px 15px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    margin-top: 10px;
+    }
+
+.notification-btn:hover {
+    background-color: #2980b9;
+    }
+
+.notification-btn:disabled {
+    background-color: #95a5a6;
+    cursor: not-allowed;
+    }
 </style>
 {% endblock %}
 
@@ -264,6 +295,13 @@
             </div>
             
             <p>Currently tracking habits for: <strong>{{ selected_profile.name }}</strong></p>
+        </div>
+
+        <!-- Notification Permission -->
+        <div class="notification-card">
+            <h3>Progress Picture Reminders</h3>
+            <p>Get weekly reminders to take progress pictures and track your improvement.</p>
+            <button id="enable-notifications" class="notification-btn">Enable Weekly Reminders</button>
         </div>
         
         <!-- Add Habit Button -->

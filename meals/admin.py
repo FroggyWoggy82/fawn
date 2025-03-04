@@ -1,7 +1,7 @@
 from django.contrib import admin
 from .models import (Ingredient, Dish, DishIngredient, DailySubmission,
                     DailySubmissionIngredient, Profile, Exercise, Workout,
-                    WorkoutExercise, ExerciseSet, WorkoutPreset, PresetExercise, HabitCompletion, Habit)
+                    WorkoutExercise, ExerciseSet, WorkoutPreset, PresetExercise, HabitCompletion, Habit, PushSubscription, NotificationSchedule)
 
 class DishIngredientInline(admin.TabularInline):
     model = DishIngredient
@@ -95,3 +95,14 @@ class HabitCompletionAdmin(admin.ModelAdmin):
     list_filter = ('habit', 'completion_date')
     date_hierarchy = 'completion_date'
 
+# Add this to admin.py
+@admin.register(PushSubscription)
+class PushSubscriptionAdmin(admin.ModelAdmin):
+    list_display = ('profile', 'endpoint', 'created_at', 'updated_at')
+    list_filter = ('profile',)
+    
+@admin.register(NotificationSchedule)
+class NotificationScheduleAdmin(admin.ModelAdmin):
+    list_display = ('profile', 'notification_type', 'frequency', 'day_of_week', 'time_of_day', 'last_sent', 'active')
+    list_filter = ('notification_type', 'frequency', 'active')
+    search_fields = ('profile__name',)

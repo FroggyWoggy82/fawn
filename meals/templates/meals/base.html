@@ -72,7 +72,138 @@
 
         // Add the button to the page
        
+        // Push Notification Functions
+        function registerForPushNotifications() {
+          if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+            console.warn('Push notifications not supported in this browser');
+            return Promise.resolve(false);
+          }
+          
+          return navigator.serviceWorker.ready
+            .then(registration => {
+              // Check permission status
+              return checkNotificationPermission()
+                .then(permissionGranted => {
+                  if (!permissionGranted) {
+                    return false;
+                  }
+                  
+                  // Subscribe for push notifications
+                  return registration.pushManager.subscribe({
+                    userVisibleOnly: true,
+                    applicationServerKey: urlBase64ToUint8Array('BFG2wzDHtc37z4Wt5_3JTGNmVpnSpDonKPUTjoa_p7UFMI0lIcm7QxkMCZn9HCvdaGJF_SAx1snwdu-mNPGR7hk')
+                  })
+                  .then(subscription => {
+                    // Send subscription to server
+                    return sendSubscriptionToServer(subscription);
+                  });
+                });
+            })
+            .catch(error => {
+              console.error('Error during push notification setup:', error);
+              return false;
+            });
+        }
+
+        // Check if notification permission is granted
+        function checkNotificationPermission() {
+          return new Promise((resolve, reject) => {
+            if (Notification.permission === 'denied') {
+              // Permission was denied previously
+              alert('Please enable notifications in your browser settings to receive reminders.');
+              resolve(false);
+            } else if (Notification.permission === 'granted') {
+              // Permission was already granted
+              resolve(true);
+            } else {
+              // Request permission
+              Notification.requestPermission()
+                .then(permission => {
+                  resolve(permission === 'granted');
+                })
+                .catch(reject);
+            }
+          });
+        }
+
+        // Send subscription to server
+        function sendSubscriptionToServer(subscription) {
+          const subscriptionJson = subscription.toJSON();
+          
+          return fetch('/api/notifications/subscribe/', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({
+              subscription: subscriptionJson,
+              notification_type: 'progress_picture',
+              frequency: 'weekly'
+            })
+          })
+          .then(response => {
+            if (!response.ok) {
+              throw new Error('Failed to subscribe for notifications');
+            }
+            return response.json();
+          })
+          .then(data => {
+            console.log('Successfully subscribed for notifications:', data);
+            return true;
+          });
+        }
+
+        // Helper function to get CSRF token
+        function getCookie(name) {
+          let cookieValue = null;
+          if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+              const cookie = cookies[i].trim();
+              if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+              }
+            }
+          }
+          return cookieValue;
+        }
+
+        // Convert base64 to Uint8Array for applicationServerKey
+        function urlBase64ToUint8Array(base64String) {
+          const padding = '='.repeat((4 - base64String.length % 4) % 4);
+          const base64 = (base64String + padding)
+            .replace(/-/g, '+')
+            .replace(/_/g, '/');
+
+          const rawData = window.atob(base64);
+          const outputArray = new Uint8Array(rawData.length);
+
+          for (let i = 0; i < rawData.length; ++i) {
+            outputArray[i] = rawData.charCodeAt(i);
+          }
+          return outputArray;
+        }
+
+        // Add subscription button functionality
+        document.addEventListener('DOMContentLoaded', function() {
+          // Check if we're on the habit tracking page and if the button exists
+          const subscribeButton = document.getElementById('enable-notifications');
+          if (subscribeButton) {
+            subscribeButton.addEventListener('click', function() {
+              registerForPushNotifications()
+                .then(success => {
+                  if (success) {
+                    subscribeButton.textContent = 'Notifications Enabled';
+                    subscribeButton.disabled = true;
+                  }
+                });
+            });
+          }
+        });
     </script>
+    
     {% block scripts %}{% endblock %}
 </body>
 </html>

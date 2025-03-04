@@ -2,7 +2,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.http import JsonResponse, HttpResponse
 from django.contrib import messages
 from .forms import DailySubmissionForm, DishForm, CalorieGoalRangeForm, AcneEntryForm, SkinProductForm, ProfileSelectForm
-from .models import DailySubmission, DishIngredient, DailySubmissionIngredient, Dish, Ingredient, DailyCalorieGoal, AcneEntry, SkinProduct, Task, SubTask, Profile, WeightMeasurement, Habit, HabitCompletion
+from .models import DailySubmission, DishIngredient, DailySubmissionIngredient, Dish, Ingredient, DailyCalorieGoal, AcneEntry, SkinProduct, Task, SubTask, Profile, WeightMeasurement, Habit, HabitCompletion, PushSubscription, NotificationSchedule
 from .custom_calendar import CustomHTMLCalendar
 from django.core.cache import cache
 import calendar
@@ -11,6 +11,11 @@ from django.utils import timezone
 import json
 import uuid
 from django.views.decorators.csrf import csrf_exempt
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST
+import json
+from .models import PushSubscription, NotificationSchedule, Profile
+
 
 @csrf_exempt
 def weight_api(request):
@@ -59,6 +64,65 @@ def weight_api(request):
     
     return JsonResponse({'status': 'error', 'message': 'Method not allowed'}, status=405)
 
+@require_POST
+def subscribe_to_push(request):
+    """API endpoint to subscribe for push notifications"""
+    try:
+        data = json.loads(request.body)
+        subscription = data.get('subscription')
+        notification_type = data.get('notification_type', 'progress_picture')
+        frequency = data.get('frequency', 'weekly')
+        
+        # Get user profile
+        profile = None
+        if request.user.is_authenticated:
+            profile = Profile.objects.filter(user=request.user).first()
+        else:
+            # If not authenticated, use the profile ID from the session or default to first profile
+            profile_id = request.session.get('profile_id')
+            if profile_id:
+                profile = Profile.objects.filter(id=profile_id).first()
+            
+            if not profile:
+                profile = Profile.objects.first()
+        
+        if not profile:
+            return JsonResponse({'error': 'No profile found'}, status=400)
+        
+        # Save subscription
+        push_subscription, created = PushSubscription.objects.update_or_create(
+            endpoint=subscription.get('endpoint'),
+            defaults={
+                'profile': profile,
+                'p256dh': subscription.get('keys', {}).get('p256dh', ''),
+                'auth': subscription.get('keys', {}).get('auth', '')
+            }
+        )
+        
+        # Create notification schedule
+        day_of_week = 0  # Monday by default
+        if frequency == 'weekly':
+            # Use Sunday (6) for weekly progress pictures by default
+            day_of_week = 6
+            
+        notification_schedule, created = NotificationSchedule.objects.update_or_create(
+            profile=profile,
+            notification_type=notification_type,
+            defaults={
+                'frequency': frequency,
+                'day_of_week': day_of_week,
+                'active': True
+            }
+        )
+        
+        return JsonResponse({
+            'status': 'success',
+            'message': f'Successfully subscribed to {notification_type} notifications'
+        })
+        
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=400)
+    
 
 def import_weight_data(request):
     if request.method == 'POST' and request.FILES.get('health_export'):

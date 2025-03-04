@@ -1,5 +1,9 @@
 from django.db import models
 from django.utils import timezone
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
+import json
 
 
 class WorkoutPreset(models.Model):
@@ -306,3 +310,103 @@ class HabitCompletion(models.Model):
         
     def __str__(self):
         return f"{self.habit.name} completed on {self.completion_date}"
+    
+# Add these models to models.py
+class PushSubscription(models.Model):
+    profile = models.ForeignKey('Profile', on_delete=models.CASCADE, null=True, blank=True)
+    endpoint = models.URLField(max_length=500)
+    p256dh = models.CharField(max_length=255)
+    auth = models.CharField(max_length=255)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    def __str__(self):
+        return f"Push subscription for {self.profile.name if self.profile else 'unknown'}"
+
+class NotificationSchedule(models.Model):
+    FREQUENCY_CHOICES = [
+        ('daily', 'Daily'),
+        ('weekly', 'Weekly'),
+        ('monthly', 'Monthly'),
+    ]
+    
+    TYPE_CHOICES = [
+        ('progress_picture', 'Progress Picture Reminder'),
+        ('habit_reminder', 'Habit Reminder'),
+        ('weight_reminder', 'Weight Tracking Reminder'),
+    ]
+    
+    profile = models.ForeignKey('Profile', on_delete=models.CASCADE)
+    notification_type = models.CharField(max_length=50, choices=TYPE_CHOICES)
+    frequency = models.CharField(max_length=10, choices=FREQUENCY_CHOICES)
+    day_of_week = models.IntegerField(null=True, blank=True)  # 0 = Monday, 6 = Sunday
+    time_of_day = models.TimeField(default='09:00:00')
+    last_sent = models.DateTimeField(null=True, blank=True)
+    active = models.BooleanField(default=True)
+    
+    def __str__(self):
+        return f"{self.get_notification_type_display()} for {self.profile.name} ({self.get_frequency_display()})"
+
+
+# Add these views to views.py
+
+
+@require_POST
+def subscribe_to_push(request):
+    """API endpoint to subscribe for push notifications"""
+    try:
+        data = json.loads(request.body)
+        subscription = data.get('subscription')
+        notification_type = data.get('notification_type', 'progress_picture')
+        frequency = data.get('frequency', 'weekly')
+        
+        # Get user profile
+        profile = None
+        if request.user.is_authenticated:
+            profile = Profile.objects.filter(user=request.user).first()
+        else:
+            # If not authenticated, use the profile ID from the session or default to first profile
+            profile_id = request.session.get('profile_id')
+            if profile_id:
+                profile = Profile.objects.filter(id=profile_id).first()
+            
+            if not profile:
+                profile = Profile.objects.first()
+        
+        if not profile:
+            return JsonResponse({'error': 'No profile found'}, status=400)
+        
+        # Save subscription
+        push_subscription, created = PushSubscription.objects.update_or_create(
+            endpoint=subscription.get('endpoint'),
+            defaults={
+                'profile': profile,
+                'p256dh': subscription.get('keys', {}).get('p256dh', ''),
+                'auth': subscription.get('keys', {}).get('auth', '')
+            }
+        )
+        
+        # Create notification schedule
+        day_of_week = 0  # Monday by default
+        if frequency == 'weekly':
+            # Use Sunday (6) for weekly progress pictures by default
+            day_of_week = 6
+            
+        notification_schedule, created = NotificationSchedule.objects.update_or_create(
+            profile=profile,
+            notification_type=notification_type,
+            defaults={
+                'frequency': frequency,
+                'day_of_week': day_of_week,
+                'active': True
+            }
+        )
+        
+        return JsonResponse({
+            'status': 'success',
+            'message': f'Successfully subscribed to {notification_type} notifications'
+        })
+        
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=400)
+

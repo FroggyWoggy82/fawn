@@ -13,3 +13,12 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'mealplanner.settings')
 
 app.config_from_object('django.conf:settings', namespace='CELERY')
 app.autodiscover_tasks()
+
+# Configure Celery Beat schedule
+app.conf.beat_schedule = {
+    # Other scheduled tasks...
+    'send-scheduled-notifications': {
+        'task': 'meals.tasks.send_scheduled_notifications',
+        'schedule': crontab(minute='0', hour='9'),  # Run daily at 9 AM
+    },
+}
