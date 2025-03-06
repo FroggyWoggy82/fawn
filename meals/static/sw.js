@@ -43,6 +43,7 @@ self.addEventListener('activate', event => {
   );
 });
 
+
 // Fetch event - return cached assets or fetch from network
 self.addEventListener('fetch', event => {
   event.respondWith(
@@ -94,6 +95,8 @@ self.addEventListener('push', function(event) {
       body: data.message || 'You have a new notification',
       icon: '/static/icons/icon-192x192.png',
       badge: '/static/icons/icon-72x72.png',
+      vibrate: [100, 50, 100],  // Add vibration pattern
+      timestamp: Date.now(),
       data: {
         url: data.url || '/'
       }
@@ -102,11 +105,14 @@ self.addEventListener('push', function(event) {
     event.waitUntil(self.registration.showNotification(title, options));
   } catch (e) {
     // Fallback for non-JSON data
+
     const title = 'Meal Planner';
     const options = {
       body: event.data.text(),
       icon: '/static/icons/icon-192x192.png',
-      badge: '/static/icons/icon-72x72.png'
+      badge: '/static/icons/icon-72x72.png',
+      vibrate: [100, 50, 100],  // Add vibration pattern
+      timestamp: Date.now()  
     };
     
     event.waitUntil(self.registration.showNotification(title, options));

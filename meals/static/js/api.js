@@ -27,18 +27,14 @@ const API = {
     },
 
     savePushSubscription: function(subscription) {
-        return fetch('/api/push-subscriptions/save/', {
+        return fetch('/push/subscribe/', {  // Updated endpoint to match your views.py
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'X-CSRFToken': this.getCsrfToken()
             },
             body: JSON.stringify({
-                endpoint: subscription.endpoint,
-                p256dh: btoa(String.fromCharCode.apply(null, 
-                    new Uint8Array(subscription.getKey('p256dh')))),
-                auth: btoa(String.fromCharCode.apply(null, 
-                    new Uint8Array(subscription.getKey('auth'))))
+                subscription: subscription  // Changed to match the expected format in your view
             })
         })
         .then(response => response.json());
