@@ -179,7 +179,7 @@
         <p>Manage your notification preferences</p>
     </header>
     <!-- Add this right after the header section -->
-<div class="actions">
+
     <div class="actions">
         <button id="add-notification-btn" class="btn btn-primary">Add New Notification</button>
         <button id="push-subscribe-btn" class="btn btn-secondary" style="margin-left: 10px;">Enable Push Notifications</button>
@@ -481,7 +481,7 @@ document.addEventListener('DOMContentLoaded', function() {
 }
     
     // Check notification permission on page load
-    document.addEventListener('DOMContentLoaded', function() {
+  
         if ('Notification' in window) {
             if (Notification.permission !== 'granted' && Notification.permission !== 'denied') {
                 // Add a banner to request notification permission
@@ -520,10 +520,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 container.insertBefore(banner, container.firstChild);
             }
         }
-    });
+
+        //Initialize push notifications if available
+        if (typeof PushNotifications !== 'undefined') {
+        PushNotifications.init();
+    }
+
 });
 
 </script>
-<script src="{% static 'js/api.js' %}"></script>
 <script src="{% static 'js/push-notifications.js' %}"></script>
 {% endblock %}
