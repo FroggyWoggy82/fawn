@@ -462,23 +462,50 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Check for service worker support
     if ('serviceWorker' in navigator) {
-    window.addEventListener('load', function() {
-        // Register service worker for all devices
-        navigator.serviceWorker.register('/service-worker.js')
-            .then(function(registration) {
-                console.log('ServiceWorker registration successful with scope: ', registration.scope);
-                
-                // If on mobile and Push API is supported, try to set up push notifications
-                if (API.isMobileDevice() && 'PushManager' in window) {
-                    console.log('Push notifications supported on this mobile device');
-                    // We'll implement push notification setup here
-                }
-            })
-            .catch(function(err) {
-                console.log('ServiceWorker registration failed: ', err);
-            });
-    });
-}
+        window.addEventListener('load', function() {
+            let swRegistration = null;
+            
+            navigator.serviceWorker.register('/service-worker.js')
+                .then(function(registration) {
+                    console.log('ServiceWorker registration successful with scope: ', registration.scope);
+                    swRegistration = registration;
+                    
+                    // If on mobile and Push API is supported, try to set up push notifications
+                    if (API.isMobileDevice() && 'PushManager' in window) {
+                        console.log('Push notifications supported on this mobile device');
+                        return swRegistration.pushManager.getSubscription();
+                    }
+                })
+                .then(function(subscription) {
+                    if (!subscription && swRegistration) {
+                        const vapidPublicKey = API.getVapidPublicKey();
+                        if (!vapidPublicKey) {
+                            throw new Error('VAPID public key not available');
+                        }
+                        return swRegistration.pushManager.subscribe({
+                            userVisibleOnly: true,
+                            applicationServerKey: vapidPublicKey
+                        });
+                    }
+                    return subscription;
+                })
+                .then(function(pushSubscription) {
+                    if (pushSubscription) {
+                        return API.savePushSubscription(pushSubscription);
+                    }
+                })
+                .catch(function(err) {
+                    console.error('Service Worker or Push subscription error:', err);
+                    if (err.message && err.message.includes('different applicationServerKey')) {
+                        if (typeof handleSubscriptionError === 'function') {
+                            handleSubscriptionError(err);
+                        } else {
+                            console.error('handleSubscriptionError function not found');
+                        }
+                    }
+                });
+        });
+    }
     
     // Check notification permission on page load
   
@@ -522,7 +549,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         //Initialize push notifications if available
-        if (typeof PushNotifications !== 'undefined') {
+    if (typeof PushNotifications !== 'undefined') {
         PushNotifications.init();
     }
 

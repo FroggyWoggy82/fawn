@@ -44,31 +44,19 @@ const PushNotifications = {
                 // Create subscription
                 const options = {
                     userVisibleOnly: true,
-                    // You'll need to generate VAPID keys for your application
-                    // and replace this with your public key
-                    applicationServerKey: this.urlBase64ToUint8Array(
-                        'BEl62iUYgUivxIkv69yViEuiBIa-Ib9-SkvMeAtA3LFgDzkrxZJjSgSnfckjBJuBkr3qBUYIHBQFLXYp5Nksh8U'
-                    )
+                    // Use the VAPID key from the API
+                    applicationServerKey: API.getVapidPublicKey()
                 };
                 
                 return registration.pushManager.subscribe(options);
             })
             .then(subscription => {
-                // Send subscription to server
-                return fetch('/api/push-subscribe/', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': API.getCsrfToken()
-                    },
-                    body: JSON.stringify({
-                        subscription: subscription.toJSON()
-                    })
-                });
+                // Send subscription to server using the API
+                return API.savePushSubscription(subscription);
             })
             .then(response => {
-                if (!response.ok) {
-                    throw new Error('Failed to store subscription');
+                if (response.status !== 'success') {
+                    throw new Error(response.message || 'Failed to store subscription');
                 }
                 
                 const subscribeBtn = document.getElementById('push-subscribe-btn');
@@ -81,30 +69,51 @@ const PushNotifications = {
             })
             .catch(error => {
                 console.error('Error enabling push notifications:', error);
-                alert('Failed to enable push notifications: ' + error.message);
+                
+                // Use the handleSubscriptionError function for specific errors
+                if (error.message && error.message.includes('different applicationServerKey')) {
+                    handleSubscriptionError(error);
+                } else {
+                    alert('Failed to enable push notifications: ' + error.message);
+                }
             });
-    },
-    
-    // Helper function to convert base64 to Uint8Array
-    urlBase64ToUint8Array(base64String) {
-        const padding = '='.repeat((4 - base64String.length % 4) % 4);
-        const base64 = (base64String + padding)
-            .replace(/-/g, '+')
-            .replace(/_/g, '/');
-        
-        const rawData = window.atob(base64);
-        const outputArray = new Uint8Array(rawData.length);
-        
-        for (let i = 0; i < rawData.length; ++i) {
-            outputArray[i] = rawData.charCodeAt(i);
-        }
-        return outputArray;
     }
 };
 
+// Function to handle subscription errors
+function handleSubscriptionError(error) {
+    console.error('Push subscription error:', error);
+    
+    // Check if it's the specific error about different applicationServerKey
+    if (error.message && error.message.includes('different applicationServerKey')) {
+        console.log('Attempting to unsubscribe and resubscribe...');
+        
+        // Get the current registration and unsubscribe
+        navigator.serviceWorker.ready
+            .then(registration => {
+                return registration.pushManager.getSubscription();
+            })
+            .then(subscription => {
+                if (subscription) {
+                    return subscription.unsubscribe();
+                }
+            })
+            .then(successful => {
+                if (successful) {
+                    console.log('Successfully unsubscribed, attempting to resubscribe...');
+                    // Reload the page to trigger a fresh subscription
+                    window.location.reload();
+                }
+            })
+            .catch(error => {
+                console.error('Error during unsubscribe process:', error);
+            });
+    }
+}
+
 // Initialize push notifications when the page loads
 document.addEventListener('DOMContentLoaded', () => {
-    if (API.isMobileDevice()) {
+    if (typeof API !== 'undefined' && API.isMobileDevice()) {
         PushNotifications.init();
     }
 });

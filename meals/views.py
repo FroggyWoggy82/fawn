@@ -107,15 +107,19 @@ def test_notification(request, notification_id):
         'message': notification.message
     })
 
+# In your view that renders the notifications template
 def notifications_view(request):
-    """View for managing notifications"""
-    notifications = Notification.objects.all().order_by('title')
+    # Get your notifications
+    notifications = Notification.objects.all()
     
-    context = {
+    # Get your VAPID public key from settings or environment variables
+    from django.conf import settings
+    vapid_public_key = getattr(settings, 'VAPID_PUBLIC_KEY', '')
+    
+    return render(request, 'meals/notifications.html', {
         'notifications': notifications,
-    }
-    
-    return render(request, 'meals/notifications.html', context)
+        'vapid_public_key': vapid_public_key
+    })
 
 @csrf_exempt
 def weight_api(request):
