@@ -1,7 +1,19 @@
 from django.db import models
 from django.utils import timezone
+from django.contrib.auth.models import User
 from datetime import timedelta, datetime
 # Add this to your existing models.py file
+
+class PushSubscription(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    endpoint = models.TextField()
+    p256dh = models.TextField()
+    auth = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        return f"Push subscription for {self.user.username}"
+
 
 class Notification(models.Model):
     FREQUENCY_CHOICES = (

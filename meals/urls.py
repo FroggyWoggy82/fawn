@@ -53,7 +53,7 @@ urlpatterns = [
     path('api/notifications/<int:notification_id>/delete/', views.delete_notification, name='delete_notification'),
     path('api/notifications/<int:notification_id>/test/', views.test_notification, name='test_notification'),
     path('service-worker.js', RedirectView.as_view(url=settings.STATIC_URL + 'service-worker.js'), name='service-worker'),
-    
+    path('api/push-subscribe/', views.push_subscribe, name='push_subscribe'),
 ] 
 if settings.DEBUG:
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

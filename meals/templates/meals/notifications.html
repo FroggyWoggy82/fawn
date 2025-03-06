@@ -178,9 +178,11 @@
         <h1>Notifications</h1>
         <p>Manage your notification preferences</p>
     </header>
-    
+    <!-- Add this right after the header section -->
+<div class="actions">
     <div class="actions">
         <button id="add-notification-btn" class="btn btn-primary">Add New Notification</button>
+        <button id="push-subscribe-btn" class="btn btn-secondary" style="margin-left: 10px;">Enable Push Notifications</button>
     </div>
     
     <div id="notifications-list">
@@ -317,9 +319,14 @@ document.addEventListener('DOMContentLoaded', function() {
         API.testNotification(id)
             .then(data => {
                 if (data.status === 'success') {
-                    requestNotificationPermission().then(() => {
-                        showNotification(data.title, data.message);
-                    });
+                    if (API.isMobileDevice()) {
+                        // On mobile, just show an alert instead of a web notification
+                        alert(`${data.title}\n\n${data.message}`);
+                    } else {
+                        requestNotificationPermission().then(() => {
+                            showNotification(data.title, data.message);
+                        });
+                    }
                 } else {
                     alert('Error testing notification');
                 }
@@ -455,16 +462,23 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Check for service worker support
     if ('serviceWorker' in navigator) {
-        window.addEventListener('load', function() {
-            navigator.serviceWorker.register('/service-worker.js')
-                .then(function(registration) {
-                    console.log('ServiceWorker registration successful with scope: ', registration.scope);
-                })
-                .catch(function(err) {
-                    console.log('ServiceWorker registration failed: ', err);
-                });
-        });
-    }
+    window.addEventListener('load', function() {
+        // Register service worker for all devices
+        navigator.serviceWorker.register('/service-worker.js')
+            .then(function(registration) {
+                console.log('ServiceWorker registration successful with scope: ', registration.scope);
+                
+                // If on mobile and Push API is supported, try to set up push notifications
+                if (API.isMobileDevice() && 'PushManager' in window) {
+                    console.log('Push notifications supported on this mobile device');
+                    // We'll implement push notification setup here
+                }
+            })
+            .catch(function(err) {
+                console.log('ServiceWorker registration failed: ', err);
+            });
+    });
+}
     
     // Check notification permission on page load
     document.addEventListener('DOMContentLoaded', function() {
@@ -508,5 +522,8 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 });
+
 </script>
+<script src="{% static 'js/api.js' %}"></script>
+<script src="{% static 'js/push-notifications.js' %}"></script>
 {% endblock %}

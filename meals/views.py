@@ -3,7 +3,7 @@ from django.http import JsonResponse, HttpResponse
 from django.contrib import messages
 from django.views.decorators.http import require_http_methods  # Add this import
 from .forms import DailySubmissionForm, DishForm, CalorieGoalRangeForm, AcneEntryForm, SkinProductForm, ProfileSelectForm
-from .models import DailySubmission, DishIngredient, DailySubmissionIngredient, Dish, Ingredient, DailyCalorieGoal, AcneEntry, SkinProduct, Task, SubTask, Profile, WeightMeasurement, Habit, HabitCompletion, Notification
+from .models import DailySubmission, DishIngredient, DailySubmissionIngredient, Dish, Ingredient, DailyCalorieGoal, AcneEntry, SkinProduct, Task, SubTask, Profile, WeightMeasurement, Habit, HabitCompletion, Notification, PushSubscription
 from .custom_calendar import CustomHTMLCalendar
 from django.core.cache import cache
 import calendar
@@ -12,6 +12,28 @@ from django.utils import timezone
 import json
 import uuid
 from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
+
+@require_POST
+def push_subscribe(request):
+    try:
+        data = json.loads(request.body)
+        subscription = data.get('subscription')
+        
+        if not subscription:
+            return JsonResponse({'status': 'error', 'message': 'No subscription data provided'}, status=400)
+            
+        # Store the subscription in your database
+        PushSubscription.objects.create(
+            user=request.user,
+            endpoint=subscription.get('endpoint'),
+            p256dh=subscription.get('keys', {}).get('p256dh'),
+            auth=subscription.get('keys', {}).get('auth')
+        )
+        
+        return JsonResponse({'status': 'success'})
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
 
 # Remove the first set of notification functions and keep only these ones with both decorators
 # Notification API endpoints
@@ -94,7 +116,7 @@ def notifications_view(request):
     }
     
     return render(request, 'meals/notifications.html', context)
-    
+
 @csrf_exempt
 def weight_api(request):
     if request.method == 'POST':
