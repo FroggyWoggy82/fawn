@@ -254,6 +254,8 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Debug information
+    console.log('VAPID public key from template:', '{{ vapid_public_key|default:"Not set" }}');
     // DOM elements
     const addBtn = document.getElementById('add-notification-btn');
     const modal = document.getElementById('notification-modal');
@@ -269,7 +271,13 @@ document.addEventListener('DOMContentLoaded', function() {
     const notificationEnabled = document.getElementById('notification-enabled');
     const API = {
     getVapidPublicKey: function() {
-        return '{{ vapid_public_key }}';
+        // Check if vapid_public_key exists and is not empty
+        const key = '{{ vapid_public_key|default:"" }}';
+        console.log('VAPID public key:', key); // Debug log
+        if (!key || key === '') {
+            console.error('VAPID public key is missing');
+        }
+        return key;
     },
     
     isMobileDevice: function() {
@@ -317,8 +325,42 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
         });
     });
+    // Request notification permission
+    function requestNotificationPermission() {
+        return new Promise((resolve, reject) => {
+            if (!('Notification' in window)) {
+                alert('This browser does not support desktop notification');
+                reject('Notifications not supported');
+            } else if (Notification.permission === 'granted') {
+                resolve();
+            } else if (Notification.permission !== 'denied') {
+                Notification.requestPermission().then(permission => {
+                    if (permission === 'granted') {
+                        resolve();
+                    } else {
+                        reject('Notification permission denied');
+                    }
+                });
+            } else {
+                reject('Notification permission denied');
+            }
+        });
+    }
     pushSubscribeBtn.addEventListener('click', function() {
         if ('serviceWorker' in navigator && 'PushManager' in window) {
+            navigator.serviceWorker.register('/service-worker.js')
+                .then(registration => {
+                    console.log('ServiceWorker registration successful');
+                    return requestNotificationPermission();
+                })
+                .then(() => {
+                    console.log('Notification permission granted');
+                    return navigator.serviceWorker.ready;
+                })
+                .then(registration => {
+                    console.log('Service worker ready, getting subscription...');
+                    return registration.pushManager.getSubscription();
+                })
             requestNotificationPermission()
                 .then(() => {
                     console.log('Notification permission granted, registering service worker...');
@@ -511,27 +553,7 @@ document.addEventListener('DOMContentLoaded', function() {
         return cookieValue;
     }
     
-    // Request notification permission
-    function requestNotificationPermission() {
-        return new Promise((resolve, reject) => {
-            if (!('Notification' in window)) {
-                alert('This browser does not support desktop notification');
-                reject('Notifications not supported');
-            } else if (Notification.permission === 'granted') {
-                resolve();
-            } else if (Notification.permission !== 'denied') {
-                Notification.requestPermission().then(permission => {
-                    if (permission === 'granted') {
-                        resolve();
-                    } else {
-                        reject('Notification permission denied');
-                    }
-                });
-            } else {
-                reject('Notification permission denied');
-            }
-        });
-    }
+    
     
     // Show notification function
     function showNotification(title, message) {
