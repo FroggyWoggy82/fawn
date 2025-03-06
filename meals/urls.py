@@ -2,6 +2,7 @@ from django.urls import path
 from . import views
 from django.conf import settings
 from django.conf.urls.static import static
+from django.views.generic.base import RedirectView
 
 urlpatterns = [
     path('', views.home_view, name='home'),
@@ -51,6 +52,7 @@ urlpatterns = [
     path('api/notifications/<int:notification_id>/update/', views.update_notification, name='update_notification'),
     path('api/notifications/<int:notification_id>/delete/', views.delete_notification, name='delete_notification'),
     path('api/notifications/<int:notification_id>/test/', views.test_notification, name='test_notification'),
+    path('service-worker.js', RedirectView.as_view(url=settings.STATIC_URL + 'service-worker.js'), name='service-worker'),
     
 ] 
 if settings.DEBUG:
