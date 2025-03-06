@@ -270,15 +270,24 @@ document.addEventListener('DOMContentLoaded', function() {
     const notificationFrequency = document.getElementById('notification-frequency');
     const notificationEnabled = document.getElementById('notification-enabled');
     const API = {
-    getVapidPublicKey: function() {
-        // Check if vapid_public_key exists and is not empty
-        const key = '{{ vapid_public_key|default:"" }}';
-        console.log('VAPID public key:', key); // Debug log
-        if (!key || key === '') {
-            console.error('VAPID public key is missing');
-        }
-        return key;
-    },
+        getVapidPublicKey: function() {
+            const key = '{{ vapid_public_key|default:"" }}';
+            console.log('Raw VAPID public key:', key); // Debug log
+            
+            if (!key || key === '') {
+                console.error('VAPID public key is missing');
+                return null;
+            }
+            
+            // Ensure the key is properly URL-safe base64 encoded
+            try {
+                const cleanKey = key.replace(/[^A-Za-z0-9\-_=]/g, '');
+                return cleanKey;
+            } catch (error) {
+                console.error('Error processing VAPID key:', error);
+                return null;
+            }
+        },
     
     isMobileDevice: function() {
         return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
@@ -348,6 +357,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     pushSubscribeBtn.addEventListener('click', function() {
         if ('serviceWorker' in navigator && 'PushManager' in window) {
+            // Single flow for service worker registration and push subscription
             navigator.serviceWorker.register('/service-worker.js')
                 .then(registration => {
                     console.log('ServiceWorker registration successful');
@@ -355,15 +365,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 })
                 .then(() => {
                     console.log('Notification permission granted');
-                    return navigator.serviceWorker.ready;
-                })
-                .then(registration => {
-                    console.log('Service worker ready, getting subscription...');
-                    return registration.pushManager.getSubscription();
-                })
-            requestNotificationPermission()
-                .then(() => {
-                    console.log('Notification permission granted, registering service worker...');
                     return navigator.serviceWorker.ready;
                 })
                 .then(registration => {
@@ -560,7 +561,8 @@ document.addEventListener('DOMContentLoaded', function() {
         if (Notification.permission === 'granted') {
             const notification = new Notification(title, {
                 body: message,
-                icon: '/static/meals/images/notification-icon.png'
+                icon: '/static/meals/images/notification-icon.png',
+                badge: '/static/meals/images/notification-badge.png' // Optional: Add a badge for mobile
             });
             
             notification.onclick = function() {
@@ -572,6 +574,11 @@ document.addEventListener('DOMContentLoaded', function() {
             setTimeout(() => {
                 notification.close();
             }, 5000);
+        } else {
+            console.warn('Notification permission not granted');
+            requestNotificationPermission()
+                .then(() => showNotification(title, message))
+                .catch(error => console.error('Permission request failed:', error));
         }
     }
     
@@ -599,7 +606,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         }
                         return swRegistration.pushManager.subscribe({
                             userVisibleOnly: true,
-                            applicationServerKey: vapidPublicKey
+                            applicationServerKey: urlBase64ToUint8Array(vapidPublicKey)
                         });
                     }
                     return subscription;
