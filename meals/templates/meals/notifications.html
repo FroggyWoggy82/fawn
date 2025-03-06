@@ -3,6 +3,10 @@
 
 {% block title %}Notifications{% endblock %}
 
+{% block extra_js %}
+<script src="{% static 'js/api.js' %}"></script>
+{% endblock %}
+
 {% block style %}
 <style>
     .container {
@@ -308,28 +312,24 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Event listeners for test buttons
     document.querySelectorAll('.test-notification-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const id = this.dataset.id;
-            fetch(`/api/notifications/${id}/test/`, {
-                method: 'POST',
-                headers: {
-                    'X-CSRFToken': getCookie('csrftoken'),
-                    'Content-Type': 'application/json'
-                }
-            })
-            .then(response => response.json())
+    btn.addEventListener('click', function() {
+        const id = this.dataset.id;
+        API.testNotification(id)
             .then(data => {
                 if (data.status === 'success') {
-                    // Request permission and show notification
                     requestNotificationPermission().then(() => {
                         showNotification(data.title, data.message);
                     });
                 } else {
                     alert('Error testing notification');
                 }
+            })
+            .catch(error => {
+                console.error('Test notification error:', error);
+                alert('Error testing notification: ' + error.message);
             });
-        });
     });
+});
     
     // Add notification button
     addBtn.addEventListener('click', function() {

@@ -5,8 +5,7 @@ from django.conf.urls.static import static
 from django.views.generic.base import RedirectView
 
 urlpatterns = [
-    path('home/', views.home_view, name='home'),
-    path('home/', RedirectView.as_view(url='/'), name='home_redirect'),
+    path('', views.home_view, name='home'),
     path('daily_submission/', views.daily_submission_view, name='daily_submission'),
     path('submission_success/', views.submission_success, name='submission_success'),
     path('get_ingredients/<int:dish_id>/', views.get_ingredients, name='get_ingredients'),
