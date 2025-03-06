@@ -253,41 +253,33 @@
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Debug information
-    console.log('VAPID public key from template:', '{{ vapid_public_key|default:"Not set" }}');
-    // DOM elements
-    const addBtn = document.getElementById('add-notification-btn');
-    const modal = document.getElementById('notification-modal');
-    const closeBtn = document.querySelector('.close-btn');
-    const cancelBtn = document.getElementById('cancel-btn');
-    const pushSubscribeBtn = document.getElementById('push-subscribe-btn');
-    const form = document.getElementById('notification-form');
-    const modalTitle = document.getElementById('modal-title');
-    const notificationId = document.getElementById('notification-id');
-    const notificationTitle = document.getElementById('notification-title');
-    const notificationMessage = document.getElementById('notification-message');
-    const notificationFrequency = document.getElementById('notification-frequency');
-    const notificationEnabled = document.getElementById('notification-enabled');
+ function urlBase64ToUint8Array(base64String) {
+        const padding = '='.repeat((4 - base64String.length % 4) % 4);
+        const base64 = (base64String + padding)
+            .replace(/-/g, '+')
+            .replace(/_/g, '/');
+        
+        const rawData = window.atob(base64);
+        const outputArray = new Uint8Array(rawData.length);
+        
+        for (let i = 0; i < rawData.length; ++i) {
+            outputArray[i] = rawData.charCodeAt(i);
+        }
+        return outputArray;
+    }
     const API = {
-        getVapidPublicKey: function() {
-            const key = '{{ vapid_public_key|default:"" }}';
-            console.log('Raw VAPID public key:', key); // Debug log
-            
-            if (!key || key === '') {
-                console.error('VAPID public key is missing');
-                return null;
-            }
-            
-            // Ensure the key is properly URL-safe base64 encoded
-            try {
-                const cleanKey = key.replace(/[^A-Za-z0-9\-_=]/g, '');
-                return cleanKey;
-            } catch (error) {
-                console.error('Error processing VAPID key:', error);
-                return null;
-            }
-        },
+    getVapidPublicKey: function() {
+        // Use the raw key directly from the template
+        const key = '{{ vapid_public_key|default:"" }}';
+        console.log('Raw VAPID public key:', key);
+        
+        if (!key || key === '') {
+            console.error('VAPID public key is missing');
+            return null;
+        }
+        
+        return key;
+    },
     
     isMobileDevice: function() {
         return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
@@ -316,6 +308,38 @@ document.addEventListener('DOMContentLoaded', function() {
         }).then(response => response.json());
     }
 };
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+document.addEventListener('DOMContentLoaded', function() {
+    // Debug information
+    console.log('VAPID public key from template:', '{{ vapid_public_key|default:"Not set" }}');
+    // DOM elements
+    const addBtn = document.getElementById('add-notification-btn');
+    const modal = document.getElementById('notification-modal');
+    const closeBtn = document.querySelector('.close-btn');
+    const cancelBtn = document.getElementById('cancel-btn');
+    const pushSubscribeBtn = document.getElementById('push-subscribe-btn');
+    const form = document.getElementById('notification-form');
+    const modalTitle = document.getElementById('modal-title');
+    const notificationId = document.getElementById('notification-id');
+    const notificationTitle = document.getElementById('notification-title');
+    const notificationMessage = document.getElementById('notification-message');
+    const notificationFrequency = document.getElementById('notification-frequency');
+    const notificationEnabled = document.getElementById('notification-enabled');
+    
+
     // Event listeners for edit buttons
     document.querySelectorAll('.edit-notification-btn').forEach(btn => {
         btn.addEventListener('click', function() {
@@ -383,7 +407,10 @@ document.addEventListener('DOMContentLoaded', function() {
                         throw new Error('VAPID public key not available');
                     }
                     
+                    console.log('Using VAPID key:', vapidPublicKey);
                     const applicationServerKey = urlBase64ToUint8Array(vapidPublicKey);
+                    console.log('Converted to Uint8Array:', applicationServerKey);
+                    
                     return navigator.serviceWorker.ready.then(registration => {
                         return registration.pushManager.subscribe({
                             userVisibleOnly: true,
@@ -392,6 +419,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     });
                 })
                 .then(subscription => {
+                    console.log('Subscription object:', JSON.stringify(subscription));
                     console.log('Saving push subscription...');
                     return API.savePushSubscription(subscription);
                 })
@@ -408,20 +436,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    function urlBase64ToUint8Array(base64String) {
-        const padding = '='.repeat((4 - base64String.length % 4) % 4);
-        const base64 = (base64String + padding)
-            .replace(/-/g, '+')
-            .replace(/_/g, '/');
-        
-        const rawData = window.atob(base64);
-        const outputArray = new Uint8Array(rawData.length);
-        
-        for (let i = 0; i < rawData.length; ++i) {
-            outputArray[i] = rawData.charCodeAt(i);
-        }
-        return outputArray;
-    }
+   
     // Event listeners for delete buttons
     document.querySelectorAll('.delete-notification-btn').forEach(btn => {
         btn.addEventListener('click', function() {
@@ -537,22 +552,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     });
-    
-    // Helper function to get CSRF token
-    function getCookie(name) {
-        let cookieValue = null;
-        if (document.cookie && document.cookie !== '') {
-            const cookies = document.cookie.split(';');
-            for (let i = 0; i < cookies.length; i++) {
-                const cookie = cookies[i].trim();
-                if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                    break;
-                }
-            }
-        }
-        return cookieValue;
-    }
+
     
     
     
@@ -604,20 +604,31 @@ document.addEventListener('DOMContentLoaded', function() {
                         if (!vapidPublicKey) {
                             throw new Error('VAPID public key not available');
                         }
+                        console.log('Using VAPID key in service worker:', vapidPublicKey);
+                        const applicationServerKey = urlBase64ToUint8Array(vapidPublicKey);
                         return swRegistration.pushManager.subscribe({
                             userVisibleOnly: true,
-                            applicationServerKey: urlBase64ToUint8Array(vapidPublicKey)
+                            applicationServerKey: applicationServerKey
                         });
                     }
                     return subscription;
                 })
                 .then(function(pushSubscription) {
                     if (pushSubscription) {
+                        console.log('Push subscription created:', JSON.stringify(pushSubscription));
                         return API.savePushSubscription(pushSubscription);
                     }
                 })
                 .catch(function(err) {
                     console.error('Service Worker or Push subscription error:', err);
+                    // More detailed error logging
+                    if (err.message) {
+                        console.error('Error message:', err.message);
+                    }
+                    if (err.stack) {
+                        console.error('Error stack:', err.stack);
+                    }
+                    
                     if (err.message && err.message.includes('different applicationServerKey')) {
                         if (typeof handleSubscriptionError === 'function') {
                             handleSubscriptionError(err);
