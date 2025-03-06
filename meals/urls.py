@@ -1,5 +1,7 @@
 from django.urls import path
 from . import views
+from django.conf import settings
+from django.conf.urls.static import static
 
 urlpatterns = [
     path('', views.home_view, name='home'),
@@ -50,4 +52,6 @@ urlpatterns = [
     path('api/notifications/<int:notification_id>/delete/', views.delete_notification, name='delete_notification'),
     path('api/notifications/<int:notification_id>/test/', views.test_notification, name='test_notification'),
     
-]
+] 
+if settings.DEBUG:
+    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

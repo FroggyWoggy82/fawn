@@ -211,7 +211,3 @@ if ENVIRONMENT == "production":
  # 
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
-# Add this to the bottom of settings.py to enable media URLs in production
-from django.conf import settings
-from django.conf.urls.static import static
-
