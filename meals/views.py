@@ -13,6 +13,7 @@ import json
 import uuid
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
+import os
 
 @require_POST
 def push_subscribe(request):
