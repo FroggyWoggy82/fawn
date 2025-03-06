@@ -11,7 +11,8 @@ const urlsToCache = [
   '/wir/',
   '/meal_planner/',
   '/dish_calculator/',
-  '/offline/'
+  '/offline/',
+  '/notifications/',  // Add the new notifications URL
   // Add more URLs to cache as needed
 ];
 
@@ -79,5 +80,61 @@ self.addEventListener('fetch', event => {
           }
         });
       })
+  );
+});
+// Push notification event handler
+self.addEventListener('push', function(event) {
+  console.log('[Service Worker] Push Received.');
+  console.log(`[Service Worker] Push had this data: "${event.data.text()}"`);
+
+  try {
+    const data = JSON.parse(event.data.text());
+    const title = data.title || 'Meal Planner Notification';
+    const options = {
+      body: data.message || 'You have a new notification',
+      icon: '/static/icons/icon-192x192.png',
+      badge: '/static/icons/icon-72x72.png',
+      data: {
+        url: data.url || '/'
+      }
+    };
+
+    event.waitUntil(self.registration.showNotification(title, options));
+  } catch (e) {
+    // Fallback for non-JSON data
+    const title = 'Meal Planner';
+    const options = {
+      body: event.data.text(),
+      icon: '/static/icons/icon-192x192.png',
+      badge: '/static/icons/icon-72x72.png'
+    };
+    
+    event.waitUntil(self.registration.showNotification(title, options));
+  }
+});
+
+// Notification click event handler
+self.addEventListener('notificationclick', function(event) {
+  console.log('[Service Worker] Notification click received.');
+
+  event.notification.close();
+
+  // This looks to see if the current is already open and focuses if it is
+  event.waitUntil(
+    clients.matchAll({
+      type: "window"
+    })
+    .then(function(clientList) {
+      const url = event.notification.data && event.notification.data.url ? event.notification.data.url : '/';
+      
+      for (var i = 0; i < clientList.length; i++) {
+        var client = clientList[i];
+        if (client.url === url && 'focus' in client)
+          return client.focus();
+      }
+      if (clients.openWindow) {
+        return clients.openWindow(url);
+      }
+    })
   );
 });

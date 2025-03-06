@@ -1,8 +1,9 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import JsonResponse, HttpResponse
 from django.contrib import messages
+from django.views.decorators.http import require_http_methods  # Add this import
 from .forms import DailySubmissionForm, DishForm, CalorieGoalRangeForm, AcneEntryForm, SkinProductForm, ProfileSelectForm
-from .models import DailySubmission, DishIngredient, DailySubmissionIngredient, Dish, Ingredient, DailyCalorieGoal, AcneEntry, SkinProduct, Task, SubTask, Profile, WeightMeasurement, Habit, HabitCompletion
+from .models import DailySubmission, DishIngredient, DailySubmissionIngredient, Dish, Ingredient, DailyCalorieGoal, AcneEntry, SkinProduct, Task, SubTask, Profile, WeightMeasurement, Habit, HabitCompletion, Notification
 from .custom_calendar import CustomHTMLCalendar
 from django.core.cache import cache
 import calendar
@@ -12,6 +13,88 @@ import json
 import uuid
 from django.views.decorators.csrf import csrf_exempt
 
+# Remove the first set of notification functions and keep only these ones with both decorators
+# Notification API endpoints
+@csrf_exempt
+@require_http_methods(["GET"])
+def get_notification(request, notification_id):
+    """API endpoint to get a notification's details"""
+    notification = get_object_or_404(Notification, id=notification_id)
+    return JsonResponse({
+        'id': notification.id,
+        'title': notification.title,
+        'message': notification.message,
+        'frequency': notification.frequency,
+        'enabled': notification.enabled
+    })
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def create_notification(request):
+    """API endpoint to create a new notification"""
+    data = json.loads(request.body)
+    
+    notification = Notification(
+        title=data.get('title'),
+        message=data.get('message'),
+        frequency=data.get('frequency', 'weekly'),
+        enabled=data.get('enabled', True)
+    )
+    notification.calculate_next_send()
+    notification.save()
+    
+    return JsonResponse({'status': 'success', 'id': notification.id})
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def update_notification(request, notification_id):
+    """API endpoint to update an existing notification"""
+    notification = get_object_or_404(Notification, id=notification_id)
+    data = json.loads(request.body)
+    
+    notification.title = data.get('title', notification.title)
+    notification.message = data.get('message', notification.message)
+    notification.frequency = data.get('frequency', notification.frequency)
+    notification.enabled = data.get('enabled', notification.enabled)
+    
+    notification.calculate_next_send()
+    notification.save()
+    
+    return JsonResponse({'status': 'success'})
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def delete_notification(request, notification_id):
+    """API endpoint to delete a notification"""
+    notification = get_object_or_404(Notification, id=notification_id)
+    notification.delete()
+    
+    return JsonResponse({'status': 'success'})
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def test_notification(request, notification_id):
+    """API endpoint to test a notification"""
+    notification = get_object_or_404(Notification, id=notification_id)
+    
+    # In a real implementation, you would send the actual push notification here
+    
+    return JsonResponse({
+        'status': 'success',
+        'title': notification.title,
+        'message': notification.message
+    })
+
+def notifications_view(request):
+    """View for managing notifications"""
+    notifications = Notification.objects.all().order_by('title')
+    
+    context = {
+        'notifications': notifications,
+    }
+    
+    return render(request, 'meals/notifications.html', context)
+    
 @csrf_exempt
 def weight_api(request):
     if request.method == 'POST':

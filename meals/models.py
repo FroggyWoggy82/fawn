@@ -1,6 +1,43 @@
 from django.db import models
 from django.utils import timezone
+from datetime import timedelta, datetime
+# Add this to your existing models.py file
 
+class Notification(models.Model):
+    FREQUENCY_CHOICES = (
+        ('daily', 'Daily'),
+        ('weekly', 'Weekly'),
+        ('monthly', 'Monthly'),
+    )
+    
+    title = models.CharField(max_length=100)
+    message = models.TextField()
+    frequency = models.CharField(max_length=10, choices=FREQUENCY_CHOICES, default='weekly')
+    last_sent = models.DateTimeField(null=True, blank=True)
+    next_send = models.DateTimeField(null=True, blank=True)
+    enabled = models.BooleanField(default=True)
+    
+    # If you want user-specific notifications, uncomment this:
+    # user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='notifications')
+    
+    def __str__(self):
+        return self.title
+        
+    def calculate_next_send(self):
+        """Calculate the next time this notification should be sent"""
+        now = timezone.now()
+        if not self.last_sent:
+            self.last_sent = now
+            
+        if self.frequency == 'daily':
+            self.next_send = self.last_sent + timedelta(days=1)
+        elif self.frequency == 'weekly':
+            self.next_send = self.last_sent + timedelta(weeks=1)
+        elif self.frequency == 'monthly':
+            # Add one month (approximately)
+            self.next_send = self.last_sent + timedelta(days=30)
+        
+        self.save()
 
 class WorkoutPreset(models.Model):
     name = models.CharField(max_length=200)
@@ -104,6 +141,7 @@ class ExerciseSet(models.Model):
 
 
 
+
 class SkinProduct(models.Model):
     name = models.CharField(max_length=255)
     brand = models.CharField(max_length=255, blank=True)
@@ -127,6 +165,7 @@ class AcneEntry(models.Model):
     
     def __str__(self):
         return f"Acne Entry on {self.entry_date}"
+
 
 
 

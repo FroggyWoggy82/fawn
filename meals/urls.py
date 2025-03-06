@@ -43,6 +43,11 @@ urlpatterns = [
     path('habits/toggle/<int:habit_id>/', views.toggle_habit_completion, name='toggle_habit'),
     path('habits/delete/<int:habit_id>/', views.delete_habit, name='delete_habit'),
     path('habits/edit/<int:habit_id>/', views.edit_habit, name='edit_habit'),
-
+    path('notifications/', views.notifications_view, name='notifications'),
+    path('api/notifications/<int:notification_id>/', views.get_notification, name='get_notification'),
+    path('api/notifications/create/', views.create_notification, name='create_notification'),
+    path('api/notifications/<int:notification_id>/update/', views.update_notification, name='update_notification'),
+    path('api/notifications/<int:notification_id>/delete/', views.delete_notification, name='delete_notification'),
+    path('api/notifications/<int:notification_id>/test/', views.test_notification, name='test_notification'),
     
 ]
