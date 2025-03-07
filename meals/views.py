@@ -113,12 +113,16 @@ def test_notification(request, notification_id):
 def notifications_view(request):
     # Get your notifications
     notifications = Notification.objects.all()
-    # Debug: Print VAPID key in server logs
+    
+    # Import at the top of the function
+    from django.conf import settings
+    
+    # Use a default empty string if setting doesn't exist
+    vapid_public_key = getattr(settings, 'VAPID_PUBLIC_KEY', '')
+    
+    # Debug prints
     print(f"VAPID key being sent to template: {vapid_public_key}")
     print(f"VAPID key length: {len(vapid_public_key)}")
-        # Get your VAPID public key from settings or environment variables
-
-    vapid_public_key = getattr(settings, 'VAPID_PUBLIC_KEY', '')
     
     return render(request, 'meals/notifications.html', {
         'notifications': notifications,

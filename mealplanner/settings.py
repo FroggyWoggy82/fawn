@@ -209,6 +209,6 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 WHITENOISE_ROOT = STATIC_ROOT
 
 # Add these lines to your settings.py (near your other environment variable configurations)
-VAPID_PUBLIC_KEY = os.getenv('VAPID_PUBLIC_KEY', '')
-VAPID_PRIVATE_KEY = os.getenv('VAPID_PRIVATE_KEY', '')
+VAPID_PUBLIC_KEY = 'BNg8SCEvjZjFFppE7YPKz6SMZ4PBCV-MHXdBRC2kNkAMpdnVVvitmM1VpYXN5XCrHVq0OGOZv83873WF8eTyipY'
+VAPID_PRIVATE_KEY = '39y9-73Jatpp12ejdznzpBQsALedJVpGlxu8c52DU1w'
 VAPID_ADMIN_EMAIL = os.getenv('VAPID_ADMIN_EMAIL', '')
