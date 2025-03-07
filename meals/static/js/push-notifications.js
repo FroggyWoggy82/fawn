@@ -68,7 +68,7 @@ document.addEventListener('DOMContentLoaded', function() {
         },
         
         savePushSubscription: function(subscription) {
-            return fetch('/push/subscribe/', {
+            return fetch('/api/push-subscribe/', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

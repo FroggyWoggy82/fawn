@@ -27,7 +27,7 @@ def push_subscribe(request):
             
         # Store the subscription in your database
         PushSubscription.objects.create(
-            user=request.user,
+            user = request.user if request.user.is_authenticated else None,
             endpoint=subscription.get('endpoint'),
             p256dh=subscription.get('keys', {}).get('p256dh'),
             auth=subscription.get('keys', {}).get('auth')
