@@ -14,6 +14,7 @@ import uuid
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 import os
+from django.conf import settings
 
 @require_POST
 def push_subscribe(request):
@@ -112,9 +113,11 @@ def test_notification(request, notification_id):
 def notifications_view(request):
     # Get your notifications
     notifications = Notification.objects.all()
-    
-    # Get your VAPID public key from settings or environment variables
-    from django.conf import settings
+    # Debug: Print VAPID key in server logs
+    print(f"VAPID key being sent to template: {vapid_public_key}")
+    print(f"VAPID key length: {len(vapid_public_key)}")
+        # Get your VAPID public key from settings or environment variables
+
     vapid_public_key = getattr(settings, 'VAPID_PUBLIC_KEY', '')
     
     return render(request, 'meals/notifications.html', {

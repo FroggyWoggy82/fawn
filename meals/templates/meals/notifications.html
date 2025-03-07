@@ -173,6 +173,63 @@
 {% endblock %}
 
 {% block content %}
+<div id="debug-info" style="background: #f8f9fa; border: 1px solid #ddd; padding: 10px; margin-bottom: 20px; font-family: monospace; white-space: pre-wrap;">
+    <h3>VAPID Key Debug</h3>
+    <div id="debug-output">Loading debug info...</div>
+</div>
+
+<script>
+    // Debug function that will write to the div
+    function debugOutput(message) {
+        const debugDiv = document.getElementById('debug-output');
+        if (debugDiv) {
+            debugDiv.innerHTML += message + "<br>";
+        }
+        console.log(message);
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const vapidKey = '{{ vapid_public_key|default:"" }}';
+        debugOutput(`VAPID key value: ${vapidKey}`);
+        debugOutput(`VAPID key length: ${vapidKey.length}`);
+        
+        // Test if key is valid base64url
+        const isValidBase64Url = /^[A-Za-z0-9\-_]+=*$/.test(vapidKey);
+        debugOutput(`Is valid base64url format: ${isValidBase64Url}`);
+        
+        if (vapidKey && isValidBase64Url) {
+            try {
+                // Convert the key
+                const padding = '='.repeat((4 - vapidKey.length % 4) % 4);
+                const base64 = (vapidKey + padding)
+                    .replace(/-/g, '+')
+                    .replace(/_/g, '/');
+                
+                debugOutput(`After padding/replacement: ${base64}`);
+                
+                const rawData = window.atob(base64);
+                debugOutput(`Decoded length: ${rawData.length} (should be 65 for P-256)`);
+                
+                // Show the first few bytes in hex
+                const firstBytes = Array.from(new Uint8Array(rawData.length > 5 ? 5 : rawData.length))
+                    .map((b, i) => rawData.charCodeAt(i).toString(16).padStart(2, '0'))
+                    .join(' ');
+                
+                debugOutput(`First bytes: ${firstBytes}`);
+                
+                if (rawData.length !== 65) {
+                    debugOutput("ERROR: P-256 VAPID key must be exactly 65 bytes when decoded");
+                } else {
+                    debugOutput("Key length is correct for P-256");
+                }
+            } catch (error) {
+                debugOutput(`ERROR: ${error.message}`);
+            }
+        } else {
+            debugOutput("No valid VAPID key found");
+        }
+    });
+</script>
 <div class="container">
     <header>
         <h1>Notifications</h1>
