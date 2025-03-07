@@ -1,3 +1,69 @@
+function urlBase64ToUint8Array(base64String) {
+    // Add more debugging
+    console.log('Converting base64 string:', base64String);
+    console.log('String length:', base64String.length);
+    
+    const padding = '='.repeat((4 - base64String.length % 4) % 4);
+    const base64 = (base64String + padding)
+        .replace(/-/g, '+')
+        .replace(/_/g, '/');
+    
+    console.log('After padding and replacement:', base64);
+    
+    try {
+        const rawData = window.atob(base64);
+        console.log('Successfully decoded base64, length:', rawData.length);
+        
+        const outputArray = new Uint8Array(rawData.length);
+        
+        for (let i = 0; i < rawData.length; ++i) {
+            outputArray[i] = rawData.charCodeAt(i);
+        }
+        return outputArray;
+    } catch (error) {
+        console.error('Error decoding base64:', error);
+        throw error;
+    }
+}
+
+const API = {
+    // Get the VAPID public key from the meta tag
+    getVapidPublicKey() {
+        const vapidKey = document.querySelector('meta[name="vapid-public-key"]').content;
+        console.log('Raw VAPID key:', vapidKey); // Debug log
+        
+        if (!vapidKey || vapidKey === '') {
+            console.error('VAPID public key is missing');
+            return null;
+        }
+        
+        // Convert the base64 string to Uint8Array
+        try {
+            const convertedKey = urlBase64ToUint8Array(vapidKey);
+            console.log('Successfully converted key to Uint8Array');
+            return convertedKey;
+        } catch (error) {
+            console.error('Failed to convert VAPID key:', error);
+            return null;
+        }
+    },
+    
+    // Save push subscription to server
+    savePushSubscription(subscription) {
+        const token = document.querySelector('meta[name="csrf-token"]').content;
+        
+        return fetch('/save-subscription/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': token
+            },
+            body: JSON.stringify(subscription)
+        })
+        .then(response => response.json());
+    }
+};
+
 // Push notification functionality
 const PushNotifications = {
     // Initialize push notifications
