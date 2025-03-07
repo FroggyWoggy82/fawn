@@ -28,7 +28,91 @@
     </head>
 <body>
     {% block content %}{% endblock %}
-
+    // Add this to base.html (fixes white screen issue)
+    <script>
+    // PWA error recovery script
+    window.addEventListener('error', function(event) {
+      console.error('Global error caught:', event.error);
+      
+      // Check if we're in a standalone PWA context
+      const isPWA = window.matchMedia('(display-mode: standalone)').matches;
+      
+      if (isPWA && document.body.children.length === 0) {
+        console.log('Detected white screen in PWA, attempting recovery...');
+        
+        // Create error recovery UI
+        const errorDiv = document.createElement('div');
+        errorDiv.style.padding = '20px';
+        errorDiv.style.fontFamily = 'system-ui, -apple-system, sans-serif';
+        
+        errorDiv.innerHTML = `
+          <h2>App Error</h2>
+          <p>The app encountered a problem. Please try:</p>
+          <button id="reload-btn" style="padding: 10px; margin: 10px 0; background: #4CAF50; color: white; border: none; border-radius: 4px;">Reload App</button>
+          <button id="clear-cache-btn" style="padding: 10px; margin: 10px 0; background: #f44336; color: white; border: none; border-radius: 4px;">Clear Cache & Reload</button>
+        `;
+        
+        document.body.appendChild(errorDiv);
+        
+        // Add event listeners to buttons
+        document.getElementById('reload-btn').addEventListener('click', function() {
+          window.location.reload();
+        });
+        
+        document.getElementById('clear-cache-btn').addEventListener('click', function() {
+          if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations().then(registrations => {
+              for (let registration of registrations) {
+                registration.unregister();
+              }
+              caches.keys().then(cacheNames => {
+                return Promise.all(
+                  cacheNames.map(cacheName => {
+                    return caches.delete(cacheName);
+                  })
+                );
+              }).then(() => {
+                console.log('Caches cleared');
+                window.location.reload();
+              });
+            });
+          } else {
+            window.location.reload();
+          }
+        });
+      }
+    });
+    
+    // Service worker safety check
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function() {
+        // Add a timeout to detect service worker initialization problems
+        const swTimeout = setTimeout(() => {
+          console.error('Service worker registration timed out');
+          // If we're in standalone mode and experiencing issues, force reload
+          if (window.matchMedia('(display-mode: standalone)').matches) {
+            window.location.reload();
+          }
+        }, 5000);
+        
+        navigator.serviceWorker.register('/service-worker.js')
+          .then(registration => {
+            clearTimeout(swTimeout);
+            console.log('ServiceWorker registration successful with scope: ', registration.scope);
+          })
+          .catch(error => {
+            clearTimeout(swTimeout);
+            console.error('ServiceWorker registration failed: ', error);
+            
+            // If in standalone mode, try to recover
+            if (window.matchMedia('(display-mode: standalone)').matches) {
+              // Fallback to basic functionality without service worker
+              console.log('Continuing without service worker...');
+            }
+          });
+      });
+    }
+    </script>
     <!-- Ensure service worker path is consistent -->
     <script>
         if ('serviceWorker' in navigator) {
