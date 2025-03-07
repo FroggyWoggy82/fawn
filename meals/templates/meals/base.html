@@ -28,7 +28,7 @@
     </head>
 <body>
     {% block content %}{% endblock %}
-    // Add this to base.html (fixes white screen issue)
+    
     <script>
     // PWA error recovery script
     window.addEventListener('error', function(event) {
@@ -82,48 +82,40 @@
         });
       }
     });
-    
-    // Service worker safety check
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', function() {
-        // Add a timeout to detect service worker initialization problems
-        const swTimeout = setTimeout(() => {
-          console.error('Service worker registration timed out');
-          // If we're in standalone mode and experiencing issues, force reload
-          if (window.matchMedia('(display-mode: standalone)').matches) {
-            window.location.reload();
-          }
-        }, 5000);
-        
-        navigator.serviceWorker.register('/service-worker.js')
-          .then(registration => {
-            clearTimeout(swTimeout);
-            console.log('ServiceWorker registration successful with scope: ', registration.scope);
-          })
-          .catch(error => {
-            clearTimeout(swTimeout);
-            console.error('ServiceWorker registration failed: ', error);
-            
-            // If in standalone mode, try to recover
-            if (window.matchMedia('(display-mode: standalone)').matches) {
-              // Fallback to basic functionality without service worker
-              console.log('Continuing without service worker...');
-            }
-          });
-      });
-    }
     </script>
-    <!-- Ensure service worker path is consistent -->
+    
+    <!-- Service worker registration -->
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', function() {
+                // Add a timeout to detect service worker initialization problems
+                const swTimeout = setTimeout(() => {
+                    console.error('Service worker registration timed out');
+                    // If we're in standalone mode and experiencing issues, force reload
+                    if (window.matchMedia('(display-mode: standalone)').matches) {
+                        window.location.reload();
+                    }
+                }, 5000);
+                
                 navigator.serviceWorker.register('/service-worker.js')
-                .then(function(registration) {
-                    console.log('ServiceWorker registration successful');
-                });
+                    .then(registration => {
+                        clearTimeout(swTimeout);
+                        console.log('ServiceWorker registration successful with scope: ', registration.scope);
+                    })
+                    .catch(error => {
+                        clearTimeout(swTimeout);
+                        console.error('ServiceWorker registration failed: ', error);
+                        
+                        // If in standalone mode, try to recover
+                        if (window.matchMedia('(display-mode: standalone)').matches) {
+                            // Fallback to basic functionality without service worker
+                            console.log('Continuing without service worker...');
+                        }
+                    });
             });
         }
     </script>
+    
     {% block scripts %}{% endblock %}
 </body>
 </html>
