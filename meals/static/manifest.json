@@ -14,7 +14,8 @@
     "share_target": {
     "action": "/",
     "method": "GET",
-    "enctype": "application/x-www-form-urlencoded",
+    "enctype": "application/x-www-form-urlencoded"
+    },
     "icons": [
       {
         "src": "/static/icons/16.png",
@@ -135,4 +136,3 @@
     ]
     
   }
-}
