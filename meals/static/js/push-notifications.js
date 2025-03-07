@@ -1,4 +1,4 @@
-// Single unified push notifications script
+// Unified push notifications script with iOS Safari support
 document.addEventListener('DOMContentLoaded', function() {
     // Utility functions
     function urlBase64ToUint8Array(base64String) {
@@ -43,13 +43,17 @@ document.addEventListener('DOMContentLoaded', function() {
         return cookieValue;
     }
 
+    // Detect iOS device
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    console.log("Is iOS device:", isIOS);
+
     // Consolidated API object
     const API = {
         getVapidPublicKey: function() {
             // First try to get from inline script variable if available
-            if (typeof vapidPublicKey !== 'undefined' && vapidPublicKey) {
-                console.log('Using inline VAPID key:', vapidPublicKey);
-                return vapidPublicKey;
+            if (typeof window.vapidPublicKey !== 'undefined' && window.vapidPublicKey) {
+                console.log('Using inline VAPID key:', window.vapidPublicKey);
+                return window.vapidPublicKey;
             }
             
             // Then try meta tag
@@ -91,29 +95,50 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
 
-    // Request notification permission
+    // Request notification permission - iOS optimized
     function requestNotificationPermission() {
         return new Promise((resolve, reject) => {
             if (!('Notification' in window)) {
                 alert('This browser does not support desktop notification');
                 reject('Notifications not supported');
-            } else if (Notification.permission === 'granted') {
+                return;
+            }
+            
+            if (Notification.permission === 'granted') {
+                console.log('Notification permission already granted');
                 resolve();
-            } else if (Notification.permission !== 'denied') {
-                Notification.requestPermission().then(permission => {
+                return;
+            }
+            
+            if (Notification.permission === 'denied') {
+                console.log('Notification permission was denied');
+                reject('Notification permission denied');
+                return;
+            }
+            
+            // Special handling for iOS
+            if (isIOS) {
+                console.log('Requesting notification permission on iOS');
+                // iOS requires permission request during user interaction
+            }
+            
+            Notification.requestPermission()
+                .then(permission => {
+                    console.log(`Notification permission result: ${permission}`);
                     if (permission === 'granted') {
                         resolve();
                     } else {
                         reject('Notification permission denied');
                     }
+                })
+                .catch(error => {
+                    console.error('Error requesting notification permission:', error);
+                    reject(error);
                 });
-            } else {
-                reject('Notification permission denied');
-            }
         });
     }
 
-    // Single service worker registration function
+    // Single service worker registration function - iOS optimized
     function registerServiceWorker() {
         return navigator.serviceWorker.register('/service-worker.js')
             .then(registration => {
@@ -126,13 +151,70 @@ document.addEventListener('DOMContentLoaded', function() {
             });
     }
 
-    // Push subscription function
-    function subscribeToPushNotifications() {
+    // iOS-specific push subscription function
+    function subscribeToIOSPushNotifications() {
+        console.log('Attempting iOS-specific push subscription');
+        
         if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-            console.log('Push notifications not supported');
+            console.log('Push API not supported on this iOS device');
+            return Promise.reject('Push notifications not supported on this iOS device');
+        }
+        
+        return registerServiceWorker()
+            .then(() => requestNotificationPermission())
+            .then(() => navigator.serviceWorker.ready)
+            .then(registration => {
+                console.log('Service worker ready for iOS subscription');
+                // Check for existing subscription first
+                return registration.pushManager.getSubscription()
+                    .then(subscription => {
+                        if (subscription) {
+                            console.log('Already subscribed to push on iOS');
+                            return subscription;
+                        }
+                        
+                        console.log('Creating new iOS push subscription');
+                        const vapidPublicKey = API.getVapidPublicKey();
+                        if (!vapidPublicKey) {
+                            throw new Error('VAPID public key not available');
+                        }
+                        
+                        console.log('Using VAPID key on iOS:', vapidPublicKey);
+                        const applicationServerKey = urlBase64ToUint8Array(vapidPublicKey);
+                        
+                        // iOS specific subscription options
+                        return registration.pushManager.subscribe({
+                            userVisibleOnly: true,
+                            applicationServerKey: applicationServerKey
+                        });
+                    });
+            })
+            .then(subscription => {
+                console.log('iOS subscription created:', JSON.stringify(subscription));
+                return API.savePushSubscription(subscription);
+            })
+            .then(response => {
+                console.log('iOS push subscription saved:', response);
+                return response;
+            });
+    }
+
+    // General push subscription function - with iOS detection
+    function subscribeToPushNotifications() {
+        console.log('Starting push notification subscription process');
+        
+        if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+            console.log('Push notifications not supported in this browser');
             return Promise.reject('Push notifications not supported');
         }
 
+        // Use iOS-specific function for iOS devices
+        if (isIOS) {
+            console.log('Using iOS-specific subscription flow');
+            return subscribeToIOSPushNotifications();
+        }
+        
+        // Standard flow for non-iOS devices
         return registerServiceWorker()
             .then(() => requestNotificationPermission())
             .then(() => navigator.serviceWorker.ready)
@@ -154,7 +236,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 console.log('Using VAPID key:', vapidPublicKey);
                 const applicationServerKey = urlBase64ToUint8Array(vapidPublicKey);
-                console.log('Converted to Uint8Array:', applicationServerKey);
                 
                 return navigator.serviceWorker.ready.then(registration => {
                     return registration.pushManager.subscribe({
@@ -178,6 +259,29 @@ document.addEventListener('DOMContentLoaded', function() {
     function handleSubscriptionError(error) {
         console.error('Push subscription error:', error);
         
+        // Special handling for iOS
+        if (isIOS && error.message && error.message.includes('applicationServerKey')) {
+            console.log('iOS subscription error, attempting recovery...');
+            
+            return navigator.serviceWorker.ready
+                .then(registration => registration.pushManager.getSubscription())
+                .then(subscription => {
+                    if (subscription) {
+                        console.log('Unsubscribing existing iOS subscription');
+                        return subscription.unsubscribe();
+                    }
+                    return false;
+                })
+                .then(successful => {
+                    if (successful) {
+                        console.log('Successfully unsubscribed on iOS, attempting to resubscribe...');
+                        return subscribeToIOSPushNotifications();
+                    }
+                    return null;
+                });
+        }
+        
+        // Regular error handling for other browsers
         if (error.message && error.message.includes('different applicationServerKey')) {
             console.log('Attempting to unsubscribe and resubscribe...');
             
@@ -205,6 +309,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const pushSubscribeBtn = document.getElementById('push-subscribe-btn');
     if (pushSubscribeBtn) {
         pushSubscribeBtn.addEventListener('click', function() {
+            // iOS requires subscription to happen during user interaction
             subscribeToPushNotifications()
                 .then(response => {
                     alert('Push notifications enabled successfully!');
@@ -214,7 +319,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 .catch(error => {
                     console.error('Error enabling push notifications:', error);
                     
-                    if (error.message && error.message.includes('different applicationServerKey')) {
+                    if (error.message && (
+                        error.message.includes('different applicationServerKey') || 
+                        (isIOS && error.message.includes('applicationServerKey'))
+                    )) {
                         return handleSubscriptionError(error)
                             .then(result => {
                                 if (result) {
@@ -224,6 +332,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 }
                             })
                             .catch(error => {
+                                console.error('Recovery failed:', error);
                                 alert('Failed to enable push notifications: ' + error.message);
                             });
                     } else {
@@ -233,8 +342,8 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Initialize push notifications automatically for mobile
-    if (API.isMobileDevice() && 'serviceWorker' in navigator && 'PushManager' in window) {
+    // Only auto-initialize for non-iOS devices, as iOS requires user interaction
+    if (API.isMobileDevice() && !isIOS && 'serviceWorker' in navigator && 'PushManager' in window) {
         navigator.serviceWorker.ready
             .then(registration => registration.pushManager.getSubscription())
             .then(subscription => {
@@ -257,6 +366,18 @@ document.addEventListener('DOMContentLoaded', function() {
             });
     }
 
+    // For iOS, we must register the service worker first on page load
+    if (isIOS && 'serviceWorker' in navigator) {
+        console.log('Registering service worker for iOS');
+        registerServiceWorker()
+            .then(registration => {
+                console.log('Service worker registered for iOS:', registration);
+            })
+            .catch(error => {
+                console.error('iOS service worker registration failed:', error);
+            });
+    }
+
     // Correctly wire up test notification buttons
     document.querySelectorAll('.test-notification-btn').forEach(btn => {
         btn.addEventListener('click', function() {
@@ -264,8 +385,18 @@ document.addEventListener('DOMContentLoaded', function() {
             API.testNotification(id)
                 .then(data => {
                     if (data.status === 'success') {
-                        if (API.isMobileDevice()) {
-                            // On mobile, just show an alert instead of a web notification
+                        if (isIOS) {
+                            // On iOS, we need to use the service worker for notifications
+                            // rather than a direct Notification
+                            navigator.serviceWorker.ready.then(registration => {
+                                registration.showNotification(data.title, {
+                                    body: data.message,
+                                    icon: '/static/meals/images/notification-icon.png',
+                                    badge: '/static/meals/images/notification-badge.png'
+                                });
+                            });
+                        } else if (API.isMobileDevice()) {
+                            // On non-iOS mobile, fallback to alert
                             alert(`${data.title}\n\n${data.message}`);
                         } else {
                             requestNotificationPermission().then(() => {
@@ -306,4 +437,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Store VAPID key globally for any inline scripts to use
     window.vapidPublicKey = API.getVapidPublicKey();
+    
+    console.log('Push notification system initialized');
+    if (isIOS) {
+        console.log('iOS push notification support enabled');
+    }
 });
