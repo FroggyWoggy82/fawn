@@ -29,52 +29,16 @@
 <body>
     {% block content %}{% endblock %}
 
+    <!-- Ensure service worker path is consistent -->
     <script>
-        // Register Service Worker
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', function() {
-                navigator.serviceWorker.register('/static/sw.js').then(function(registration) {
-                    console.log('ServiceWorker registration successful with scope: ', registration.scope);
-                }, function(err) {
-                    console.log('ServiceWorker registration failed: ', err);
+                navigator.serviceWorker.register('/service-worker.js')
+                .then(function(registration) {
+                    console.log('ServiceWorker registration successful');
                 });
             });
         }
-
-        // Handle "Add to Home Screen" functionality
-        let deferredPrompt;
-        const addBtn = document.createElement('button');
-        addBtn.style.display = 'none';
-        addBtn.className = 'add-button';
-        addBtn.textContent = 'Add to Home Screen';
-
-        window.addEventListener('beforeinstallprompt', (e) => {
-            // Prevent Chrome 67 and earlier from automatically showing the prompt
-            e.preventDefault();
-            // Stash the event so it can be triggered later
-            deferredPrompt = e;
-            // Update UI to notify the user they can add to home screen
-            addBtn.style.display = 'block';
-
-            addBtn.addEventListener('click', () => {
-                // Hide our user interface that shows our A2HS button
-                addBtn.style.display = 'none';
-                // Show the prompt
-                deferredPrompt.prompt();
-                // Wait for the user to respond to the prompt
-                deferredPrompt.userChoice.then((choiceResult) => {
-                    if (choiceResult.outcome === 'accepted') {
-                        console.log('User accepted the A2HS prompt');
-                    } else {
-                        console.log('User dismissed the A2HS prompt');
-                    }
-                    deferredPrompt = null;
-                });
-            });
-        });
-
-        // Add the button to the page
-       
     </script>
     {% block scripts %}{% endblock %}
 </body>

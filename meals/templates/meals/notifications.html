@@ -178,7 +178,6 @@
         <h1>Notifications</h1>
         <p>Manage your notification preferences</p>
     </header>
-    <!-- Add this right after the header section -->
 
     <div class="actions">
         <button id="add-notification-btn" class="btn btn-primary">Add New Notification</button>
@@ -227,110 +226,44 @@
                     <textarea id="notification-message" rows="4" required></textarea>
                 </div>
             
-            <div class="form-group">
-                <label for="notification-frequency">Frequency:</label>
-                <select id="notification-frequency">
-                    <option value="daily">Daily</option>
-                    <option value="weekly" selected>Weekly</option>
-                    <option value="monthly">Monthly</option>
-                </select>
-            </div>
+                <div class="form-group">
+                    <label for="notification-frequency">Frequency:</label>
+                    <select id="notification-frequency">
+                        <option value="daily">Daily</option>
+                        <option value="weekly" selected>Weekly</option>
+                        <option value="monthly">Monthly</option>
+                    </select>
+                </div>
             
-            <div class="form-group">
-                <label>
-                    <input type="checkbox" id="notification-enabled" checked>
-                    Enabled
-                </label>
-            </div>
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="notification-enabled" checked>
+                        Enabled
+                    </label>
+                </div>
             
-            <div class="form-actions">
-                <button type="button" class="btn btn-secondary" id="cancel-btn">Cancel</button>
-                <button type="submit" class="btn btn-primary" id="save-btn">Save</button>
-            </div>
-        </form>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" id="cancel-btn">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="save-btn">Save</button>
+                </div>
+            </form>
+        </div>
     </div>
-</div>
 </div>
 
 <script>
- function urlBase64ToUint8Array(base64String) {
-        const padding = '='.repeat((4 - base64String.length % 4) % 4);
-        const base64 = (base64String + padding)
-            .replace(/-/g, '+')
-            .replace(/_/g, '/');
-        
-        const rawData = window.atob(base64);
-        const outputArray = new Uint8Array(rawData.length);
-        
-        for (let i = 0; i < rawData.length; ++i) {
-            outputArray[i] = rawData.charCodeAt(i);
-        }
-        return outputArray;
-    }
-    const API = {
-    getVapidPublicKey: function() {
-        // Use the raw key directly from the template
-        const key = '{{ vapid_public_key|default:"" }}';
-        console.log('Raw VAPID public key:', key);
-        
-        if (!key || key === '') {
-            console.error('VAPID public key is missing');
-            return null;
-        }
-        
-        return key;
-    },
-    
-    isMobileDevice: function() {
-        return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    },
-    
-    savePushSubscription: function(subscription) {
-        return fetch('/push/subscribe/', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': getCookie('csrftoken')
-            },
-            body: JSON.stringify({
-                subscription: subscription
-            })
-        }).then(response => response.json());
-    },
-    
-    testNotification: function(id) {
-        return fetch(`/api/notifications/${id}/test/`, {
-            method: 'POST',
-            headers: {
-                'X-CSRFToken': getCookie('csrftoken'),
-                'Content-Type': 'application/json'
-            }
-        }).then(response => response.json());
-    }
-};
-function getCookie(name) {
-    let cookieValue = null;
-    if (document.cookie && document.cookie !== '') {
-        const cookies = document.cookie.split(';');
-        for (let i = 0; i < cookies.length; i++) {
-            const cookie = cookies[i].trim();
-            if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                break;
-            }
-        }
-    }
-    return cookieValue;
-}
+// Make VAPID key available to the unified push notifications script
+window.vapidPublicKey = '{{ vapid_public_key|default:"" }}';
+
 document.addEventListener('DOMContentLoaded', function() {
     // Debug information
     console.log('VAPID public key from template:', '{{ vapid_public_key|default:"Not set" }}');
+    
     // DOM elements
     const addBtn = document.getElementById('add-notification-btn');
     const modal = document.getElementById('notification-modal');
     const closeBtn = document.querySelector('.close-btn');
     const cancelBtn = document.getElementById('cancel-btn');
-    const pushSubscribeBtn = document.getElementById('push-subscribe-btn');
     const form = document.getElementById('notification-form');
     const modalTitle = document.getElementById('modal-title');
     const notificationId = document.getElementById('notification-id');
@@ -339,7 +272,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const notificationFrequency = document.getElementById('notification-frequency');
     const notificationEnabled = document.getElementById('notification-enabled');
     
-
     // Event listeners for edit buttons
     document.querySelectorAll('.edit-notification-btn').forEach(btn => {
         btn.addEventListener('click', function() {
@@ -358,85 +290,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
         });
     });
-    // Request notification permission
-    function requestNotificationPermission() {
-        return new Promise((resolve, reject) => {
-            if (!('Notification' in window)) {
-                alert('This browser does not support desktop notification');
-                reject('Notifications not supported');
-            } else if (Notification.permission === 'granted') {
-                resolve();
-            } else if (Notification.permission !== 'denied') {
-                Notification.requestPermission().then(permission => {
-                    if (permission === 'granted') {
-                        resolve();
-                    } else {
-                        reject('Notification permission denied');
-                    }
-                });
-            } else {
-                reject('Notification permission denied');
-            }
-        });
-    }
-    pushSubscribeBtn.addEventListener('click', function() {
-        if ('serviceWorker' in navigator && 'PushManager' in window) {
-            // Single flow for service worker registration and push subscription
-            navigator.serviceWorker.register('/service-worker.js')
-                .then(registration => {
-                    console.log('ServiceWorker registration successful');
-                    return requestNotificationPermission();
-                })
-                .then(() => {
-                    console.log('Notification permission granted');
-                    return navigator.serviceWorker.ready;
-                })
-                .then(registration => {
-                    console.log('Service worker ready, getting subscription...');
-                    return registration.pushManager.getSubscription();
-                })
-                .then(subscription => {
-                    if (subscription) {
-                        console.log('Already subscribed to push notifications');
-                        return subscription;
-                    }
-                    
-                    console.log('Creating new subscription...');
-                    const vapidPublicKey = API.getVapidPublicKey();
-                    if (!vapidPublicKey) {
-                        throw new Error('VAPID public key not available');
-                    }
-                    
-                    console.log('Using VAPID key:', vapidPublicKey);
-                    const applicationServerKey = urlBase64ToUint8Array(vapidPublicKey);
-                    console.log('Converted to Uint8Array:', applicationServerKey);
-                    
-                    return navigator.serviceWorker.ready.then(registration => {
-                        return registration.pushManager.subscribe({
-                            userVisibleOnly: true,
-                            applicationServerKey: applicationServerKey
-                        });
-                    });
-                })
-                .then(subscription => {
-                    console.log('Subscription object:', JSON.stringify(subscription));
-                    console.log('Saving push subscription...');
-                    return API.savePushSubscription(subscription);
-                })
-                .then(response => {
-                    console.log('Push subscription saved:', response);
-                    alert('Push notifications enabled successfully!');
-                })
-                .catch(error => {
-                    console.error('Error enabling push notifications:', error);
-                    alert('Failed to enable push notifications: ' + error.message);
-                });
-        } else {
-            alert('Push notifications are not supported in this browser');
-        }
-    });
 
-   
     // Event listeners for delete buttons
     document.querySelectorAll('.delete-notification-btn').forEach(btn => {
         btn.addEventListener('click', function() {
@@ -462,32 +316,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     });
-    
-    // Event listeners for test buttons
-    document.querySelectorAll('.test-notification-btn').forEach(btn => {
-    btn.addEventListener('click', function() {
-        const id = this.dataset.id;
-        API.testNotification(id)
-            .then(data => {
-                if (data.status === 'success') {
-                    if (API.isMobileDevice()) {
-                        // On mobile, just show an alert instead of a web notification
-                        alert(`${data.title}\n\n${data.message}`);
-                    } else {
-                        requestNotificationPermission().then(() => {
-                            showNotification(data.title, data.message);
-                        });
-                    }
-                } else {
-                    alert('Error testing notification');
-                }
-            })
-            .catch(error => {
-                console.error('Test notification error:', error);
-                alert('Error testing notification: ' + error.message);
-            });
-    });
-});
     
     // Add notification button
     addBtn.addEventListener('click', function() {
@@ -553,141 +381,24 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    
-    
-    
-    // Show notification function
-    function showNotification(title, message) {
-        if (Notification.permission === 'granted') {
-            const notification = new Notification(title, {
-                body: message,
-                icon: '/static/meals/images/notification-icon.png',
-                badge: '/static/meals/images/notification-badge.png' // Optional: Add a badge for mobile
-            });
-            
-            notification.onclick = function() {
-                window.focus();
-                this.close();
-            };
-            
-            // Auto close after 5 seconds
-            setTimeout(() => {
-                notification.close();
-            }, 5000);
-        } else {
-            console.warn('Notification permission not granted');
-            requestNotificationPermission()
-                .then(() => showNotification(title, message))
-                .catch(error => console.error('Permission request failed:', error));
-        }
-    }
-    
-    // Check for service worker support
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', function() {
-            let swRegistration = null;
-            
-            navigator.serviceWorker.register('/service-worker.js')
-                .then(function(registration) {
-                    console.log('ServiceWorker registration successful with scope: ', registration.scope);
-                    swRegistration = registration;
-                    
-                    // If on mobile and Push API is supported, try to set up push notifications
-                    if (API.isMobileDevice() && 'PushManager' in window) {
-                        console.log('Push notifications supported on this mobile device');
-                        return swRegistration.pushManager.getSubscription();
-                    }
-                })
-                .then(function(subscription) {
-                    if (!subscription && swRegistration) {
-                        const vapidPublicKey = API.getVapidPublicKey();
-                        if (!vapidPublicKey) {
-                            throw new Error('VAPID public key not available');
-                        }
-                        console.log('Using VAPID key in service worker:', vapidPublicKey);
-                        const applicationServerKey = urlBase64ToUint8Array(vapidPublicKey);
-                        return swRegistration.pushManager.subscribe({
-                            userVisibleOnly: true,
-                            applicationServerKey: applicationServerKey
-                        });
-                    }
-                    return subscription;
-                })
-                .then(function(pushSubscription) {
-                    if (pushSubscription) {
-                        console.log('Push subscription created:', JSON.stringify(pushSubscription));
-                        return API.savePushSubscription(pushSubscription);
-                    }
-                })
-                .catch(function(err) {
-                    console.error('Service Worker or Push subscription error:', err);
-                    // More detailed error logging
-                    if (err.message) {
-                        console.error('Error message:', err.message);
-                    }
-                    if (err.stack) {
-                        console.error('Error stack:', err.stack);
-                    }
-                    
-                    if (err.message && err.message.includes('different applicationServerKey')) {
-                        if (typeof handleSubscriptionError === 'function') {
-                            handleSubscriptionError(err);
-                        } else {
-                            console.error('handleSubscriptionError function not found');
-                        }
-                    }
-                });
-        });
-    }
-    
-    // Check notification permission on page load
-  
-        if ('Notification' in window) {
-            if (Notification.permission !== 'granted' && Notification.permission !== 'denied') {
-                // Add a banner to request notification permission
-                const banner = document.createElement('div');
-                banner.style.backgroundColor = '#f8d7da';
-                banner.style.color = '#721c24';
-                banner.style.padding = '10px';
-                banner.style.marginBottom = '20px';
-                banner.style.borderRadius = '4px';
-                banner.style.display = 'flex';
-                banner.style.justifyContent = 'space-between';
-                banner.style.alignItems = 'center';
-                
-                const bannerText = document.createElement('p');
-                bannerText.textContent = 'Enable notifications to receive updates about your habits and goals.';
-                bannerText.style.margin = '0';
-                
-                const bannerBtn = document.createElement('button');
-                bannerBtn.textContent = 'Enable Notifications';
-                bannerBtn.className = 'btn btn-primary';
-                bannerBtn.addEventListener('click', function() {
-                    requestNotificationPermission()
-                        .then(() => {
-                            banner.remove();
-                        })
-                        .catch(() => {
-                            bannerText.textContent = 'Notification permission denied. You can change this in your browser settings.';
-                            bannerBtn.remove();
-                        });
-                });
-                
-                banner.appendChild(bannerText);
-                banner.appendChild(bannerBtn);
-                
-                const container = document.querySelector('.container');
-                container.insertBefore(banner, container.firstChild);
+    // Helper function for CSRF token
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
             }
         }
-
-        //Initialize push notifications if available
-    if (typeof PushNotifications !== 'undefined') {
-        PushNotifications.init();
+        return cookieValue;
     }
-
 });
-
 </script>
+
+<!-- Load the unified push notifications script -->
 <script src="{% static 'js/push-notifications.js' %}"></script>
 {% endblock %}
