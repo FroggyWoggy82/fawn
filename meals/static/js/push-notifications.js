@@ -1,3 +1,62 @@
+const API = {
+    // Get the VAPID public key from the meta tag
+    getVapidPublicKey() {
+        const metaTag = document.querySelector('meta[name="vapid-public-key"]');
+        if (!metaTag) {
+            console.error('VAPID public key meta tag is missing');
+            return null;
+        }
+        
+        const vapidKey = metaTag.content;
+        console.log('Raw VAPID key:', vapidKey); // Debug log
+        
+        if (!vapidKey || vapidKey === '') {
+            console.error('VAPID public key is empty');
+            return null;
+        }
+        
+        // Convert the base64 string to Uint8Array
+        try {
+            const convertedKey = urlBase64ToUint8Array(vapidKey);
+            console.log('Successfully converted key to Uint8Array');
+            return convertedKey;
+        } catch (error) {
+            console.error('Failed to convert VAPID key:', error);
+            return null;
+        }
+    },
+    
+    // Check if device is mobile (missing in your code)
+    isMobileDevice() {
+        return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    },
+    
+    // Save push subscription to server
+    savePushSubscription(subscription) {
+        const tokenEl = document.querySelector('meta[name="csrf-token"]');
+        if (!tokenEl) {
+            console.error('CSRF token meta tag is missing');
+            return Promise.reject('CSRF token missing');
+        }
+        
+        const token = tokenEl.content;
+        
+        return fetch('/save-subscription/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': token
+            },
+            body: JSON.stringify(subscription)
+        })
+        .then(response => response.json())
+        .catch(error => {
+            console.error('Error saving subscription:', error);
+            return { status: 'error', message: error.message };
+        });
+    }
+};
+
 function urlBase64ToUint8Array(base64String) {
     // Add more debugging
     console.log('Converting base64 string:', base64String);
@@ -26,44 +85,6 @@ function urlBase64ToUint8Array(base64String) {
     }
 }
 
-const API = {
-    // Get the VAPID public key from the meta tag
-    getVapidPublicKey() {
-        const vapidKey = document.querySelector('meta[name="vapid-public-key"]').content;
-        console.log('Raw VAPID key:', vapidKey); // Debug log
-        
-        if (!vapidKey || vapidKey === '') {
-            console.error('VAPID public key is missing');
-            return null;
-        }
-        
-        // Convert the base64 string to Uint8Array
-        try {
-            const convertedKey = urlBase64ToUint8Array(vapidKey);
-            console.log('Successfully converted key to Uint8Array');
-            return convertedKey;
-        } catch (error) {
-            console.error('Failed to convert VAPID key:', error);
-            return null;
-        }
-    },
-    
-    // Save push subscription to server
-    savePushSubscription(subscription) {
-        const token = document.querySelector('meta[name="csrf-token"]').content;
-        
-        return fetch('/save-subscription/', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': token
-            },
-            body: JSON.stringify(subscription)
-        })
-        .then(response => response.json());
-    }
-};
-
 // Push notification functionality
 const PushNotifications = {
     // Initialize push notifications
@@ -73,14 +94,34 @@ const PushNotifications = {
             return Promise.reject('Push notifications not supported');
         }
         
-        // Check if already subscribed
-        this.checkSubscription();
-        
-        // Add event listener to subscribe button if it exists
-        const subscribeBtn = document.getElementById('push-subscribe-btn');
-        if (subscribeBtn) {
-            subscribeBtn.addEventListener('click', () => this.subscribe());
-        }
+        // Ensure service worker is registered
+        this.registerServiceWorker()
+            .then(() => {
+                // Check if already subscribed
+                this.checkSubscription();
+                
+                // Add event listener to subscribe button if it exists
+                const subscribeBtn = document.getElementById('push-subscribe-btn');
+                if (subscribeBtn) {
+                    subscribeBtn.addEventListener('click', () => this.subscribe());
+                }
+            })
+            .catch(error => {
+                console.error('Failed to register service worker:', error);
+            });
+    },
+    
+    // Register service worker
+    registerServiceWorker() {
+        return navigator.serviceWorker.register('/service-worker.js')
+            .then(registration => {
+                console.log('Service Worker registered successfully:', registration);
+                return registration;
+            })
+            .catch(error => {
+                console.error('Service Worker registration failed:', error);
+                throw error;
+            });
     },
     
     // Check if already subscribed
@@ -105,18 +146,26 @@ const PushNotifications = {
     
     // Subscribe to push notifications
     subscribe() {
+        const applicationServerKey = API.getVapidPublicKey();
+        
+        if (!applicationServerKey) {
+            alert('Push notification setup is incomplete. Contact the administrator.');
+            return;
+        }
+        
         navigator.serviceWorker.ready
             .then(registration => {
                 // Create subscription
                 const options = {
                     userVisibleOnly: true,
-                    // Use the VAPID key from the API
-                    applicationServerKey: API.getVapidPublicKey()
+                    applicationServerKey: applicationServerKey
                 };
                 
+                console.log('Subscription options:', options);
                 return registration.pushManager.subscribe(options);
             })
             .then(subscription => {
+                console.log('Subscription successful:', JSON.stringify(subscription));
                 // Send subscription to server using the API
                 return API.savePushSubscription(subscription);
             })
@@ -179,7 +228,5 @@ function handleSubscriptionError(error) {
 
 // Initialize push notifications when the page loads
 document.addEventListener('DOMContentLoaded', () => {
-    if (typeof API !== 'undefined' && API.isMobileDevice()) {
-        PushNotifications.init();
-    }
+    PushNotifications.init();
 });
