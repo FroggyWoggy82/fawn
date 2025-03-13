@@ -4,6 +4,9 @@ from django.contrib.auth.models import User
 from datetime import timedelta, datetime
 # Add this to your existing models.py file
 
+
+
+
 class PushSubscription(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     endpoint = models.TextField()
@@ -302,8 +305,12 @@ class Task(models.Model):
     title = models.CharField(max_length=200)
     start_time = models.DateTimeField(null=True, blank=True)
     end_time = models.DateTimeField(null=True, blank=True)
-    duration = models.DurationField(null=True, blank=True)  # stored as a timedelta
+    duration = models.DurationField(null=True, blank=True)
     date = models.DateField(default=timezone.now)
+    # New fields for our mobile UI
+    details = models.TextField(blank=True, null=True)  # Add this
+    completed = models.BooleanField(default=False)     # Add this
+    profile = models.ForeignKey('Profile', on_delete=models.CASCADE, null=True, blank=True)  # Add this
 
     def __str__(self):
         return self.title

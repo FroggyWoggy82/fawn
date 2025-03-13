@@ -16,6 +16,116 @@ from django.views.decorators.http import require_POST
 import os
 from django.conf import settings
 
+@csrf_exempt
+def delete_task(request, task_id):
+    """API view for deleting a task"""
+    if request.method == 'POST':
+        try:
+            task = get_object_or_404(Task, id=task_id)
+            task.delete()
+            
+            return JsonResponse({
+                'status': 'success',
+                'message': 'Task deleted successfully'
+            })
+        except Exception as e:
+            return JsonResponse({
+                'status': 'error',
+                'message': str(e)
+            }, status=400)
+    
+    return JsonResponse({
+        'status': 'error',
+        'message': 'Invalid request method'
+    }, status=405)
+
+@csrf_exempt
+def toggle_task_completion(request, task_id):
+    """API view for marking a task as completed/incomplete"""
+    if request.method == 'POST':
+        try:
+            task = get_object_or_404(Task, id=task_id)
+            task.completed = not task.completed
+            
+            # If completing the task, set end_time and calculate duration
+            if task.completed:
+                now = timezone.now()
+                task.end_time = now
+                
+                # Set a dummy start_time if it doesn't exist
+                if not task.start_time:
+                    task.start_time = now - timedelta(minutes=30)  # Default 30 min task
+                    
+                # Calculate duration
+                if task.start_time and task.end_time:
+                    task.duration = task.end_time - task.start_time
+            
+            task.save()
+            
+            return JsonResponse({
+                'status': 'success',
+                'completed': task.completed,
+                'message': f'Task marked as {"completed" if task.completed else "incomplete"}'
+            })
+        except Exception as e:
+            return JsonResponse({
+                'status': 'error',
+                'message': str(e)
+            }, status=400)
+    
+    return JsonResponse({
+        'status': 'error',
+        'message': 'Invalid request method'
+    }, status=405)
+
+@csrf_exempt
+def create_task(request):
+    """API view for creating a new task"""
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            profile = Profile.objects.first()
+            if not profile:
+                profile = Profile.objects.create(name="Default Profile")
+            
+            # Parse the date and time
+            task_date = data.get('due_date')
+            task_time = data.get('due_time')
+            
+            # Convert time string to datetime object
+            time_parts = task_time.split(':')
+            hour = int(time_parts[0])
+            minute = int(time_parts[1])
+            
+            # Create task datetime
+            start_time = datetime.strptime(f"{task_date} {hour}:{minute}:00", "%Y-%m-%d %H:%M:%S")
+            
+            task = Task.objects.create(
+                title=data.get('title'),
+                details=data.get('details', ''),
+                date=task_date,
+                start_time=start_time,
+                profile=profile,
+                completed=False
+            )
+            
+            return JsonResponse({
+                'status': 'success',
+                'task_id': task.id,
+                'message': 'Task created successfully'
+            })
+        except Exception as e:
+            return JsonResponse({
+                'status': 'error',
+                'message': str(e)
+            }, status=400)
+    
+    return JsonResponse({
+        'status': 'error',
+        'message': 'Invalid request method'
+    }, status=405)
+
+
 @require_POST
 def push_subscribe(request):
     try:
@@ -227,8 +337,25 @@ except ImportError:
     WORKOUT_MODELS_EXIST = False
 
 def home_view(request):
-    """Home page view"""
-    return render(request, 'meals/home.html')
+    """Home page view with tasks"""
+    # Get the user's profile (assuming the default profile if needed)
+    profile = Profile.objects.first()
+    if not profile:
+        profile = Profile.objects.create(name="Default Profile")
+    
+    # Get today's date for filtering tasks
+    today = date.today()
+    
+    # Get tasks due today or in the future, ordered by due date/time
+    tasks = Task.objects.filter(
+        profile=profile,
+        date__gte=today,
+        completed=False  # Only get incomplete tasks
+    ).order_by('date')[:10]  # Limit to 10 most recent
+    
+    return render(request, 'meals/home.html', {
+        'tasks': tasks
+    })
 
 def calculate_dish(request):
     """Calculate adjusted ingredients based on nutritional targets"""
@@ -723,12 +850,24 @@ def wir_view(request):
 
             # For simplicity, we store start_time and end_time as the time of submission.
             now = timezone.now()
+            
+            # Get the profile (create default if none exists)
+            try:
+                profile = Profile.objects.first()
+                if not profile:
+                    profile = Profile.objects.create(name="Default Profile")
+            except Exception as e:
+                print(f"Error getting profile: {e}")
+                profile = None
+            
+            # Create the task with profile
             task = Task.objects.create(
                 title=task_title,
                 start_time=now,
                 end_time=now,
                 duration=duration,
-                date=now.date()
+                date=now.date(),
+                profile=profile
             )
             
             # Process subtasks data
@@ -797,9 +936,72 @@ def wir_view(request):
             
         except Exception as e:
             # Catch all errors in POST handling
+            import traceback
             print(f"Error processing WIR form: {e}")
+            print(traceback.format_exc())
             messages.error(request, "There was an error processing your task. Please try again.")
             # Return to the form page instead of crashing
+            return render(request, "meals/wir.html", {})
+            
+    # Normal GET request handling
+    try:
+        # Ensure DB connection is working
+        tasks = list(Task.objects.all().order_by("-date", "-id")[:50])  # Limit to 50 most recent tasks
+        
+        today = timezone.now().date()
+        start_of_week = today - timedelta(days=today.weekday())
+        
+        # Sum durations (in seconds) for today and this week
+        # Use safer approach with a default value if duration is None
+        daily_total = sum((
+            t.duration.total_seconds() if t.duration else 0 
+            for t in tasks if t.date == today
+        ), 0)
+        
+        weekly_total = sum((
+            t.duration.total_seconds() if t.duration else 0 
+            for t in tasks if t.date and t.date >= start_of_week
+        ), 0)
+        
+        total_tasks = len(tasks)
+
+        context = {
+            "tasks": tasks,
+            "daily_total": daily_total,
+            "weekly_total": weekly_total,
+            "total_tasks": total_tasks,
+        }
+        return render(request, "meals/wir.html", context)
+    except Exception as e:
+        import traceback
+        print(f"Error rendering WIR page: {e}")
+        print(traceback.format_exc())
+        # Return a basic page with error message instead of HttpResponse
+        return render(request, "meals/error.html", {"error": str(e)})
+            
+    # Normal GET request handling
+    try:
+        tasks = Task.objects.all().order_by("-id")
+        today = timezone.now().date()
+        start_of_week = today - timedelta(days=today.weekday())
+        
+        # Sum durations (in seconds) for today and this week
+        daily_total = sum((t.duration.total_seconds() for t in tasks if t.date == today), 0)
+        weekly_total = sum((t.duration.total_seconds() for t in tasks if t.date >= start_of_week), 0)
+        total_tasks = tasks.count()
+
+        context = {
+            "tasks": tasks,
+            "daily_total": daily_total,
+            "weekly_total": weekly_total,
+            "total_tasks": total_tasks,
+        }
+        return render(request, "meals/wir.html", context)
+    except Exception as e:
+        import traceback
+        print(f"Error rendering WIR page: {e}")
+        print(traceback.format_exc())
+        return HttpResponse("An error occurred loading the WIR page. Please try again.")
             
     # Normal GET request handling
     try:

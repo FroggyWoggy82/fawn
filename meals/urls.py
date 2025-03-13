@@ -54,6 +54,9 @@ urlpatterns = [
     path('api/notifications/<int:notification_id>/test/', views.test_notification, name='test_notification'),
     path('service-worker.js', RedirectView.as_view(url=settings.STATIC_URL + 'service-worker.js'), name='service-worker'),
     path('api/push-subscribe/', views.push_subscribe, name='push_subscribe'),
+    path('api/tasks/create/', views.create_task, name='create_task'),
+    path('api/tasks/<int:task_id>/delete/', views.delete_task, name='delete_task'),
+    path('api/tasks/<int:task_id>/toggle/', views.toggle_task_completion, name='toggle_task'),
 ] 
 if settings.DEBUG:
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
