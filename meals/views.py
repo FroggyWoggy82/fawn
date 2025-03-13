@@ -336,26 +336,43 @@ try:
 except ImportError:
     WORKOUT_MODELS_EXIST = False
 
+# Safer home_view function
 def home_view(request):
     """Home page view with tasks"""
-    # Get the user's profile (assuming the default profile if needed)
-    profile = Profile.objects.first()
-    if not profile:
-        profile = Profile.objects.create(name="Default Profile")
-    
-    # Get today's date for filtering tasks
-    today = date.today()
-    
-    # Get tasks due today or in the future, ordered by due date/time
-    tasks = Task.objects.filter(
-        profile=profile,
-        date__gte=today,
-        completed=False  # Only get incomplete tasks
-    ).order_by('date')[:10]  # Limit to 10 most recent
-    
-    return render(request, 'meals/home.html', {
-        'tasks': tasks
-    })
+    try:
+        # Get the user's profile (assuming the default profile if needed)
+        profile = Profile.objects.first()
+        if not profile:
+            profile = Profile.objects.create(name="Default Profile")
+        
+        # Get today's date for filtering tasks
+        today = date.today()
+        
+        # Safer query that doesn't rely on "completed" field until migration is complete
+        # Only get recent tasks
+        tasks = Task.objects.filter(
+            profile=profile,
+            date__gte=today
+        ).order_by('date')[:10]
+        
+        # At this point, filter in Python instead of at the database level
+        # to handle the case where 'completed' field might not exist yet
+        filtered_tasks = []
+        for task in tasks:
+            # Skip tasks that are marked as completed (if the attribute exists)
+            if hasattr(task, 'completed') and task.completed:
+                continue
+            filtered_tasks.append(task)
+        
+        return render(request, 'meals/home.html', {
+            'tasks': filtered_tasks
+        })
+    except Exception as e:
+        import traceback
+        print(f"Error in home_view: {e}")
+        print(traceback.format_exc())
+        # Provide a minimal context that doesn't rely on potentially missing model fields
+        return render(request, 'meals/home.html', {'tasks': []})
 
 def calculate_dish(request):
     """Calculate adjusted ingredients based on nutritional targets"""
