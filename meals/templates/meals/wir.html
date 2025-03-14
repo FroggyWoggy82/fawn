@@ -718,6 +718,7 @@
                     <!-- Hidden inputs for task and subtask duration (in seconds) -->
                     <input type="hidden" id="task_duration" name="task_duration" value="0">
                     <input type="hidden" id="subtasks_data" name="subtasks_data" value="[]">
+                    <input type="hidden" id="task_date" name="date" value="">
                     <div class="timer" id="timerDisplay">00:00:00</div>
                     <div>
                         <button type="button" class="button" id="startButton">Start</button>
@@ -733,10 +734,6 @@
                         <input type="text" id="subtask_title" required placeholder="e.g., Research API endpoints">
                         <div class="subtask-timer" id="subtaskTimerDisplay">00:00:00</div>
                         <div>
-                            <button type="button" class="button" id="startSubtaskButton">Start</button>
-                            <button type="button" class="button" id="pauseSubtaskButton" disabled>Pause</button>
-                            <button type="button" class="button" id="resumeSubtaskButton" disabled>Resume</button>
-                            <button type="button" class="button" id="completeSubtaskButton" disabled>Complete</button>
                             <button type="button" class="button" id="startSubtaskButton">Start</button>
                             <button type="button" class="button" id="pauseSubtaskButton" disabled>Pause</button>
                             <button type="button" class="button" id="resumeSubtaskButton" disabled>Resume</button>
@@ -800,7 +797,7 @@
             <!-- Sunday -->
             <div class="day-container">
                 <h4>Sunday</h4>
-                {% with sunday_tasks=tasks|dictsortreversed:"date"|filter_by_day:"Sunday" %}
+                {% with sunday_tasks=weekly_tasks|dictsortreversed:"date"|filter_by_day:"Sunday" %}
                 <span class="task-count {% if sunday_tasks|length == 0 %}zero{% endif %}">
                     {{ sunday_tasks|length }} task{% if sunday_tasks|length != 1 %}s{% endif %}
                 </span>
@@ -808,7 +805,13 @@
                     {% for task in sunday_tasks %}
                         <li>
                             <span class="task-title-display">{{ task.title }}</span>
-                            <span class="task-duration">{{ task.duration.total_seconds|floatformat:0|time_format }}</span>
+                            <span class="task-duration">
+                                {% if task.duration %}
+                                    {{ task.duration.total_seconds|floatformat:0|time_format }}
+                                {% else %}
+                                    00:00:00
+                                {% endif %}
+                            </span>
                         </li>
                     {% empty %}
                         <li class="no-tasks">No tasks</li>
@@ -820,7 +823,7 @@
             <!-- Monday -->
             <div class="day-container">
                 <h4>Monday</h4>
-                {% with monday_tasks=tasks|dictsortreversed:"date"|filter_by_day:"Monday" %}
+                {% with monday_tasks=weekly_tasks|dictsortreversed:"date"|filter_by_day:"Monday" %}
                 <span class="task-count {% if monday_tasks|length == 0 %}zero{% endif %}">
                     {{ monday_tasks|length }} task{% if monday_tasks|length != 1 %}s{% endif %}
                 </span>
@@ -828,7 +831,13 @@
                     {% for task in monday_tasks %}
                         <li>
                             <span class="task-title-display">{{ task.title }}</span>
-                            <span class="task-duration">{{ task.duration.total_seconds|floatformat:0|time_format }}</span>
+                            <span class="task-duration">
+                                {% if task.duration %}
+                                    {{ task.duration.total_seconds|floatformat:0|time_format }}
+                                {% else %}
+                                    00:00:00
+                                {% endif %}
+                            </span>
                         </li>
                     {% empty %}
                         <li class="no-tasks">No tasks</li>
@@ -840,7 +849,7 @@
             <!-- Tuesday -->
             <div class="day-container">
                 <h4>Tuesday</h4>
-                {% with tuesday_tasks=tasks|dictsortreversed:"date"|filter_by_day:"Tuesday" %}
+                {% with tuesday_tasks=weekly_tasks|dictsortreversed:"date"|filter_by_day:"Tuesday" %}
                 <span class="task-count {% if tuesday_tasks|length == 0 %}zero{% endif %}">
                     {{ tuesday_tasks|length }} task{% if tuesday_tasks|length != 1 %}s{% endif %}
                 </span>
@@ -848,7 +857,13 @@
                     {% for task in tuesday_tasks %}
                         <li>
                             <span class="task-title-display">{{ task.title }}</span>
-                            <span class="task-duration">{{ task.duration.total_seconds|floatformat:0|time_format }}</span>
+                            <span class="task-duration">
+                                {% if task.duration %}
+                                    {{ task.duration.total_seconds|floatformat:0|time_format }}
+                                {% else %}
+                                    00:00:00
+                                {% endif %}
+                            </span>
                         </li>
                     {% empty %}
                         <li class="no-tasks">No tasks</li>
@@ -860,7 +875,7 @@
             <!-- Wednesday -->
             <div class="day-container">
                 <h4>Wednesday</h4>
-                {% with wednesday_tasks=tasks|dictsortreversed:"date"|filter_by_day:"Wednesday" %}
+                {% with wednesday_tasks=weekly_tasks|dictsortreversed:"date"|filter_by_day:"Wednesday" %}
                 <span class="task-count {% if wednesday_tasks|length == 0 %}zero{% endif %}">
                     {{ wednesday_tasks|length }} task{% if wednesday_tasks|length != 1 %}s{% endif %}
                 </span>
@@ -868,7 +883,13 @@
                     {% for task in wednesday_tasks %}
                         <li>
                             <span class="task-title-display">{{ task.title }}</span>
-                            <span class="task-duration">{{ task.duration.total_seconds|floatformat:0|time_format }}</span>
+                            <span class="task-duration">
+                                {% if task.duration %}
+                                    {{ task.duration.total_seconds|floatformat:0|time_format }}
+                                {% else %}
+                                    00:00:00
+                                {% endif %}
+                            </span>
                         </li>
                     {% empty %}
                         <li class="no-tasks">No tasks</li>
@@ -880,7 +901,7 @@
             <!-- Thursday (Center Day) -->
             <div class="day-container">
                 <h4>Thursday</h4>
-                {% with thursday_tasks=tasks|dictsortreversed:"date"|filter_by_day:"Thursday" %}
+                {% with thursday_tasks=weekly_tasks|dictsortreversed:"date"|filter_by_day:"Thursday" %}
                 <span class="task-count {% if thursday_tasks|length == 0 %}zero{% endif %}">
                     {{ thursday_tasks|length }} task{% if thursday_tasks|length != 1 %}s{% endif %}
                 </span>
@@ -888,7 +909,13 @@
                     {% for task in thursday_tasks %}
                         <li>
                             <span class="task-title-display">{{ task.title }}</span>
-                            <span class="task-duration">{{ task.duration.total_seconds|floatformat:0|time_format }}</span>
+                            <span class="task-duration">
+                                {% if task.duration %}
+                                    {{ task.duration.total_seconds|floatformat:0|time_format }}
+                                {% else %}
+                                    00:00:00
+                                {% endif %}
+                            </span>
                         </li>
                     {% empty %}
                         <li class="no-tasks">No tasks</li>
@@ -900,7 +927,7 @@
             <!-- Friday -->
             <div class="day-container">
                 <h4>Friday</h4>
-                {% with friday_tasks=tasks|dictsortreversed:"date"|filter_by_day:"Friday" %}
+                {% with friday_tasks=weekly_tasks|dictsortreversed:"date"|filter_by_day:"Friday" %}
                 <span class="task-count {% if friday_tasks|length == 0 %}zero{% endif %}">
                     {{ friday_tasks|length }} task{% if friday_tasks|length != 1 %}s{% endif %}
                 </span>
@@ -908,7 +935,13 @@
                     {% for task in friday_tasks %}
                         <li>
                             <span class="task-title-display">{{ task.title }}</span>
-                            <span class="task-duration">{{ task.duration.total_seconds|floatformat:0|time_format }}</span>
+                            <span class="task-duration">
+                                {% if task.duration %}
+                                    {{ task.duration.total_seconds|floatformat:0|time_format }}
+                                {% else %}
+                                    00:00:00
+                                {% endif %}
+                            </span>
                         </li>
                     {% empty %}
                         <li class="no-tasks">No tasks</li>
@@ -920,7 +953,7 @@
             <!-- Saturday -->
             <div class="day-container">
                 <h4>Saturday</h4>
-                {% with saturday_tasks=tasks|dictsortreversed:"date"|filter_by_day:"Saturday" %}
+                {% with saturday_tasks=weekly_tasks|dictsortreversed:"date"|filter_by_day:"Saturday" %}
                 <span class="task-count {% if saturday_tasks|length == 0 %}zero{% endif %}">
                     {{ saturday_tasks|length }} task{% if saturday_tasks|length != 1 %}s{% endif %}
                 </span>
@@ -928,7 +961,13 @@
                     {% for task in saturday_tasks %}
                         <li>
                             <span class="task-title-display">{{ task.title }}</span>
-                            <span class="task-duration">{{ task.duration.total_seconds|floatformat:0|time_format }}</span>
+                            <span class="task-duration">
+                                {% if task.duration %}
+                                    {{ task.duration.total_seconds|floatformat:0|time_format }}
+                                {% else %}
+                                    00:00:00
+                                {% endif %}
+                            </span>
                         </li>
                     {% empty %}
                         <li class="no-tasks">No tasks</li>
@@ -947,7 +986,13 @@
                 <li id="task-{{ task.id }}">
                     <div class="task-details">
                         <span class="task-title-display">{{ task.title }}</span>
-                        <span class="task-duration">{{ task.duration.total_seconds|floatformat:0|time_format }}</span>
+                        <span class="task-duration">
+                            {% if task.duration %}
+                                {{ task.duration.total_seconds|floatformat:0|time_format }}
+                            {% else %}
+                                00:00:00
+                            {% endif %}
+                        </span>
                     </div>
                     
                     <!-- Subtasks section (if any) -->
@@ -958,7 +1003,13 @@
                             {% for subtask in task.subtasks.all %}
                                 <li>
                                     <span class="subtask-name">{{ subtask.title }}</span>
-                                    <span class="task-duration">{{ subtask.duration.total_seconds|floatformat:0|time_format }}</span>
+                                    <span class="task-duration">
+                                        {% if subtask.duration %}
+                                            {{ subtask.duration.total_seconds|floatformat:0|time_format }}
+                                        {% else %}
+                                            00:00:00
+                                        {% endif %}
+                                    </span>
                                 </li>
                             {% endfor %}
                         </ul>
@@ -977,6 +1028,7 @@
 {% block scripts %}
 <script>
 // Global variables and DOM references
+let taskSyncInProgress = false;
 let selectedTask = null; // Added for task selection functionality
 const timerDisplay = document.getElementById('timerDisplay');
 const taskDurationInput = document.getElementById('task_duration');
@@ -1339,19 +1391,28 @@ function getCookie(name) {
 
 // Function to add a completed task to the list
 function addCompletedTask(title, duration, subtasks = []) {
+    // Get today's date in YYYY-MM-DD format
+    const today = new Date();
+    const formattedDate = today.getFullYear() + '-' + 
+                          String(today.getMonth() + 1).padStart(2, '0') + '-' + 
+                          String(today.getDate()).padStart(2, '0');
+    
     // Create completed task object
     const completedTask = {
         id: Date.now(),
         title: title,
         duration: duration,
         timestamp: new Date().toISOString(),
-        subtasks: subtasks
+        date: formattedDate,  // Add today's date
+        subtasks: subtasks,
+        completed: true  // Make sure this is set to true
     };
     
     // Set form values for submission
     document.getElementById('task_title').value = title;
     document.getElementById('task_duration').value = duration;
     document.getElementById('subtasks_data').value = JSON.stringify(subtasks);
+    document.getElementById('task_date').value = formattedDate;  // Set the date field if it exists
     
     // Submit the form
     document.getElementById('taskForm').submit();
@@ -1428,19 +1489,36 @@ resumeButton.addEventListener('click', function() {
 });
 
 // Stop button event handler
+// Stop button event handler
 stopButton.addEventListener('click', function() {
+    // Get task data
+    const taskTitle = document.getElementById('task_title').value || 'Unnamed Task';
+    const taskDuration = Math.floor(elapsed);
+    
+    console.log('Stop button clicked');
+    console.log(`Task title: "${taskTitle}", Duration: ${taskDuration}`);
+    console.log(`Selected task: ${selectedTask ? JSON.stringify(selectedTask) : 'none'}`);
+    
     // Process selected task if exists
     if (selectedTask) {
         const priority = selectedTask.priority;
         const taskId = parseInt(selectedTask.id);
+        
+        console.log(`Processing selected task: ID ${taskId}, Priority: ${priority}`);
         
         // Find and remove from priority lists in localStorage
         const savedTasks = localStorage.getItem(PRIORITY_TASKS_KEY);
         if (savedTasks) {
             try {
                 const allTasks = JSON.parse(savedTasks);
+                console.log(`Priority tasks before update:`, JSON.parse(JSON.stringify(allTasks)));
+                
                 if (allTasks[priority]) {
+                    const beforeCount = allTasks[priority].length;
                     allTasks[priority] = allTasks[priority].filter(t => t.id !== taskId);
+                    const afterCount = allTasks[priority].length;
+                    
+                    console.log(`Removed ${beforeCount - afterCount} tasks from ${priority} priority`);
                     localStorage.setItem(PRIORITY_TASKS_KEY, JSON.stringify(allTasks));
                     
                     // Update the global priorityTasks variable used for task comparisons
@@ -1454,57 +1532,181 @@ stopButton.addEventListener('click', function() {
                         const taskElement = taskList.querySelector(`li[data-task-id="${taskId}"]`);
                         if (taskElement) {
                             taskElement.remove();
+                            console.log(`Removed task element from UI`);
                         }
                     }
                 }
+                
+                console.log(`Priority tasks after update:`, allTasks);
             } catch (e) {
                 console.error('Error updating tasks:', e);
             }
         }
-        
-        // Reset selected task
-        selectedTask = null;
-        
-        // Remove selected-task class from any task items
-        document.querySelectorAll('.task-item').forEach(item => {
-            item.classList.remove('selected-task');
-        });
     }
     
-    // Stop timers
-    clearInterval(timerInterval);
-    clearInterval(subtaskTimerInterval);
-    updateTimer();
+    // Get today's date in YYYY-MM-DD format
+    const today = new Date();
+    const formattedDate = today.getFullYear() + '-' + 
+                          String(today.getMonth() + 1).padStart(2, '0') + '-' + 
+                          String(today.getDate()).padStart(2, '0');
     
-    // Get task data
-    const taskTitle = document.getElementById('task_title').value || 'Unnamed Task';
-    const taskDuration = Math.floor(elapsed);
+    // Set form values for submission
+    document.getElementById('task_title').value = taskTitle;
+    document.getElementById('task_duration').value = taskDuration;
+    document.getElementById('subtasks_data').value = JSON.stringify(subtasks);
+    document.getElementById('task_date').value = formattedDate;
     
-    // Process subtasks
-    const allSubtasks = [];
-    subtasks.forEach(subtask => {
-        allSubtasks.push({
-            title: subtask.title,
-            duration: Math.floor(subtask.duration || 0),
-            parentId: null
-        });
+    // Use AJAX to submit the form instead of regular form submission
+    const form = document.getElementById('taskForm');
+    const formData = new FormData(form);
+    
+    // Get CSRF token
+    const csrftoken = getCookie('csrftoken');
+    
+    // Submit form via AJAX
+    fetch(form.action, {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': csrftoken,
+        },
+        credentials: 'same-origin'
+    })
+    .then(response => {
+        if (response.ok) {
+            return response.text();
+        } else {
+            throw new Error('Network response was not ok');
+        }
+    })
+    .then(html => {
+        // Clear timer data
+        clearTimerLocalStorage();
+        
+        // Reset UI
+        resetTaskUI();
+        
+        // Update the weekly view without full page refresh
+        updateWeeklyView(formattedDate, taskTitle, taskDuration);
+        
+        // Show success message
+        console.log('Task completed successfully!');
+    })
+    .catch(error => {
+        console.error('Error submitting task:', error);
+        alert('Error submitting task. Please try again.');
     });
     
-    // Update form input for form submission
-    subtasksDataInput.value = JSON.stringify(allSubtasks);
-    
-    // Add to completed tasks
-    addCompletedTask(taskTitle, taskDuration, allSubtasks);
-    
-    // Reset UI and timer
-    resetTaskUI();
-    
-    // Clear localStorage items
-    clearTimerLocalStorage();
-    
-    // Return false to prevent form submission
+    // Prevent the default form submission
     return false;
 });
+
+// Function to update the weekly view without page refresh
+function updateWeeklyView(date, taskTitle, duration) {
+    // Get the day of week from the date
+    const taskDate = new Date(date);
+    const dayOfWeek = taskDate.toLocaleDateString('en-US', { weekday: 'long' });
+    
+    // Format the duration for display
+    const formattedDuration = formatTime(duration);
+    
+    // Find the correct day container
+    const dayContainers = document.querySelectorAll('.day-container');
+    let targetContainer = null;
+    
+    for (let container of dayContainers) {
+        const heading = container.querySelector('h4');
+        if (heading && heading.textContent.trim() === dayOfWeek) {
+            targetContainer = container;
+            break;
+        }
+    }
+    
+    if (!targetContainer) {
+        console.error(`Could not find container for ${dayOfWeek}`);
+        return;
+    }
+    
+    // Get the task count element and task list
+    const taskCountElement = targetContainer.querySelector('.task-count');
+    const taskList = targetContainer.querySelector('.day-tasks');
+    
+    if (!taskList) {
+        console.error('Could not find task list element');
+        return;
+    }
+    
+    // Remove "No tasks" message if it exists
+    const noTasksElement = taskList.querySelector('.no-tasks');
+    if (noTasksElement) {
+        noTasksElement.remove();
+    }
+    
+    // Create new task element
+    const newTaskElement = document.createElement('li');
+    newTaskElement.innerHTML = `
+        <span class="task-title-display">${taskTitle}</span>
+        <span class="task-duration">${formattedDuration}</span>
+    `;
+    
+    // Add the new task to the list
+    taskList.insertBefore(newTaskElement, taskList.firstChild);
+    
+    // Update the task count
+    const taskCount = taskList.querySelectorAll('li:not(.no-tasks)').length;
+    if (taskCountElement) {
+        taskCountElement.textContent = `${taskCount} task${taskCount !== 1 ? 's' : ''}`;
+        taskCountElement.classList.remove('zero');
+    }
+    
+    // Update the metrics section
+    updateMetrics(duration);
+}
+
+// Helper function to update metrics
+function updateMetrics(duration) {
+    // Update daily total
+    const dailyTotalElement = document.querySelector('.metrics p:nth-child(2) .formatted-time');
+    if (dailyTotalElement) {
+        const currentText = dailyTotalElement.textContent.replace(/[()]/g, '').trim();
+        let currentTotal = 0;
+        
+        // Parse the time format HH:MM:SS to seconds
+        const timeParts = currentText.split(':');
+        if (timeParts.length === 3) {
+            currentTotal = parseInt(timeParts[0]) * 3600 + parseInt(timeParts[1]) * 60 + parseInt(timeParts[2]);
+        }
+        
+        const newTotal = currentTotal + parseInt(duration);
+        dailyTotalElement.textContent = `(${formatTime(newTotal)})`;
+    }
+    
+    // Update weekly total
+    const weeklyTotalElement = document.querySelector('.metrics p:nth-child(3) .formatted-time');
+    if (weeklyTotalElement) {
+        const currentText = weeklyTotalElement.textContent.replace(/[()]/g, '').trim();
+        let currentTotal = 0;
+        
+        // Parse the time format HH:MM:SS to seconds
+        const timeParts = currentText.split(':');
+        if (timeParts.length === 3) {
+            currentTotal = parseInt(timeParts[0]) * 3600 + parseInt(timeParts[1]) * 60 + parseInt(timeParts[2]);
+        }
+        
+        const newTotal = currentTotal + parseInt(duration);
+        weeklyTotalElement.textContent = `(${formatTime(newTotal)})`;
+    }
+    
+    // Update total tasks count
+    const totalTasksElement = document.querySelector('.metrics p:nth-child(1)');
+    if (totalTasksElement) {
+        const match = totalTasksElement.textContent.match(/Total tasks completed: (\d+)/);
+        if (match) {
+            const currentCount = parseInt(match[1]);
+            totalTasksElement.textContent = `Total tasks completed: ${currentCount + 1}`;
+        }
+    }
+}
 
 // Subtask Button Event Listeners
 subtaskButton.addEventListener('click', function() {
@@ -1765,6 +1967,7 @@ document.addEventListener('click', function(e) {
     if (e.target.classList.contains('toggle-subtasks-btn')) {
         const taskId = e.target.getAttribute('data-task-id');
         toggleTaskSubtasks(taskId);
+
     }
 });
 
@@ -2043,6 +2246,181 @@ window.addEventListener('beforeunload', function() {
         updateNestedSubtaskTimer();
     }
 });
+// Consolidate DOMContentLoaded event listeners
+document.addEventListener('DOMContentLoaded', function() {
+    // Add form submission handler
+    document.getElementById('taskForm').addEventListener('submit', function(e) {
+        // Check if we're already syncing a task
+        if (taskSyncInProgress) {
+            console.warn('⚠️ Form submission during task sync - this might cause duplicates');
+            e.preventDefault();
+            return false;
+        }
+        
+        // Continue with normal form submission
+        console.log('📝 Form submitted');
+    });
+    
+    // Check if there are any tasks from the home page to add
+    const homePageTasks = JSON.parse(localStorage.getItem('wir_priority_tasks') || '{"high":[],"medium":[],"low":[]}');
+    function syncPriorityTasksFromOtherPages() {
+        const savedTasks = localStorage.getItem(PRIORITY_TASKS_KEY);
+        if (savedTasks) {
+            try {
+                const parsedTasks = JSON.parse(savedTasks);
+                
+                // Merge with existing tasks
+                for (const priority in parsedTasks) {
+                    if (parsedTasks.hasOwnProperty(priority)) {
+                        // Make sure window.priorityTasks has this priority level
+                        if (!window.priorityTasks[priority]) {
+                            window.priorityTasks[priority] = [];
+                        }
+                        
+                        // Add tasks that don't already exist
+                        parsedTasks[priority].forEach(task => {
+                            const exists = window.priorityTasks[priority].some(t => t.id === task.id);
+                            if (!exists) {
+                                window.priorityTasks[priority].push(task);
+                            }
+                        });
+                    }
+                }
+                
+                // Save merged tasks back to localStorage
+                localStorage.setItem(PRIORITY_TASKS_KEY, JSON.stringify(window.priorityTasks));
+                
+                // Update UI
+                renderAllTaskLists();
+            } catch (e) {
+                console.error('Error syncing priority tasks:', e);
+            }
+        }
+    }
+    
+    // Call the sync function when the page loads
+    syncPriorityTasksFromOtherPages();
+    // Merge with existing tasks if needed
+    if (homePageTasks) {
+        // For each priority level
+        ['high', 'medium', 'low'].forEach(priority => {
+            if (homePageTasks[priority] && homePageTasks[priority].length > 0) {
+                // For each task in this priority
+                homePageTasks[priority].forEach(task => {
+                    // Check if this task already exists in our list
+                    const exists = window.priorityTasks[priority].some(t => t.id === task.id);
+                    if (!exists) {
+                        // Add the task to our list
+                        window.priorityTasks[priority].push({
+                            id: task.id,
+                            title: task.title,
+                            priority: priority,
+                            createdAt: new Date()
+                        });
+                    }
+                });
+            }
+        });
+        
+        // Save the merged tasks
+        localStorage.setItem(PRIORITY_TASKS_KEY, JSON.stringify(window.priorityTasks));
+        
+        // Update the UI
+        renderAllTaskLists();
+    }
+});
+
+// Add this function to sync completed tasks with the home page
+function syncCompletedTask(taskTitle, taskId) {
+    // Prevent duplicate calls
+    if (taskSyncInProgress) {
+        console.warn('⚠️ DUPLICATE SYNC ATTEMPT PREVENTED: Task sync already in progress');
+        alert('Debug: Prevented duplicate sync attempt');
+        return;
+    }
+    
+    taskSyncInProgress = true;
+    console.log(`🔄 SYNC STARTED: "${taskTitle}", ID: ${taskId || 'none'}`);
+    
+    // Get today's date in YYYY-MM-DD format for the server
+    const today = new Date();
+    const formattedDate = today.getFullYear() + '-' + 
+                          String(today.getMonth() + 1).padStart(2, '0') + '-' + 
+                          String(today.getDate()).padStart(2, '0');
+    
+    // First, update the server database
+    const requestData = {
+        title: taskTitle,
+        completed: true,
+        date: formattedDate  // Add today's date to ensure it appears in the calendar
+    };
+    
+    // Add task_id if available
+    if (taskId) {
+        requestData.task_id = taskId;
+        console.log(`📎 Including task ID ${taskId} in request`);
+    }
+    
+    console.log('📦 Request data:', requestData);
+    
+    fetch('/sync_completed_tasks/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify(requestData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log('✅ Task sync result:', data);
+        
+        // Also update the localStorage for the home page
+        // Get the home page tasks
+        const homeTasks = JSON.parse(localStorage.getItem('wir_priority_tasks') || '{"high":[],"medium":[],"low":[]}');
+        console.log('📋 Home tasks before update:', JSON.parse(JSON.stringify(homeTasks)));
+        
+        // Filter out the completed task from all priority levels
+        ['high', 'medium', 'low'].forEach(priority => {
+            if (homeTasks[priority]) {
+                const beforeCount = homeTasks[priority].length;
+                homeTasks[priority] = homeTasks[priority].filter(task => {
+                    // Filter by ID if available, otherwise by title
+                    if (taskId) {
+                        return task.id !== parseInt(taskId);
+                    } else {
+                        return task.title !== taskTitle;
+                    }
+                });
+                const afterCount = homeTasks[priority].length;
+                if (beforeCount !== afterCount) {
+                    console.log(`🗑️ Removed ${beforeCount - afterCount} tasks from ${priority} priority`);
+                }
+            }
+        });
+        
+        // Save back to localStorage
+        localStorage.setItem('wir_priority_tasks', JSON.stringify(homeTasks));
+        console.log('📋 Home tasks after update:', homeTasks);
+        
+        console.log('✅ Removed task from wir_priority_tasks localStorage');
+        
+        // Reset the flag after a short delay to ensure any queued calls have time to be rejected
+        setTimeout(() => {
+            taskSyncInProgress = false;
+            console.log('🔓 Task sync lock released');
+        }, 1000);
+    })
+    .catch(error => {
+        console.error('❌ Error syncing task:', error);
+        // Reset the flag even on error
+        setTimeout(() => {
+            taskSyncInProgress = false;
+            console.log('🔓 Task sync lock released (after error)');
+        }, 1000);
+    });
+}
+
 </script>
 {% endblock %}
    

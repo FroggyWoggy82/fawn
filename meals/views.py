@@ -16,6 +16,257 @@ from django.views.decorators.http import require_POST
 import os
 from django.conf import settings
 
+# ... existing code ...
+@csrf_exempt
+@require_http_methods(["POST"])
+def sync_completed_tasks(request):
+    """API endpoint to sync completed tasks between WIR and home page"""
+    try:
+        data = json.loads(request.body)
+        task_title = data.get('task_title')
+        task_id = data.get('task_id')
+        
+        # Parse is_completion as a boolean with a default of True
+        is_completion_str = data.get('is_completion')
+        if isinstance(is_completion_str, str):
+            is_completion = is_completion_str.lower() == 'true'
+        else:
+            is_completion = bool(is_completion_str) if is_completion_str is not None else True
+        
+        # Enhanced debug logging
+        print("\n\n==== SYNC TASK DEBUG ====")
+        print(f"Request data: {data}")
+        print(f"Task title: {task_title}")
+        print(f"Task ID: {task_id}")
+        print(f"Is completion: {is_completion} (raw: {data.get('is_completion')})")
+        print(f"Current server time: {timezone.now()}")
+        print(f"Current server timezone: {settings.TIME_ZONE}")
+        
+        # Get the profile
+        profile = Profile.objects.first()
+        if not profile:
+            profile = Profile.objects.create(name="Default Profile")
+            print(f"Created new profile: {profile.id}")
+        else:
+            print(f"Using existing profile: {profile.id}")
+        
+        # Check for existing tasks with this title (both completed and incomplete)
+        all_matching_tasks = Task.objects.filter(profile=profile, title=task_title)
+        completed_tasks = all_matching_tasks.filter(completed=True)
+        incomplete_tasks = all_matching_tasks.filter(completed=False)
+        
+        print(f"Found {all_matching_tasks.count()} total tasks with title '{task_title}'")
+        print(f"- {completed_tasks.count()} completed tasks")
+        print(f"- {incomplete_tasks.count()} incomplete tasks")
+        
+        # If we have a task_id, use that first
+        if task_id:
+            try:
+                task = Task.objects.get(id=task_id)
+                print(f"Found task by ID {task_id}: {task.title} (completed: {task.completed})")
+                
+                if task.completed:
+                    print(f"Task {task_id} is already completed, no action needed")
+                    return JsonResponse({
+                        'status': 'success',
+                        'message': f'Task {task_id} is already completed',
+                        'count': 0
+                    })
+                
+                # Mark as completed
+                task.completed = True
+                task.end_time = timezone.now()
+                
+                # Set a dummy start_time if it doesn't exist
+                if not task.start_time:
+                    task.start_time = task.end_time - timedelta(minutes=30)
+                    
+                # Calculate duration
+                if task.start_time and task.end_time:
+                    task.duration = task.end_time - task.start_time
+                
+                task.save()
+                print(f"Marked task {task_id} with direct ID as completed")
+                
+                return JsonResponse({
+                    'status': 'success',
+                    'message': f'Marked task {task_id} as completed',
+                    'count': 1
+                })
+            except Task.DoesNotExist:
+                print(f"Task with ID {task_id} not found")
+                # Continue to title-based search
+        
+        # Find all tasks with this title and mark them as completed
+        if task_title:
+            # Check if there's already a completed task with this title
+            if completed_tasks.exists():
+                print(f"Task '{task_title}' is already marked as completed ({completed_tasks.count()} instances)")
+                return JsonResponse({
+                    'status': 'success',
+                    'message': f'Task "{task_title}" is already completed',
+                    'count': 0
+                })
+            
+            # Find all incomplete tasks with this title
+            task_count = incomplete_tasks.count()
+            print(f"Found {task_count} incomplete tasks with title '{task_title}'")
+            
+            if task_count > 0:
+                # Tasks exist, mark them as completed
+                for task in incomplete_tasks:
+                    task.completed = True
+                    task.end_time = timezone.now()
+                    
+                    # Set a dummy start_time if it doesn't exist
+                    if not task.start_time:
+                        task.start_time = task.end_time - timedelta(minutes=30)
+                        
+                    # Calculate duration
+                    if task.start_time and task.end_time:
+                        task.duration = task.end_time - task.start_time
+                    
+                    task.save()
+                    print(f"Marked task {task.id} as completed")
+                
+                return JsonResponse({
+                    'status': 'success',
+                    'message': f'Marked {task_count} tasks as completed',
+                    'count': task_count
+                })
+            elif is_completion:
+                # Only create a new completed task if this is explicitly a completion request
+                # and no existing task was found
+                print(f"No tasks found, creating new completed task (is_completion={is_completion})")
+                
+                end_time = timezone.now()
+                start_time = end_time - timedelta(minutes=30)
+                
+                task = Task.objects.create(
+                    profile=profile,
+                    title=task_title,
+                    completed=True,
+                    date=timezone.now().date(),  # Make sure to set the date
+                    start_time=start_time,
+                    end_time=end_time,
+                    duration=end_time - start_time
+                )
+                print(f"Created new completed task with ID {task.id}")
+                
+                return JsonResponse({
+                    'status': 'success',
+                    'message': 'Created completed task record',
+                    'count': 1
+                })
+            
+            return JsonResponse({
+                'status': 'warning',
+                'message': f'No tasks found with title "{task_title}"'
+            })
+        
+        return JsonResponse({
+            'status': 'error',
+            'message': 'No task title or ID provided'
+        }, status=400)
+    except Exception as e:
+        import traceback
+        print(f"Error in sync_completed_tasks: {str(e)}")
+        print(traceback.format_exc())
+        return JsonResponse({
+            'status': 'error',
+            'message': str(e)
+        }, status=500)
+        
+@require_http_methods(["POST"])
+def create_task(request):
+    try:
+        data = json.loads(request.body)
+        title = data.get('title')
+        date_str = data.get('date')
+        priority = data.get('priority', 'medium')
+        
+        # Get the user's profile
+        profile = Profile.objects.first()
+        if not profile:
+            profile = Profile.objects.create(name="Default Profile")
+        
+        # Create the task
+        task = Task.objects.create(
+            title=title,
+            date=date_str,
+            profile=profile,
+            completed=False,
+            priority=priority
+        )
+        
+        return JsonResponse({
+            'status': 'success',
+            'task_id': task.id,
+            'message': 'Task created successfully'
+        })
+    except Exception as e:
+        return JsonResponse({
+            'status': 'error',
+            'message': str(e)
+        }, status=400)
+
+@require_http_methods(["POST"])
+def complete_task(request):
+    try:
+        data = json.loads(request.body)
+        task_id = data.get('task_id')
+        
+        # Get the task
+        task = get_object_or_404(Task, id=task_id)
+        
+        # Mark as completed
+        task.completed = True
+        task.save()
+        
+        return JsonResponse({
+            'status': 'success',
+            'message': 'Task completed successfully'
+        })
+    except Exception as e:
+        return JsonResponse({
+            'status': 'error',
+            'message': str(e)
+        }, status=400)
+
+@require_http_methods(["GET"])
+def get_tasks(request):
+    try:
+        # Get the user's profile
+        profile = Profile.objects.first()
+        if not profile:
+            profile = Profile.objects.create(name="Default Profile")
+        
+        # Get all tasks for the profile
+        tasks = Task.objects.filter(profile=profile)
+        
+        # Convert to JSON-serializable format
+        tasks_data = []
+        for task in tasks:
+            tasks_data.append({
+                'id': task.id,
+                'title': task.title,
+                'date': task.date.isoformat() if task.date else None,
+                'completed': task.completed if hasattr(task, 'completed') else False,
+                'priority': getattr(task, 'priority', 'medium')
+            })
+        
+        return JsonResponse({
+            'status': 'success',
+            'tasks': tasks_data
+        })
+    except Exception as e:
+        return JsonResponse({
+            'status': 'error',
+            'message': str(e)
+        }, status=400)
+
+# ... existing code ...
+
 @csrf_exempt
 def delete_task(request, task_id):
     """API view for deleting a task"""
@@ -348,24 +599,16 @@ def home_view(request):
         # Get today's date for filtering tasks
         today = date.today()
         
-        # Safer query that doesn't rely on "completed" field until migration is complete
-        # Only get recent tasks
+        # Modify this query to filter out completed tasks at the database level
         tasks = Task.objects.filter(
             profile=profile,
-            date__gte=today
+            date__gte=today,
+            completed=False  # Add this line to filter out completed tasks
         ).order_by('date')[:10]
         
-        # At this point, filter in Python instead of at the database level
-        # to handle the case where 'completed' field might not exist yet
-        filtered_tasks = []
-        for task in tasks:
-            # Skip tasks that are marked as completed (if the attribute exists)
-            if hasattr(task, 'completed') and task.completed:
-                continue
-            filtered_tasks.append(task)
-        
+        # No need for Python-level filtering anymore since we're filtering in the database
         return render(request, 'meals/home.html', {
-            'tasks': filtered_tasks
+            'tasks': tasks
         })
     except Exception as e:
         import traceback
@@ -877,14 +1120,15 @@ def wir_view(request):
                 print(f"Error getting profile: {e}")
                 profile = None
             
-            # Create the task with profile
+            # Create the task with profile and mark it as completed
             task = Task.objects.create(
                 title=task_title,
                 start_time=now,
                 end_time=now,
                 duration=duration,
                 date=now.date(),
-                profile=profile
+                profile=profile,
+                completed=True  # Mark as completed when created via form
             )
             
             # Process subtasks data
@@ -959,6 +1203,84 @@ def wir_view(request):
             messages.error(request, "There was an error processing your task. Please try again.")
             # Return to the form page instead of crashing
             return render(request, "meals/wir.html", {})
+            
+    # Normal GET request handling
+    try:
+        # Ensure DB connection is working
+        all_tasks = list(Task.objects.all().order_by("-date", "-id")[:50])  # Limit to 50 most recent tasks
+        
+        today = timezone.now().date()
+        start_of_week = today - timedelta(days=today.weekday())
+        
+        # Sum durations (in seconds) for today and this week
+        # Use safer approach with a default value if duration is None
+        daily_total = sum((
+            t.duration.total_seconds() if t.duration else 0 
+            for t in all_tasks if t.date == today
+        ), 0)
+        
+        weekly_total = sum((
+            t.duration.total_seconds() if t.duration else 0 
+            for t in all_tasks if t.date and t.date >= start_of_week
+        ), 0)
+        
+        # For weekly view, only include tasks that are marked as completed
+        weekly_tasks = Task.objects.filter(completed=True).order_by("-date", "-id")
+        
+        context = {
+            "tasks": all_tasks,
+            "weekly_tasks": weekly_tasks,  # Only completed tasks for weekly view
+            "daily_total": daily_total,
+            "weekly_total": weekly_total,
+            "total_tasks": len(all_tasks),
+        }
+        return render(request, "meals/wir.html", context)
+    except Exception as e:
+        import traceback
+        print(f"Error rendering WIR page: {e}")
+        print(traceback.format_exc())
+        # Return a basic page with error message instead of HttpResponse
+        return render(request, "meals/error.html", {"error": str(e)})
+            
+    # Normal GET request handling
+    try:
+        # Ensure DB connection is working
+        tasks = list(Task.objects.all().order_by("-date", "-id")[:50])  # Limit to 50 most recent tasks
+        
+        today = timezone.now().date()
+        start_of_week = today - timedelta(days=today.weekday())
+        
+        # Sum durations (in seconds) for today and this week
+        # Use safer approach with a default value if duration is None
+        daily_total = sum((
+            t.duration.total_seconds() if t.duration else 0 
+            for t in tasks if t.date == today
+        ), 0)
+        
+        weekly_total = sum((
+            t.duration.total_seconds() if t.duration else 0 
+            for t in tasks if t.date and t.date >= start_of_week
+        ), 0)
+        
+        total_tasks = len(tasks)
+
+        # For weekly view, only include tasks that are marked as completed
+        weekly_tasks = [t for t in tasks if getattr(t, 'completed', False)]
+
+        context = {
+            "tasks": tasks,
+            "weekly_tasks": weekly_tasks,  # Only completed tasks for weekly view
+            "daily_total": daily_total,
+            "weekly_total": weekly_total,
+            "total_tasks": total_tasks,
+        }
+        return render(request, "meals/wir.html", context)
+    except Exception as e:
+        import traceback
+        print(f"Error rendering WIR page: {e}")
+        print(traceback.format_exc())
+        # Return a basic page with error message instead of HttpResponse
+        return render(request, "meals/error.html", {"error": str(e)})
             
     # Normal GET request handling
     try:

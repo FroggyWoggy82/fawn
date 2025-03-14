@@ -57,6 +57,10 @@ urlpatterns = [
     path('api/tasks/create/', views.create_task, name='create_task'),
     path('api/tasks/<int:task_id>/delete/', views.delete_task, name='delete_task'),
     path('api/tasks/<int:task_id>/toggle/', views.toggle_task_completion, name='toggle_task'),
+    path('create-task/', views.create_task, name='create_task'),
+    path('complete-task/', views.complete_task, name='complete_task'),
+    path('get-tasks/', views.get_tasks, name='get_tasks'),
+    path('sync_completed_tasks/', views.sync_completed_tasks, name='sync_completed_tasks'),
 ] 
 if settings.DEBUG:
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

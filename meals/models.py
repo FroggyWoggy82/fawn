@@ -307,10 +307,14 @@ class Task(models.Model):
     end_time = models.DateTimeField(null=True, blank=True)
     duration = models.DurationField(null=True, blank=True)
     date = models.DateField(default=timezone.now)
-    # New fields for our mobile UI
     details = models.TextField(blank=True, null=True)  # Add this
     completed = models.BooleanField(default=False)     # Add this
-    profile = models.ForeignKey('Profile', on_delete=models.CASCADE, null=True, blank=True)  # Add this
+    profile = models.ForeignKey('Profile', on_delete=models.SET_NULL, null=True, blank=True)
+    priority = models.CharField(max_length=10, default='medium', choices=[
+        ('high', 'High'),
+        ('medium', 'Medium'),
+        ('low', 'Low')
+    ])
 
     def __str__(self):
         return self.title
