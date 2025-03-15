@@ -1987,17 +1987,11 @@ def create_habit(request):
         habit_description = request.POST.get('habit_description', '')
         habit_frequency = request.POST.get('habit_frequency', 'daily')
         
-        # Get the profile
-        profile = Profile.objects.first()
-        if not profile:
-            profile = Profile.objects.create(name="Default Profile")
-        
-        # Create the habit
+        # Create the habit without profile
         habit = Habit.objects.create(
             name=habit_name,
             description=habit_description,
-            frequency=habit_frequency,
-            profile=profile
+            frequency=habit_frequency
         )
         
         return JsonResponse({
@@ -2059,22 +2053,8 @@ def habit_home(request):
 
 def get_habits_json(request):
     """API endpoint to get habits data as JSON"""
-    profile_id = request.GET.get('profile')
-    
-    if profile_id:
-        try:
-            profile = Profile.objects.get(id=profile_id)
-        except Profile.DoesNotExist:
-            profile = Profile.objects.first()
-    else:
-        profile = Profile.objects.first()
-    
-    # Create an initial profile if none exist
-    if not profile:
-        profile = Profile.objects.create(name="Default Profile")
-    
-    # Get all habits for the selected profile
-    habits = Habit.objects.filter(profile=profile).order_by('name')
+    # Get all habits (no profile filtering)
+    habits = Habit.objects.all().order_by('name')
     
     # Get today's date
     today = date.today()
@@ -2098,9 +2078,8 @@ def get_habits_json(request):
     
     return JsonResponse({
         'status': 'success',
-        'habits': habits_data,
-        'profile_id': profile.id,
-        'profile_name': profile.name
+        'habits': habits_data
+        # Removed profile_id and profile_name
     })
 
 def toggle_habit_completion(request, habit_id):
