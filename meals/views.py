@@ -15,6 +15,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 import os
 from django.conf import settings
+from django.db import models  # For the Q objects
 
 # ... existing code ...
 @csrf_exempt
@@ -339,19 +340,23 @@ def create_task(request):
             if not profile:
                 profile = Profile.objects.create(name="Default Profile")
             
-            # Parse the date and time, but make them optional
+            # Parse the date and time as optional fields
             task_date = data.get('due_date')
             task_time = data.get('due_time')
             
             start_time = None
             if task_date and task_time:
-                # Convert time string to datetime object
-                time_parts = task_time.split(':')
-                hour = int(time_parts[0])
-                minute = int(time_parts[1])
-                
-                # Create task datetime
-                start_time = datetime.strptime(f"{task_date} {hour}:{minute}:00", "%Y-%m-%d %H:%M:%S")
+                try:
+                    # Convert time string to datetime object
+                    time_parts = task_time.split(':')
+                    hour = int(time_parts[0])
+                    minute = int(time_parts[1])
+                    
+                    # Create task datetime
+                    start_time = datetime.strptime(f"{task_date} {hour}:{minute}:00", "%Y-%m-%d %H:%M:%S")
+                except (ValueError, IndexError):
+                    # If there's an error parsing the date/time, just leave it as None
+                    pass
             
             task = Task.objects.create(
                 title=data.get('title'),
@@ -598,17 +603,19 @@ def home_view(request):
         if not profile:
             profile = Profile.objects.create(name="Default Profile")
         
-        # Get today's date for filtering tasks
+        # Get today's date for determining overdue status
         today = date.today()
         
-        # Modify this query to filter out completed tasks at the database level
+        # Get all incomplete tasks regardless of due date
         tasks = Task.objects.filter(
             profile=profile,
-            date__gte=today,
-            completed=False  # Add this line to filter out completed tasks
+            completed=False
         ).order_by('date')[:10]
         
-        # No need for Python-level filtering anymore since we're filtering in the database
+        # Add an overdue flag to each task
+        for task in tasks:
+            task.overdue = task.date and task.date < today
+        
         return render(request, 'meals/home.html', {
             'tasks': tasks
         })

@@ -73,7 +73,12 @@
         font-size: 1.5rem;
         cursor: pointer;
     }
-
+    
+    .task-item.overdue .task-date {
+    color: #e74c3c;
+    font-weight: bold;
+    }
+    
     .sidebar-section {
         margin-top: 1rem;
     }
@@ -422,7 +427,7 @@
                 <!-- Server-rendered tasks -->
                 {% if tasks %}
                     {% for task in tasks %}
-                        <div class="task-item {% if task.completed %}completed{% endif %}" data-id="{{ task.id }}">
+                        <div class="task-item {% if task.completed %}completed{% endif %} {% if task.overdue %}overdue{% endif %}" data-id="{{ task.id }}">
                             <div class="task-title">{{ task.title }}</div>
                             <div class="task-details">{{ task.details }}</div>
                             <span class="task-date">Due: {{ task.date|date:"F j, Y" }}{% if task.start_time %}, {{ task.start_time|time:"g:i A" }}{% endif %}</span>
@@ -453,12 +458,12 @@
                 <input type="text" id="task-title" placeholder="Task Title" required>
                 <textarea id="task-details" placeholder="Task Details"></textarea>
                 <div>
-                    <label for="task-due-date">Due Date:</label>
-                    <input type="date" id="task-due-date" required>
+                    <label for="task-due-date">Due Date (Optional):</label>
+                    <input type="date" id="task-due-date">
                 </div>
                 <div>
-                    <label for="task-due-time">Due Time:</label>
-                    <input type="time" id="task-due-time" required>
+                    <label for="task-due-time">Due Time (Optional):</label>
+                    <input type="time" id="task-due-time">
                 </div>
                 <button type="submit">Save Task</button>
             </form>
@@ -498,13 +503,11 @@
         addTaskBtn.addEventListener('click', function() {
             taskModal.classList.add('visible');
             // Set default due date to today
-            const today = new Date();
-            const dateString = today.toISOString().split('T')[0];
+          
             document.getElementById('task-due-date').value = dateString;
             
             // Set default time to current hour + 1
-            const hour = today.getHours() + 1;
-            const timeString = `${hour.toString().padStart(2, '0')}:00`;
+            
             document.getElementById('task-due-time').value = timeString;
         });
         
