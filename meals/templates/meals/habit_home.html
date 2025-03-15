@@ -203,14 +203,8 @@
     <!-- Profile Selector -->
     <div class="profile-selector">
         <form method="get" action="{% url 'habit_home' %}">
-            <label for="profile-select">Profile:</label>
-            <select id="profile-select" name="profile" onchange="this.form.submit()">
-                {% for profile in profiles %}
-                    <option value="{{ profile.id }}" {% if profile.id == selected_profile.id %}selected{% endif %}>
-                        {{ profile.name }}
-                    </option>
-                {% endfor %}
-            </select>
+        
+    
         </form>
     </div>
     

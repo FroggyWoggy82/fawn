@@ -2022,26 +2022,8 @@ def habit_home(request):
     if request.GET.get('format') == 'json':
         return get_habits_json(request)
     
-    # Get the profile from the request or use the default profile
-    profile_id = request.GET.get('profile')
-    
-    if profile_id:
-        try:
-            profile = Profile.objects.get(id=profile_id)
-        except Profile.DoesNotExist:
-            profile = Profile.objects.first()
-    else:
-        profile = Profile.objects.first()
-    
-    # Create an initial profile if none exist
-    if not profile:
-        profile = Profile.objects.create(name="Default Profile")
-    
-    # Get all available profiles
-    profiles = Profile.objects.all()
-    
-    # Get all habits for the selected profile
-    habits = Habit.objects.filter(profile=profile).order_by('name')
+    # Get all habits (now that profile is removed from the model)
+    habits = Habit.objects.all().order_by('name')
     
     # Get today's date
     today = date.today()
@@ -2064,15 +2046,12 @@ def habit_home(request):
                 Habit.objects.create(
                     name=name,
                     description=description,
-                    frequency=frequency,
-                    profile=profile
+                    frequency=frequency
                 )
                 return redirect('habit_home')
     
     context = {
         'habits': habits,
-        'profiles': profiles,
-        'selected_profile': profile,
         'today': today,
     }
     
