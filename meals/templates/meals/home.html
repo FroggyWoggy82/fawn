@@ -525,8 +525,8 @@
             
             const taskTitle = document.getElementById('task-title').value;
             const taskDetails = document.getElementById('task-details').value;
-            const taskDueDate = document.getElementById('task-due-date').value;
-            const taskDueTime = document.getElementById('task-due-time').value;
+            const taskDueDate = document.getElementById('task-due-date').value || null;
+            const taskDueTime = document.getElementById('task-due-time').value || null;
             
             const newTask = {
                 title: taskTitle,

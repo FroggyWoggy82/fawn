@@ -306,7 +306,7 @@ class Task(models.Model):
     start_time = models.DateTimeField(null=True, blank=True)
     end_time = models.DateTimeField(null=True, blank=True)
     duration = models.DurationField(null=True, blank=True)
-    date = models.DateField(default=timezone.now)
+    date = models.DateField(null=True, blank=True)
     details = models.TextField(blank=True, null=True)  # Add this
     completed = models.BooleanField(default=False)     # Add this
     profile = models.ForeignKey('Profile', on_delete=models.SET_NULL, null=True, blank=True)

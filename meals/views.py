@@ -339,22 +339,24 @@ def create_task(request):
             if not profile:
                 profile = Profile.objects.create(name="Default Profile")
             
-            # Parse the date and time
+            # Parse the date and time, but make them optional
             task_date = data.get('due_date')
             task_time = data.get('due_time')
             
-            # Convert time string to datetime object
-            time_parts = task_time.split(':')
-            hour = int(time_parts[0])
-            minute = int(time_parts[1])
-            
-            # Create task datetime
-            start_time = datetime.strptime(f"{task_date} {hour}:{minute}:00", "%Y-%m-%d %H:%M:%S")
+            start_time = None
+            if task_date and task_time:
+                # Convert time string to datetime object
+                time_parts = task_time.split(':')
+                hour = int(time_parts[0])
+                minute = int(time_parts[1])
+                
+                # Create task datetime
+                start_time = datetime.strptime(f"{task_date} {hour}:{minute}:00", "%Y-%m-%d %H:%M:%S")
             
             task = Task.objects.create(
                 title=data.get('title'),
                 details=data.get('details', ''),
-                date=task_date,
+                date=task_date if task_date else None,
                 start_time=start_time,
                 profile=profile,
                 completed=False
