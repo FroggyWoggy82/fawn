@@ -352,7 +352,6 @@ class Habit(models.Model):
     name = models.CharField(max_length=100)
     description = models.TextField(blank=True)
     frequency = models.CharField(max_length=10, choices=FREQUENCY_CHOICES, default='daily')
-    profile = models.ForeignKey('Profile', on_delete=models.CASCADE, null=True, blank=True, default=1)
     created_at = models.DateTimeField(auto_now_add=True)
     completion_count = models.PositiveIntegerField(default=0)
     

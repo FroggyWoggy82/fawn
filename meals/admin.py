@@ -85,8 +85,8 @@ class PresetExerciseAdmin(admin.ModelAdmin):
 
 @admin.register(Habit)
 class HabitAdmin(admin.ModelAdmin):
-    list_display = ('name', 'frequency', 'profile', 'created_at')
-    list_filter = ('frequency', 'profile')
+    list_display = ('name', 'frequency', 'created_at')
+    list_filter = ('frequency',)
     search_fields = ('name', 'description')
 
 @admin.register(HabitCompletion)
