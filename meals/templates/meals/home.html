@@ -15,6 +15,29 @@
         overflow-x: hidden;
         min-height: 100vh;
     }
+    
+    .plus-one {
+        position: absolute;
+        top: 5px;
+        right: 40px;
+        color: #4CAF50;
+        font-weight: bold;
+        font-size: 1rem;
+        opacity: 1;
+        transition: opacity 0.8s, transform 0.8s;
+        pointer-events: none;
+    }
+
+    .habit-item .habit-level {
+        font-size: 0.7rem;
+        color: #4CAF50;
+        margin-left: 0.5rem;
+        background-color: #f0f9f0;
+        padding: 0.2rem 0.4rem;
+        border-radius: 3px;
+        font-weight: bold;
+        display: inline-block;
+    }
 
     /* Header */
     .header {
@@ -75,8 +98,8 @@
     }
     
     .task-item.overdue .task-date {
-    color: #e74c3c;
-    font-weight: bold;
+        color: #e74c3c;
+        font-weight: bold;
     }
     
     .sidebar-section {
@@ -96,10 +119,26 @@
         color: #333;
         border-bottom: 1px solid #eee;
         transition: background-color 0.2s;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
     }
 
     .nav-link:hover {
         background-color: #f5f5f5;
+    }
+
+    .badge {
+        background-color: #4CAF50;
+        color: white;
+        border-radius: 50%;
+        min-width: 20px;
+        height: 20px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.75rem;
+        padding: 0 4px;
     }
 
     .meal-planning {
@@ -125,24 +164,27 @@
         transition: margin-left 0.3s ease-in-out;
     }
 
-    /* Task List */
+    /* Task List - More compact */
     .task-list {
         margin-top: 1rem;
+        margin-bottom: 2rem;
     }
 
     .task-list h2 {
-        margin-bottom: 1rem;
+        margin-bottom: 0.75rem;
         padding-bottom: 0.5rem;
         border-bottom: 2px solid #4CAF50;
+        font-size: 1.25rem;
     }
 
     .task-item {
         background-color: white;
-        border-radius: 8px;
-        padding: 1rem;
-        margin-bottom: 1rem;
+        border-radius: 6px;
+        padding: 0.6rem 0.75rem;
+        margin-bottom: 0.5rem;
         box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         position: relative;
+        font-size: 0.9rem;
     }
 
     .task-item.completed {
@@ -152,31 +194,31 @@
 
     .task-title {
         font-weight: bold;
-        margin-bottom: 0.5rem;
+        margin-bottom: 0.25rem;
     }
 
     .task-details {
         color: #777;
-        font-size: 0.9rem;
+        font-size: 0.8rem;
     }
 
     .task-date {
-        font-size: 0.8rem;
+        font-size: 0.7rem;
         color: #555;
         display: block;
-        margin-top: 0.5rem;
+        margin-top: 0.25rem;
         text-align: right;
     }
 
     .delete-task {
         position: absolute;
-        top: 10px;
-        right: 10px;
+        top: 6px;
+        right: 6px;
         background: none;
         border: none;
         color: #999;
         cursor: pointer;
-        font-size: 1.2rem;
+        font-size: 1rem;
         transition: color 0.2s;
     }
 
@@ -186,9 +228,9 @@
     
     .task-complete {
         position: absolute;
-        top: 12px;
-        right: 40px;
-        transform: scale(1.2);
+        top: 8px;
+        right: 30px;
+        transform: scale(1.1);
         cursor: pointer;
     }
     
@@ -198,8 +240,95 @@
 
     .empty-task-list {
         text-align: center;
-        padding: 2rem;
+        padding: 1rem;
         color: #777;
+        font-size: 0.9rem;
+    }
+
+    /* Habit Tracker Section */
+    .habit-list {
+        margin-top: 1rem;
+    }
+
+    .habit-list h2 {
+        margin-bottom: 0.75rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid #4CAF50;
+        font-size: 1.25rem;
+    }
+
+    .habit-item {
+        background-color: white;
+        border-radius: 6px;
+        padding: 0.6rem 0.75rem;
+        margin-bottom: 0.5rem;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        position: relative;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .habit-name {
+        font-weight: bold;
+        font-size: 0.9rem;
+    }
+
+    .habit-frequency {
+        font-size: 0.7rem;
+        color: #666;
+        margin-left: 0.5rem;
+    }
+
+    .habit-item.completed {
+        background-color: #f0f9f0;
+    }
+
+    .habit-check {
+        width: 20px;
+        height: 20px;
+        margin-right: 0.25rem;
+        cursor: pointer;
+    }
+
+    .empty-habit-list {
+        text-align: center;
+        padding: 1rem;
+        color: #777;
+        font-size: 0.9rem;
+    }
+
+    .add-habit-btn {
+        background-color: #4CAF50;
+        color: white;
+        border: none;
+        padding: 0.5rem 1rem;
+        border-radius: 4px;
+        margin-top: 0.5rem;
+        margin-bottom: 1rem;
+        cursor: pointer;
+        font-size: 0.8rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: max-content;
+    }
+
+    .add-habit-btn:hover {
+        background-color: #45a049;
+    }
+    .success-message {
+        position: fixed;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background-color: #4CAF50;
+        color: white;
+        padding: 10px 20px;
+        border-radius: 4px;
+        z-index: 1000;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        transition: opacity 0.5s;
     }
 
     /* Floating Action Button */
@@ -325,6 +454,28 @@
         background-color: #45a049;
     }
 
+    /* Habit Modal */
+    .habit-modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0,0,0,0.5);
+        z-index: 300;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.3s, visibility 0.3s;
+    }
+
+    .habit-modal.visible {
+        opacity: 1;
+        visibility: visible;
+    }
+
     /* Responsive styles */
     @media (min-width: 768px) {
         .main-content {
@@ -333,10 +484,18 @@
             margin-right: auto;
         }
 
-        .task-list {
+        .task-list, .habit-list {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            grid-gap: 1rem;
+            grid-gap: 0.75rem;
+        }
+        
+        .task-list h2, .habit-list h2 {
+            grid-column: 1 / -1;
+        }
+        
+        .empty-task-list, .empty-habit-list, .add-habit-btn {
+            grid-column: 1 / -1;
         }
     }
 
@@ -401,7 +560,10 @@
             <a href="{% url 'dashboard' %}" class="nav-link">Dashboard</a>
             <a href="{% url 'wir_view' %}" class="nav-link">WIR</a>
             <a href="{% url 'notifications' %}" class="nav-link">Notifications</a>
-            <a href="{% url 'habit_home' %}" class="nav-link">Habit Tracker</a>
+            <a href="{% url 'habit_home' %}" class="nav-link">
+                Habit Tracker
+                <span class="badge" id="habit-count">0</span>
+            </a>
         </div>
 
         <div class="sidebar-section">
@@ -420,6 +582,7 @@
 
     <!-- Main Content with Task List -->
     <main class="main-content">
+        <!-- Tasks Section -->
         <div class="task-list">
             <h2>Today's Tasks</h2>
             
@@ -441,6 +604,20 @@
                     </div>
                 {% endif %}
             </div>
+        </div>
+
+        <!-- Habits Section -->
+        <div class="habit-list">
+            <h2>Habits</h2>
+            
+            <div id="habit-container">
+                <!-- This will be populated by JavaScript -->
+                <div class="empty-habit-list">
+                    <p>No habits found. Add a new habit to get started.</p>
+                </div>
+            </div>
+
+            <button class="add-habit-btn" id="add-habit-btn">+ Add New Habit</button>
         </div>
     </main>
 
@@ -470,7 +647,30 @@
         </div>
     </div>
 
-<!-- Keep the first script block, but modify the toggleTaskCompletion function -->
+    <!-- Habit Modal -->
+    <div class="habit-modal" id="habit-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Add New Habit</h3>
+                <button class="close-modal" id="close-habit-modal">×</button>
+            </div>
+            <form class="task-form" id="habit-form">
+                <input type="text" id="habit-title" placeholder="Habit Name" required>
+                <textarea id="habit-description" placeholder="Habit Description (Optional)"></textarea>
+                <div>
+                    <label for="habit-frequency">Frequency:</label>
+                    <select id="habit-frequency">
+                        <option value="daily">Daily</option>
+                        <option value="weekly">Weekly</option>
+                        <option value="monthly">Monthly</option>
+                        <option value="whenever">Whenever</option>
+                    </select>
+                </div>
+                <button type="submit">Save Habit</button>
+            </form>
+        </div>
+    </div>
+
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const menuToggle = document.querySelector('.menu-toggle');
@@ -481,6 +681,19 @@
         const taskModal = document.getElementById('task-modal');
         const closeModal = document.getElementById('close-modal');
         const taskForm = document.getElementById('task-form');
+        const addHabitBtn = document.getElementById('add-habit-btn');
+        const habitModal = document.getElementById('habit-modal');
+        const closeHabitModal = document.getElementById('close-habit-modal');
+        const habitForm = document.getElementById('habit-form');
+        
+        // Initialize date and time values
+        const now = new Date();
+        const dateString = now.toISOString().split('T')[0];
+        
+        // Format time as HH:MM
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        const timeString = `${hours}:${minutes}`;
         
         // Open sidebar
         menuToggle.addEventListener('click', function() {
@@ -503,11 +716,9 @@
         addTaskBtn.addEventListener('click', function() {
             taskModal.classList.add('visible');
             // Set default due date to today
-          
             document.getElementById('task-due-date').value = dateString;
             
             // Set default time to current hour + 1
-            
             document.getElementById('task-due-time').value = timeString;
         });
         
@@ -519,6 +730,22 @@
         taskModal.addEventListener('click', function(e) {
             if (e.target === taskModal) {
                 taskModal.classList.remove('visible');
+            }
+        });
+        
+        // Habit Modal Functions
+        addHabitBtn.addEventListener('click', function() {
+            habitModal.classList.add('visible');
+        });
+        
+        closeHabitModal.addEventListener('click', function() {
+            habitModal.classList.remove('visible');
+        });
+        
+        // Close modal when clicking outside of it
+        habitModal.addEventListener('click', function(e) {
+            if (e.target === habitModal) {
+                habitModal.classList.remove('visible');
             }
         });
         
@@ -565,6 +792,61 @@
             .catch(error => {
                 console.error('Error creating task:', error);
                 alert('Error creating task. Please try again.');
+            });
+        });
+        
+      // Update this part of the script in your home.html file
+
+        // Save a new habit
+        habitForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const habitName = document.getElementById('habit-title').value;
+            const habitDescription = document.getElementById('habit-description').value;
+            const habitFrequency = document.getElementById('habit-frequency').value;
+            
+            // Create form data for a traditional form submission
+            const formData = new FormData();
+            formData.append('habit_name', habitName);
+            formData.append('habit_description', habitDescription);
+            formData.append('habit_frequency', habitFrequency);
+            formData.append('create_habit', 'true');
+            
+            // Send to server via fetch API using form data
+            fetch('/habits/', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: formData
+            })
+            .then(response => {
+                if (response.ok) {
+                    // Reset form and close modal
+                    habitForm.reset();
+                    habitModal.classList.remove('visible');
+                    
+                    // Explicitly fetch habits to update the UI
+                    fetchHabits();
+                    
+                    // Show success message
+                    const successMessage = document.createElement('div');
+                    successMessage.className = 'success-message';
+                    successMessage.textContent = 'Habit created successfully!';
+                    document.body.appendChild(successMessage);
+                    
+                    // Remove success message after 3 seconds
+                    setTimeout(() => {
+                        successMessage.style.opacity = '0';
+                        setTimeout(() => successMessage.remove(), 500);
+                    }, 3000);
+                } else {
+                    alert('Error creating habit. Please try again.');
+                }
+            })
+            .catch(error => {
+                console.error('Error creating habit:', error);
+                alert('Error creating habit. Please try again.');
             });
         });
         
@@ -709,6 +991,168 @@
             // Save back to localStorage
             localStorage.setItem(wirTasksKey, JSON.stringify(wirTasks));
         }
+        
+        // Habit functions
+        function fetchHabits() {
+            fetch('/api/habits/')
+                .then(response => response.json())
+                .then(data => {
+                    renderHabits(data.habits || []);
+                    updateHabitCount(data.habits || []);
+                })
+                .catch(error => {
+                    console.error('Error fetching habits:', error);
+                });
+        }
+                // Save a new habit
+        
+        function renderHabits(habits) {
+            const habitContainer = document.getElementById('habit-container');
+            
+            // Clear container
+            habitContainer.innerHTML = '';
+            
+            if (habits.length === 0) {
+                habitContainer.innerHTML = `
+                    <div class="empty-habit-list">
+                        <p>No habits found. Add a new habit to get started.</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Sort habits by name
+            habits.sort((a, b) => a.name.localeCompare(b.name));
+            
+            // Show all habits instead of just daily ones
+            habits.forEach(habit => {
+                const habitItem = document.createElement('div');
+                habitItem.className = `habit-item ${habit.completed_today ? 'completed' : ''}`;
+                habitItem.dataset.id = habit.id;
+                
+                habitItem.innerHTML = `
+                    <div class="habit-info">
+                        <span class="habit-name">${habit.name}</span>
+                        <span class="habit-frequency">(${habit.frequency})</span>
+                        <span class="habit-level">Level ${habit.completion_count || 0}</span>
+                    </div>
+                    <input type="checkbox" class="habit-check" ${habit.completed_today ? 'checked' : ''} data-id="${habit.id}">
+                `;
+                
+                habitContainer.appendChild(habitItem);
+            });
+            
+            // Add event listeners to habit checkboxes
+            document.querySelectorAll('.habit-check').forEach(checkbox => {
+                checkbox.addEventListener('change', function() {
+                    const habitId = this.dataset.id;
+                    toggleHabitCompletion(habitId, this.checked);
+                });
+            });
+        }
+        
+        function toggleHabitCompletion(habitId, isChecked) {
+            console.log(`Toggling habit ${habitId}, current check state: ${isChecked}`);
+            
+            fetch(`/habits/toggle/${habitId}/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken'),
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => {
+                console.log("Response status:", response.status);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log("Toggle response:", data);
+                
+                const habitItem = document.querySelector(`.habit-item[data-id="${habitId}"]`);
+                if (!habitItem) return;
+                
+                const levelSpan = habitItem.querySelector('.habit-level');
+                const checkbox = habitItem.querySelector('.habit-check');
+                
+                // Update the level display
+                if (levelSpan) {
+                    levelSpan.textContent = `Level ${data.completion_count}`;
+                }
+                
+                if (data.status === 'completed') {
+                    habitItem.classList.add('completed');
+                    checkbox.checked = true;
+                } else if (data.status === 'already_completed') {
+                    // Keep checked, show message
+                    checkbox.checked = true;
+                    alert('This habit is already completed for today');
+                } else if (data.status === 'incremented') {
+                    // For "whenever" habits
+                    // Show +1 animation
+                    const plusOne = document.createElement('div');
+                    plusOne.className = 'plus-one';
+                    plusOne.textContent = '+1';
+                    habitItem.appendChild(plusOne);
+                    
+                    // Animate and remove
+                    setTimeout(() => {
+                        plusOne.style.opacity = '0';
+                        plusOne.style.transform = 'translateY(-20px)';
+                    }, 50);
+                    setTimeout(() => plusOne.remove(), 1000);
+                    
+                    // Reset checkbox
+                    checkbox.checked = false;
+                }
+       
+       // Refresh habit counts
+       fetchHabits();
+   })
+   .catch(error => {
+       console.error('Error toggling habit completion:', error);
+       alert(`Error toggling habit: ${error.message}`);
+       // Revert checkbox
+       const checkbox = document.querySelector(`.habit-check[data-id="${habitId}"]`);
+       if (checkbox) checkbox.checked = !isChecked;
+   });
+}
+
+        // Fetch habits on page load
+        fetchHabits();
+                
+        function updateHabitCount(habits) {
+            const habitCountBadge = document.getElementById('habit-count');
+            if (!habitCountBadge) return;
+            
+            // Count completed habits (all frequencies)
+            const completedCount = habits.filter(habit => habit.completed_today).length;
+            
+            // Update badge
+            habitCountBadge.textContent = completedCount;
+        }
+        
+        // Helper function to get CSRF token
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+        
+        // Initialize the page
+        fetchHabits();
+
     });
-    </script>
+</script>
 {% endblock %}

@@ -1972,8 +1972,13 @@ if WORKOUT_MODELS_EXIST:
             })
         
         return JsonResponse({'status': 'error', 'message': 'Method not allowed'}, status=405)
+
 def habit_home(request):
     """View for the habit tracking home page"""
+    # Check if JSON format is requested
+    if request.GET.get('format') == 'json':
+        return get_habits_json(request)
+    
     # Get the profile from the request or use the default profile
     profile_id = request.GET.get('profile')
     
@@ -1996,7 +2001,7 @@ def habit_home(request):
     habits = Habit.objects.filter(profile=profile).order_by('name')
     
     # Get today's date
-    today = timezone.now().date()
+    today = date.today()
     
     # Check which habits have been completed today
     for habit in habits:
@@ -2030,42 +2035,101 @@ def habit_home(request):
     
     return render(request, 'meals/habit_home.html', context)
 
+def get_habits_json(request):
+    """API endpoint to get habits data as JSON"""
+    profile_id = request.GET.get('profile')
+    
+    if profile_id:
+        try:
+            profile = Profile.objects.get(id=profile_id)
+        except Profile.DoesNotExist:
+            profile = Profile.objects.first()
+    else:
+        profile = Profile.objects.first()
+    
+    # Create an initial profile if none exist
+    if not profile:
+        profile = Profile.objects.create(name="Default Profile")
+    
+    # Get all habits for the selected profile
+    habits = Habit.objects.filter(profile=profile).order_by('name')
+    
+    # Get today's date
+    today = date.today()
+    
+    # Prepare habits data with completion status
+    habits_data = []
+    for habit in habits:
+        completed_today = HabitCompletion.objects.filter(
+            habit=habit, 
+            completion_date=today
+        ).exists()
+        
+        habits_data.append({
+            'id': habit.id,
+            'name': habit.name,
+            'description': habit.description,
+            'frequency': habit.frequency,
+            'completed_today': completed_today,
+            'completion_count': habit.completion_count
+        })
+    
+    return JsonResponse({
+        'status': 'success',
+        'habits': habits_data,
+        'profile_id': profile.id,
+        'profile_name': profile.name
+    })
+
 def toggle_habit_completion(request, habit_id):
-    """Toggle the completion status of a habit for today"""
     if request.method == 'POST':
         habit = get_object_or_404(Habit, id=habit_id)
-        today = timezone.now().date()
+        today = date.today()
         
-        # Check if already completed today
         completion = HabitCompletion.objects.filter(
             habit=habit,
             completion_date=today
         ).first()
         
-        if completion:
-            # If already completed, remove the completion
-            completion.delete()
-            status = 'uncompleted'
+        # Handle "whenever" frequency habits differently
+        if habit.frequency == 'whenever':
+            # Always increment count, don't toggle completion status
+            habit.completion_count += 1
+            habit.save()
+            # For UI purposes, create a completion record if none exists
+            if not completion:
+                HabitCompletion.objects.create(
+                    habit=habit,
+                    completion_date=today
+                )
+            status = 'incremented'
+            
+        # Handle daily/weekly/monthly habits
         else:
-            # If not completed, add a completion
-            HabitCompletion.objects.create(
-                habit=habit,
-                completion_date=today
-            )
-            status = 'completed'
+            if completion and not request.POST.get('force_complete'):
+                # If already completed, don't allow unchecking
+                status = 'already_completed'
+            elif not completion:
+                # If not completed, add a completion
+                HabitCompletion.objects.create(
+                    habit=habit,
+                    completion_date=today
+                )
+                # Increment the habit's completion count
+                habit.completion_count += 1
+                habit.save()
+                status = 'completed'
+            else:
+                # This shouldn't happen normally
+                status = 'no_change'
         
-        # Return JSON response for AJAX requests
-        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-            return JsonResponse({
-                'status': status,
-                'habit_id': habit_id,
-                'message': f"Habit '{habit.name}' marked as {status}"
-            })
+        return JsonResponse({
+            'status': status,
+            'habit_id': habit_id,
+            'message': f"Habit '{habit.name}' action: {status}",
+            'completion_count': habit.completion_count
+        })
         
-        # For regular form submissions, redirect back to the habit home
-        return redirect('habit_home')
-    
-    # For GET requests, redirect to habit home
     return redirect('habit_home')
 
 def delete_habit(request, habit_id):

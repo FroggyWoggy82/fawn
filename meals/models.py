@@ -346,6 +346,7 @@ class Habit(models.Model):
         ('daily', 'Daily'),
         ('weekly', 'Weekly'),
         ('monthly', 'Monthly'),
+        ('whenever', 'Whenever'),  # Add this new option
     ]
     
     name = models.CharField(max_length=100)
@@ -353,6 +354,7 @@ class Habit(models.Model):
     frequency = models.CharField(max_length=10, choices=FREQUENCY_CHOICES, default='daily')
     profile = models.ForeignKey('Profile', on_delete=models.CASCADE, null=True, blank=True, default=1)
     created_at = models.DateTimeField(auto_now_add=True)
+    completion_count = models.PositiveIntegerField(default=0)
     
     def __str__(self):
         return self.name

@@ -1,483 +1,297 @@
 {% extends 'meals/base.html' %}
-{% load static %}
 
-{% block title %}Habit Tracking{% endblock %}
+{% block title %}Habit Tracker{% endblock %}
 
 {% block style %}
 <style>
-    body {
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        background-color: #f5f5f5;
-        margin: 0;
-        padding: 0;
+    .habit-container {
+        margin-top: 2rem;
     }
-    .container {
-        max-width: 800px;
-        margin: 0 auto;
-        padding: 20px;
-    }
-    h1 {
-        color: #333;
-        text-align: center;
-        margin-bottom: 30px;
-    }
-    .profile-selector {
-        background-color: #e9f7fe;
-        padding: 15px;
-        border-radius: 8px;
-        margin-bottom: 20px;
-        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-        text-align: center;
-    }
-    .profile-tabs {
-        display: flex;
-        justify-content: center;
-        gap: 10px;
-        margin-bottom: 15px;
-        flex-wrap: wrap;
-    }
-    .profile-tab {
-        padding: 10px 20px;
-        border: 2px solid #3498db;
-        border-radius: 20px;
-        cursor: pointer;
-        font-weight: bold;
-        transition: all 0.3s ease;
-        text-decoration: none;
-        color: #3498db;
-    }
-    .profile-tab:hover {
-        background-color: #e3f2fd;
-    }
-    .profile-tab.active {
-        background-color: #3498db;
-        color: white;
-    }
-    .habit-card {
+    
+    .habit-item {
         background-color: white;
         border-radius: 8px;
-        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-        padding: 20px;
-        margin-bottom: 15px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         display: flex;
         justify-content: space-between;
         align-items: center;
-        transition: transform 0.2s ease;
     }
-    .habit-card:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-    }
+    
     .habit-info {
         flex: 1;
     }
+    
     .habit-name {
-        font-size: 18px;
         font-weight: bold;
-        margin-bottom: 5px;
+        font-size: 1.1rem;
+        margin-bottom: 0.25rem;
+        display: block;
     }
+    
     .habit-description {
         color: #666;
-        font-size: 14px;
-        margin-bottom: 5px;
+        font-size: 0.9rem;
     }
+    
     .habit-frequency {
-        font-size: 12px;
-        background-color: #eee;
-        border-radius: 20px;
-        padding: 3px 8px;
-        display: inline-block;
+        color: #4CAF50;
+        font-size: 0.8rem;
+        background-color: #f1f8e9;
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        margin-left: 0.5rem;
     }
+    
     .habit-actions {
         display: flex;
-        gap: 10px;
-        align-items: center;
+        gap: 0.5rem;
     }
-    .complete-btn {
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        border: 2px solid #3498db;
-        background-color: white;
-        color: #3498db;
-        font-size: 20px;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: all 0.2s ease;
+    
+    .habit-check {
+        transform: scale(1.5);
+        margin-right: 1rem;
     }
-    .complete-btn:hover {
-        background-color: #e3f2fd;
+    
+    .habit-item.completed {
+        background-color: #f0f9f0;
     }
-    .complete-btn.completed {
-        background-color: #3498db;
-        color: white;
-    }
-    .edit-btn, .delete-btn {
+    
+    .habit-btn {
         background: none;
         border: none;
         cursor: pointer;
-        font-size: 16px;
-        color: #666;
-        transition: color 0.2s ease;
-    }
-    .edit-btn:hover {
-        color: #3498db;
-    }
-    .delete-btn:hover {
-        color: #e74c3c;
-    }
-    .add-habit-card {
-        background-color: white;
-        border-radius: 8px;
-        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-        padding: 20px;
-        margin-bottom: 15px;
-    }
-    .add-habit-form {
-        display: flex;
-        flex-direction: column;
-        gap: 15px;
-    }
-    .form-group {
-        display: flex;
-        flex-direction: column;
-        gap: 5px;
-    }
-    .form-group label {
-        font-weight: bold;
-        font-size: 14px;
-    }
-    .form-group input, .form-group textarea, .form-group select {
-        padding: 10px;
-        border: 1px solid #ddd;
-        border-radius: 4px;
-        font-size: 16px;
-    }
-    .form-group textarea {
-        min-height: 80px;
-        resize: vertical;
-    }
-    .submit-btn {
-        background-color: #3498db;
-        color: white;
-        border: none;
-        border-radius: 4px;
-        padding: 10px 15px;
-        font-size: 16px;
-        cursor: pointer;
-        transition: background-color 0.2s ease;
-    }
-    .submit-btn:hover {
-        background-color: #2980b9;
-    }
-    .empty-state {
-        text-align: center;
-        padding: 30px;
-        color: #666;
-    }
-    .back-link {
-        display: block;
-        margin: 20px auto;
-        text-align: center;
-        color: #3498db;
-        text-decoration: none;
-        font-weight: bold;
-        transition: color 0.2s ease;
-    }
-    .back-link:hover {
-        color: #2980b9;
-    }
-    .add-habit-toggle {
-        background-color: #3498db;
-        color: white;
-        border: none;
-        border-radius: 4px;
-        padding: 10px 15px;
-        font-size: 16px;
-        cursor: pointer;
-        transition: background-color 0.2s ease;
-        display: block;
-        margin: 0 auto 20px;
-    }
-    .add-habit-toggle:hover {
-        background-color: #2980b9;
+        font-size: 1.2rem;
+        color: #777;
+        transition: color 0.2s;
     }
     
-    /* Modal styles */
-    .modal {
-        display: none;
-        position: fixed;
-        z-index: 1000;
-        left: 0;
-        top: 0;
-        width: 100%;
-        height: 100%;
-        background-color: rgba(0, 0, 0, 0.5);
+    .edit-habit {
+        color: #2196F3;
     }
-    .modal-content {
+    
+    .edit-habit:hover {
+        color: #0b7dda;
+    }
+    
+    .delete-habit {
+        color: #e74c3c;
+    }
+    
+    .delete-habit:hover {
+        color: #c0392b;
+    }
+    
+    .add-habit-form {
         background-color: white;
-        margin: 10% auto;
-        padding: 20px;
         border-radius: 8px;
-        width: 80%;
-        max-width: 500px;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
     }
-    .modal-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 15px;
+    
+    .form-group {
+        margin-bottom: 1rem;
     }
-    .modal-title {
-        font-size: 20px;
+    
+    .form-group label {
+        display: block;
+        margin-bottom: 0.5rem;
         font-weight: bold;
     }
-    .close-modal {
-        font-size: 24px;
-        cursor: pointer;
-        color: #666;
-        transition: color 0.2s ease;
+    
+    .form-group input,
+    .form-group textarea,
+    .form-group select {
+        width: 100%;
+        padding: 0.5rem;
+        border: 1px solid #ddd;
+        border-radius: 4px;
     }
-    .close-modal:hover {
-        color: #e74c3c;
+    
+    .form-group textarea {
+        height: 100px;
+        resize: vertical;
+    }
+    
+    .submit-btn {
+        background-color: #4CAF50;
+        color: white;
+        border: none;
+        padding: 0.5rem 1rem;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 1rem;
+    }
+    
+    .submit-btn:hover {
+        background-color: #45a049;
+    }
+    
+    .empty-habits {
+        text-align: center;
+        padding: 2rem;
+        background-color: white;
+        border-radius: 8px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    
+    .profile-selector {
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+    }
+    
+    .profile-selector select {
+        margin-left: 0.5rem;
+        padding: 0.5rem;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+    }
+    
+    .stats-container {
+        background-color: white;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        display: flex;
+        justify-content: space-around;
+        text-align: center;
+    }
+    
+    .stat-item {
+        padding: 0.5rem;
+    }
+    
+    .stat-value {
+        font-size: 1.5rem;
+        font-weight: bold;
+        display: block;
+        color: #4CAF50;
+    }
+    
+    .stat-label {
+        font-size: 0.8rem;
+        color: #666;
+    }
+
+    /* Responsive adjustments */
+    @media (min-width: 768px) {
+        .habit-container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            grid-gap: 1rem;
+        }
+        
+        .add-habit-form {
+            grid-column: 1 / -1;
+        }
+        
+        .empty-habits {
+            grid-column: 1 / -1;
+        }
     }
 </style>
 {% endblock %}
 
 {% block content %}
-    <div class="container">
-        <h1>Habit Tracking</h1>
-        
-        <!-- Profile Selector -->
-        <div class="profile-selector">
-            <h3>Select Profile</h3>
-            
-            <div class="profile-tabs">
+<div class="container">
+    <h1>Habit Tracker</h1>
+    
+    <!-- Profile Selector -->
+    <div class="profile-selector">
+        <form method="get" action="{% url 'habit_home' %}">
+            <label for="profile-select">Profile:</label>
+            <select id="profile-select" name="profile" onchange="this.form.submit()">
                 {% for profile in profiles %}
-                    <a href="?profile={{ profile.id }}" class="profile-tab {% if selected_profile.id == profile.id %}active{% endif %}">
+                    <option value="{{ profile.id }}" {% if profile.id == selected_profile.id %}selected{% endif %}>
                         {{ profile.name }}
-                    </a>
+                    </option>
                 {% endfor %}
-            </div>
-            
-            <p>Currently tracking habits for: <strong>{{ selected_profile.name }}</strong></p>
-        </div>
-        
-        <!-- Add Habit Button -->
-        <button id="add-habit-btn" class="add-habit-toggle">+ Add New Habit</button>
-        
-        <!-- Add Habit Form (initially hidden) -->
-        <div id="add-habit-form" class="add-habit-card" style="display: none;">
-            <form method="post" class="add-habit-form">
-                {% csrf_token %}
-                <input type="hidden" name="create_habit" value="true">
-                
-                <div class="form-group">
-                    <label for="habit-name">Habit Name:</label>
-                    <input type="text" id="habit-name" name="habit_name" required placeholder="e.g., Take Medication">
-                </div>
-                
-                <div class="form-group">
-                    <label for="habit-description">Description (Optional):</label>
-                    <textarea id="habit-description" name="habit_description" placeholder="Add details about this habit"></textarea>
-                </div>
-                
-                <div class="form-group">
-                    <label for="habit-frequency">Frequency:</label>
-                    <select id="habit-frequency" name="habit_frequency">
-                        <option value="daily">Daily</option>
-                        <option value="weekly">Weekly</option>
-                        <option value="monthly">Monthly</option>
-                    </select>
-                </div>
-                
-                <button type="submit" class="submit-btn">Create Habit</button>
-            </form>
-        </div>
-        
-        <!-- Habits List -->
-        <div id="habits-container">
-            {% if habits %}
-                {% for habit in habits %}
-                    <div class="habit-card" id="habit-{{ habit.id }}">
-                        <div class="habit-info">
-                            <div class="habit-name">{{ habit.name }}</div>
-                            {% if habit.description %}
-                                <div class="habit-description">{{ habit.description }}</div>
-                            {% endif %}
-                            <div class="habit-frequency">{{ habit.get_frequency_display }}</div>
-                        </div>
-                        <div class="habit-actions">
-                            <form method="post" action="{% url 'toggle_habit' habit.id %}" class="complete-form">
-                                {% csrf_token %}
-                                <button type="submit" class="complete-btn {% if habit.completed_today %}completed{% endif %}" title="{% if habit.completed_today %}Completed today! Click to undo.{% else %}Click to mark as complete{% endif %}">
-                                    {% if habit.completed_today %}✓{% endif %}
-                                </button>
-                            </form>
-                            <button class="edit-btn" data-habit-id="{{ habit.id }}" title="Edit habit">✏️</button>
-                            <form method="post" action="{% url 'delete_habit' habit.id %}" class="delete-form">
-                                {% csrf_token %}
-                                <button type="submit" class="delete-btn" title="Delete habit" onclick="return confirm('Are you sure you want to delete this habit?')">🗑️</button>
-                            </form>
-                        </div>
-                    </div>
-                {% endfor %}
-            {% else %}
-                <div class="empty-state">
-                    <p>You don't have any habits yet.</p>
-                    <p>Click "Add New Habit" to get started!</p>
-                </div>
-            {% endif %}
-        </div>
-        
-        <!-- Edit Habit Modal -->
-        <div id="edit-habit-modal" class="modal">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h3 class="modal-title">Edit Habit</h3>
-                    <span class="close-modal">&times;</span>
-                </div>
-                <form id="edit-habit-form" method="post" class="add-habit-form">
-                    {% csrf_token %}
-                    <input type="hidden" id="edit-habit-id" name="habit_id" value="">
-                    
-                    <div class="form-group">
-                        <label for="edit-habit-name">Habit Name:</label>
-                        <input type="text" id="edit-habit-name" name="habit_name" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="edit-habit-description">Description (Optional):</label>
-                        <textarea id="edit-habit-description" name="habit_description"></textarea>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="edit-habit-frequency">Frequency:</label>
-                        <select id="edit-habit-frequency" name="habit_frequency">
-                            <option value="daily">Daily</option>
-                            <option value="weekly">Weekly</option>
-                            <option value="monthly">Monthly</option>
-                        </select>
-                    </div>
-                    
-                    <button type="submit" class="submit-btn">Update Habit</button>
-                </form>
-            </div>
-        </div>
-        
-        <a href="{% url 'home' %}" class="back-link">← Back to Home</a>
+            </select>
+        </form>
     </div>
-{% endblock %}
-
-{% block scripts %}
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Toggle add habit form visibility
-        const addHabitBtn = document.getElementById('add-habit-btn');
-        const addHabitForm = document.getElementById('add-habit-form');
-        
-        addHabitBtn.addEventListener('click', function() {
-            if (addHabitForm.style.display === 'none') {
-                addHabitForm.style.display = 'block';
-                addHabitBtn.textContent = '- Cancel';
-            } else {
-                addHabitForm.style.display = 'none';
-                addHabitBtn.textContent = '+ Add New Habit';
-            }
-        });
-        
-        // Handle edit buttons
-        const editButtons = document.querySelectorAll('.edit-btn');
-        const editModal = document.getElementById('edit-habit-modal');
-        const closeModal = document.querySelector('.close-modal');
-        const editForm = document.getElementById('edit-habit-form');
-        
-        editButtons.forEach(button => {
-            button.addEventListener('click', function() {
-                const habitId = this.getAttribute('data-habit-id');
-                const habitCard = document.getElementById(`habit-${habitId}`);
-                
-                // Get habit details from the card
-                const name = habitCard.querySelector('.habit-name').textContent;
-                const description = habitCard.querySelector('.habit-description') ? 
-                                   habitCard.querySelector('.habit-description').textContent : '';
-                                   
-                // Get frequency (need to parse from display text)
-                const frequencyText = habitCard.querySelector('.habit-frequency').textContent;
-                let frequency = 'daily'; // Default
-                
-                if (frequencyText === 'Weekly') {
-                    frequency = 'weekly';
-                } else if (frequencyText === 'Monthly') {
-                    frequency = 'monthly';
-                }
-                
-                // Set form values
-                document.getElementById('edit-habit-id').value = habitId;
-                document.getElementById('edit-habit-name').value = name;
-                document.getElementById('edit-habit-description').value = description;
-                document.getElementById('edit-habit-frequency').value = frequency;
-                
-                // Update form action
-                editForm.action = `/habits/edit/${habitId}/`;
-                
-                // Show modal
-                editModal.style.display = 'block';
-            });
-        });
-        
-        // Close modal
-        if (closeModal) {
-            closeModal.addEventListener('click', function() {
-                editModal.style.display = 'none';
-            });
-        }
-        
-        // Click outside to close
-        window.addEventListener('click', function(event) {
-            if (event.target === editModal) {
-                editModal.style.display = 'none';
-            }
-        });
-        
-        // Use AJAX for habit completion to avoid page refresh
-        const completeForms = document.querySelectorAll('.complete-form');
-        
-        completeForms.forEach(form => {
-            form.addEventListener('submit', function(e) {
-                e.preventDefault();
-                
-                const formData = new FormData(this);
-                const url = this.action;
-                const completeBtn = this.querySelector('.complete-btn');
-                
-                fetch(url, {
-                    method: 'POST',
-                    body: formData,
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest'
-                    }
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.status === 'completed') {
-                        completeBtn.classList.add('completed');
-                        completeBtn.innerHTML = '✓';
-                        completeBtn.title = 'Completed today! Click to undo.';
-                    } else {
-                        completeBtn.classList.remove('completed');
-                        completeBtn.innerHTML = '';
-                        completeBtn.title = 'Click to mark as complete';
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                });
-            });
-        });
-    });
-</script>
+    
+    <!-- Stats Overview -->
+    <div class="stats-container">
+        <div class="stat-item">
+            <span class="stat-value">{{ habits|length }}</span>
+            <span class="stat-label">Total Habits</span>
+        </div>
+        <div class="stat-item">
+            {% with completed_count=0 %}
+                {% for habit in habits %}
+                    {% if habit.completed_today %}
+                        {% with completed_count=completed_count|add:1 %}{% endwith %}
+                    {% endif %}
+                {% endfor %}
+                <span class="stat-value">{{ completed_count }}</span>
+            {% endwith %}
+            <span class="stat-label">Completed Today</span>
+        </div>
+    </div>
+    
+    <!-- Add Habit Form -->
+    <div class="add-habit-form">
+        <h2>Add New Habit</h2>
+        <form method="post">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="habit_name">Habit Name:</label>
+                <input type="text" id="habit_name" name="habit_name" required>
+            </div>
+            <div class="form-group">
+                <label for="habit_description">Description (Optional):</label>
+                <textarea id="habit_description" name="habit_description"></textarea>
+            </div>
+            <div class="form-group">
+                <label for="habit_frequency">Frequency:</label>
+                <select id="habit_frequency" name="habit_frequency">
+                    <option value="daily">Daily</option>
+                    <option value="weekly">Weekly</option>
+                    <option value="monthly">Monthly</option>
+                </select>
+            </div>
+            <button type="submit" name="create_habit" value="true" class="submit-btn">Add Habit</button>
+        </form>
+    </div>
+    
+    <!-- Habits List -->
+    {% if habits %}
+        <div class="habit-container">
+            {% for habit in habits %}
+                <div class="habit-item {% if habit.completed_today %}completed{% endif %}" data-id="{{ habit.id }}">
+                    <div class="habit-info">
+                        <span class="habit-name">{{ habit.name }}</span>
+                        {% if habit.description %}
+                            <p class="habit-description">{{ habit.description }}</p>
+                        {% endif %}
+                        <span class="habit-frequency">{{ habit.frequency|title }}</span>
+                    </div>
+                    <div class="habit-actions">
+                        <form method="post" action="{% url 'toggle_habit' habit.id %}" style="display: inline;">
+                            {% csrf_token %}
+                            <input type="checkbox" class="habit-check" 
+                                   {% if habit.completed_today %}checked{% endif %}
+                                   onchange="this.form.submit()">
+                        </form>
+                        <a href="{% url 'edit_habit' habit.id %}" class="habit-btn edit-habit" title="Edit Habit">✎</a>
+                        <form method="post" action="{% url 'delete_habit' habit.id %}" 
+                              style="display: inline;"
+                              onsubmit="return confirm('Are you sure you want to delete this habit?');">
+                            {% csrf_token %}
+                            <button type="submit" class="habit-btn delete-habit" title="Delete Habit">×</button>
+                        </form>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="empty-habits">
+            <p>You don't have any habits yet. Add your first habit using the form above.</p>
+        </div>
+    {% endif %}
+</div>
 {% endblock %}
