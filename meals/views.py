@@ -1973,6 +1973,49 @@ if WORKOUT_MODELS_EXIST:
         
         return JsonResponse({'status': 'error', 'message': 'Method not allowed'}, status=405)
 
+# ... existing code ...
+
+@csrf_exempt
+@require_POST
+def create_habit(request):
+    """API endpoint for creating a new habit"""
+    try:
+        # Debug logging
+        print(f"Received habit creation request: {request.POST}")
+        
+        habit_name = request.POST.get('habit_name')
+        habit_description = request.POST.get('habit_description', '')
+        habit_frequency = request.POST.get('habit_frequency', 'daily')
+        
+        # Get the profile
+        profile = Profile.objects.first()
+        if not profile:
+            profile = Profile.objects.create(name="Default Profile")
+        
+        # Create the habit
+        habit = Habit.objects.create(
+            name=habit_name,
+            description=habit_description,
+            frequency=habit_frequency,
+            profile=profile
+        )
+        
+        return JsonResponse({
+            'status': 'success',
+            'message': 'Habit created successfully',
+            'habit_id': habit.id
+        })
+    except Exception as e:
+        import traceback
+        print(f"Error creating habit: {e}")
+        print(traceback.format_exc())
+        return JsonResponse({
+            'status': 'error',
+            'message': f'Error creating habit: {str(e)}'
+        }, status=500)
+
+# ... existing code ...
+
 def habit_home(request):
     """View for the habit tracking home page"""
     # Check if JSON format is requested

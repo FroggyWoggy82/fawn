@@ -62,6 +62,8 @@ urlpatterns = [
     path('complete-task/', views.complete_task, name='complete_task'),
     path('get-tasks/', views.get_tasks, name='get_tasks'),
     path('sync_completed_tasks/', views.sync_completed_tasks, name='sync_completed_tasks'),
+    path('api/habits/create/', views.create_habit, name='api_create_habit'),
+
 ] 
 if settings.DEBUG:
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

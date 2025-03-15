@@ -797,7 +797,7 @@
         
       // Update this part of the script in your home.html file
 
-        // Save a new habit
+                // Save a new habit
         habitForm.addEventListener('submit', function(e) {
             e.preventDefault();
             
@@ -813,7 +813,7 @@
             formData.append('create_habit', 'true');
             
             // Send to server via fetch API using form data
-            fetch('/habits/', {
+            fetch('/api/habits/create/', {
                 method: 'POST',
                 headers: {
                     'X-CSRFToken': getCookie('csrftoken')
@@ -821,32 +821,36 @@
                 body: formData
             })
             .then(response => {
-                if (response.ok) {
-                    // Reset form and close modal
-                    habitForm.reset();
-                    habitModal.classList.remove('visible');
-                    
-                    // Explicitly fetch habits to update the UI
-                    fetchHabits();
-                    
-                    // Show success message
-                    const successMessage = document.createElement('div');
-                    successMessage.className = 'success-message';
-                    successMessage.textContent = 'Habit created successfully!';
-                    document.body.appendChild(successMessage);
-                    
-                    // Remove success message after 3 seconds
-                    setTimeout(() => {
-                        successMessage.style.opacity = '0';
-                        setTimeout(() => successMessage.remove(), 500);
-                    }, 3000);
-                } else {
-                    alert('Error creating habit. Please try again.');
+                if (!response.ok) {
+                    return response.json().then(data => {
+                        throw new Error(data.message || 'Error creating habit');
+                    });
                 }
+                return response.json();
+            })
+            .then(data => {
+                // Reset form and close modal
+                habitForm.reset();
+                habitModal.classList.remove('visible');
+                
+                // Explicitly fetch habits to update the UI
+                fetchHabits();
+                
+                // Show success message
+                const successMessage = document.createElement('div');
+                successMessage.className = 'success-message';
+                successMessage.textContent = 'Habit created successfully!';
+                document.body.appendChild(successMessage);
+                
+                // Remove success message after 3 seconds
+                setTimeout(() => {
+                    successMessage.style.opacity = '0';
+                    setTimeout(() => successMessage.remove(), 500);
+                }, 3000);
             })
             .catch(error => {
                 console.error('Error creating habit:', error);
-                alert('Error creating habit. Please try again.');
+                alert('Error creating habit: ' + error.message);
             });
         });
         
@@ -995,15 +999,28 @@
         // Habit functions
         function fetchHabits() {
             fetch('/api/habits/')
-                .then(response => response.json())
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Failed to fetch habits');
+                    }
+                    return response.json();
+                })
                 .then(data => {
                     renderHabits(data.habits || []);
-                    updateHabitCount(data.habits || []);
                 })
                 .catch(error => {
                     console.error('Error fetching habits:', error);
+                    // Show error in the UI instead of breaking the page
+                    const habitContainer = document.getElementById('habit-container');
+                    habitContainer.innerHTML = `
+                        <div class="error-message">
+                            <p>Error loading habits. Please refresh the page or try again later.</p>
+                        </div>
+                    `;
                 });
         }
+
+        
                 // Save a new habit
         
         function renderHabits(habits) {
